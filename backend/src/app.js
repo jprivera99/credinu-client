@@ -45,7 +45,7 @@ app.use("/api/user", userRoutes);
 
 // Test
 app.get("/", (req, res) => {
-    res.send("API segura funcionando 🔐");
+    res.send("API segura funcionando");
 });
 
 // Start server
