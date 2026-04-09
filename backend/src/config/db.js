@@ -15,7 +15,18 @@ export const pool = mysql.createPool({
     queueLimit: 0
 });
 
-// función helper tipo pg
+// Test conexión (opcional pero recomendado)
+(async () => {
+    try {
+        const conn = await pool.getConnection();
+        console.log("Conectado a MySQL");
+        conn.release();
+    } catch (error) {
+        console.error("Error conexión BD:", error.message);
+    }
+})();
+
+// helper tipo pg
 export async function query(sql, params = []) {
     const [rows] = await pool.query(sql, params);
     return rows;
