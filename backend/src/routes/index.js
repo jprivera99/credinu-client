@@ -1,3 +1,8 @@
-import authRoutes from "../modules/security/auth.routes.js";
+import { Router } from "express";
+import authRoutes from "../modules/auth/auth.routes.js";
 
-app.use("/api/auth", authRoutes);
+const router = Router();
+
+router.use("/api/auth", authRoutes);
+
+export default router;

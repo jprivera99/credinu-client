@@ -5,8 +5,9 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import { env } from "./config/env.js";
-import authRoutes from "./modules/security/auth.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
+import apiRoutes from "./routes/index.js";
 
 const app = express();
 
@@ -40,8 +41,7 @@ app.use(express.json({
 }));
 
 // Rutas
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/v1", apiRoutes);
 
 // Test
 app.get("/", (req, res) => {
