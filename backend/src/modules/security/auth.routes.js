@@ -12,6 +12,7 @@ router.post(
         body("usuario").notEmpty().withMessage("Usuario requerido"),
         body("password").isLength({ min: 4 }).withMessage("Password inválido")
     ],
+    loginLimiter,
     login
 );
 
