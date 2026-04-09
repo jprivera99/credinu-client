@@ -10,3 +10,4 @@ Formato basado en **Keep a Changelog** y versionado semántico.
 - Creación de appError.js en donde se usara para lanzar errores controlados desde servicios. 
 - Creación de responses.js que se utilizara para estandarizar respuestas.
 - Creación de jwt.js que se centraliza en la firma del token.
+-Creación de validateRequest.js que evitará repetir validationResult en todos lados. 
