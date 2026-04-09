@@ -20,8 +20,7 @@
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
-    "mysql2": "^3.21.0",
-    "xss-clean": "^0.1.4"
+    "mysql2": "^3.21.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

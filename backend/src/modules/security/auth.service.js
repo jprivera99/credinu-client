@@ -37,7 +37,10 @@ export const loginService = async (usuario, password) => {
             usuario: user.usuario
         },
         env.jwtSecret,
-        { expiresIn: "8h" }
+        {
+            expiresIn: "8h",
+            issuer: "credinu",
+        }
     );
 
     return {
