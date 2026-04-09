@@ -1,16 +1,19 @@
 import { loginService } from "./auth.service.js";
 import { registerService } from "./auth.service.js";
+import { validationResult } from "express-validator";
 
 export const login = async (req, res) => {
     try {
 
-        const { usuario, password } = req.body;
+        const errors = validationResult(req);
 
-        if (!usuario || !password) {
+        if (!errors.isEmpty()) {
             return res.status(400).json({
-                message: "Usuario y password son requeridos"
+                errors: errors.array()
             });
         }
+
+        const { usuario, password } = req.body;
 
         const data = await loginService(usuario, password);
 
