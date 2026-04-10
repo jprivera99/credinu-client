@@ -1,52 +1,39 @@
-import { loginService } from "./auth.service.js";
-import { registerService } from "./auth.service.js";
-import { validationResult } from "express-validator";
+import {
+    loginService,
+    getMeService,
+    changePasswordService,
+} from "./auth.service.js";
+import { ok } from "../../utils/responses.js";
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
     try {
-
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                errors: errors.array()
-            });
-        }
-
         const { usuario, password } = req.body;
-
         const data = await loginService(usuario, password);
-
-        res.json(data);
-
+        return ok(res, data, "Login correcto");
     } catch (error) {
-        res.status(401).json({
-            message: error.message
-        });
+        return next(error);
     }
 };
 
-export const register = async (req, res) => {
+export const me = async (req, res, next) => {
     try {
-
-        const data = req.body;
-
-        if (!data.usuario || !data.password || !data.nombre) {
-            return res.status(400).json({
-                message: "Datos incompletos"
-            });
-        }
-
-        const user = await registerService(data);
-
-        res.status(201).json({
-            message: "Usuario registrado correctamente",
-            user
-        });
-
+        const data = await getMeService(req.user.id);
+        return ok(res, data, "Perfil obtenido");
     } catch (error) {
-        res.status(400).json({
-            message: error.message
-        });
+        return next(error);
+    }
+};
+
+export const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const data = await changePasswordService(
+            req.user.id,
+            currentPassword,
+            newPassword
+        );
+        return ok(res, data, "Password actualizado");
+    } catch (error) {
+        return next(error);
     }
 };
