@@ -12,3 +12,4 @@ Formato basado en **Keep a Changelog** y versionado semántico.
 - Creación de jwt.js que se centraliza en la firma del token.
 - Creación de validateRequest.js que evitará repetir validationResult en todos lados. 
 - Creación de errorHandler.js para manejar excepciones de servicios/controladores
+- Creación de auth.validators.js para mejora de validaciones
