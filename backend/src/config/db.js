@@ -9,7 +9,7 @@ export const pool = mysql.createPool({
     user: url.username,
     password: url.password,
     database: url.pathname.replace('/', ''),
-    port: url.port || 3306,
+    port: url.port || 3001,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

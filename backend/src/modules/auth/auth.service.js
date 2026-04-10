@@ -45,7 +45,7 @@ const buildToken = (user) => {
 
 export const loginService = async (usuario, password) => {
     const [rows] = await pool.query(
-        "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id, estatus FROM sis_usuario WHERE usuario = ? LIMIT 1",
+        "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id FROM sis_usuario WHERE usuario = ? LIMIT 1",
         [usuario]
     );
 
@@ -63,12 +63,12 @@ export const loginService = async (usuario, password) => {
         throw new AppError("Usuario sin cliente asociado", 403);
     }
 
-    if (user.estatus !== null && user.estatus !== undefined) {
+/*     if (user.estatus !== null && user.estatus !== undefined) {
         const active = String(user.estatus).toUpperCase();
         if (active !== "1" && active !== "ACTIVO") {
             throw new AppError("Usuario inactivo", 403);
         }
-    }
+    } *///no existe este campo en la tabla sis_usuario
 
     const passwordCheck = await verifyPassword(password, user.password);
 
@@ -101,7 +101,7 @@ export const loginService = async (usuario, password) => {
 
 export const getMeService = async (userId) => {
     const [rows] = await pool.query(
-        "SELECT id, nombre, usuario, email, perfil_id, cliente_id, estatus FROM sis_usuario WHERE id = ? LIMIT 1",
+        "SELECT id, nombre, usuario, email, perfil_id, cliente_id FROM sis_usuario WHERE id = ? LIMIT 1",
         [userId]
     );
 
