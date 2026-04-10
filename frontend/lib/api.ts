@@ -4,6 +4,7 @@ import type {
   ClientProfile,
   LoginResponse,
   ProductItem,
+  RegisterPayload,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
@@ -58,4 +59,11 @@ export function getClientApplications() {
 
 export function getClientProfile() {
   return apiFetch<ClientProfile>("/user/me", { auth: true });
+}
+
+export function registerRequest(payload: RegisterPayload) {
+  return apiFetch<{ id: number; usuario: string }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

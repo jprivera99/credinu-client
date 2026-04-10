@@ -40,3 +40,15 @@ export interface ClientProfile {
     domicilio_calle: string | null;
     domicilio_numero: string | null;
 }
+
+export type RegisterPayload = {
+  usuario: string;
+  password: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  email: string;
+  telefono?: string;
+  rfc?: string;
+  curp?: string;
+};

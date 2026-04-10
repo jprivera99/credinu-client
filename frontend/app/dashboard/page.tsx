@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getPerfil } from "@/lib/api";
+import { getMe } from "@/lib/api";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -17,7 +17,7 @@ export default function Dashboard() {
         }
 
         const fetchData = async () => {
-            const data = await getPerfil();
+            const data = await getMe();
             setUser(data);
         };
 
