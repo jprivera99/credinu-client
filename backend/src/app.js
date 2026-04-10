@@ -7,6 +7,7 @@ import hpp from "hpp";
 import { env } from "./config/env.js";
 import apiRoutes from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use(express.json({
 
 // Rutas
 app.use("/api/v1", apiRoutes);
+app.use("/api/auth", authRoutes);
 
 // Middleware de manejo de errores
 app.use(errorHandler);

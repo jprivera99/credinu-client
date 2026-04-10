@@ -141,3 +141,68 @@ export const changePasswordService = async (
 
     return { updated: true };
 };
+
+export const registerService = async (data) => {
+    const {
+        usuario,
+        password,
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        email,
+        telefono,
+        rfc,
+        curp
+    } = data;
+    
+    if (!usuario || !password || !nombre || !email) {
+        throw new Error("Datos incompletos");
+    }
+
+    const [exist] = await pool.query(
+        "SELECT id FROM sis_usuario WHERE usuario = ? OR email = ? LIMIT 1",
+        [usuario, email]
+    );
+
+    if (exist.length > 0) {
+        throw new Error("El usuario o correo ya existe");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [result] = await pool.query(
+        `INSERT INTO sis_usuario 
+        (
+            usuario,
+            password,
+            nombre,
+            apellido_paterno,
+            apellido_materno,
+            email,
+            telefono_movil,
+            rfc,
+            curp,
+            perfil_id,
+            fecha_registro
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [
+            usuario,
+            hashedPassword,
+            nombre,
+            apellido_paterno || "",
+            apellido_materno || "",
+            email,
+            telefono || "",
+            rfc || "",
+            curp || "",
+            2
+        ]
+    );
+
+    return {
+        id: result.insertId,
+        usuario,
+        nombre
+    };
+};
