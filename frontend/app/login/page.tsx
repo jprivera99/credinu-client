@@ -53,9 +53,21 @@ export default function LoginPage() {
                     className="w-full p-2 mb-3 border rounded"
                 />
 
+                {/* BOTÓN */}
                 <button className="w-full bg-blue-600 text-white p-2 rounded">
                     Entrar
                 </button>
+
+                {/* REGISTER */}
+                <p className="text-center text-sm mt-4">
+                    ¿No tienes cuenta?{" "}
+                    <span
+                        className="text-blue-600 cursor-pointer"
+                        onClick={() => router.push("/register")}
+                    >
+                        Regístrate
+                    </span>
+                </p>
             </form>
         </div>
     );
