@@ -5,9 +5,8 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import { env } from "./config/env.js";
-import authRoutes from "./modules/auth/auth.routes.js";
-import userRoutes from "./modules/user/user.routes.js";
 import apiRoutes from "./routes/index.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
@@ -42,6 +41,9 @@ app.use(express.json({
 
 // Rutas
 app.use("/api/v1", apiRoutes);
+
+// Middleware de manejo de errores
+app.use(errorHandler);
 
 // Test
 app.get("/", (req, res) => {
