@@ -56,7 +56,6 @@ export interface ChangePasswordPayload {
 
 export type RegisterPayload = {
   usuario: string;
-  password: string;
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string;
