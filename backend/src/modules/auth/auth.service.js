@@ -5,25 +5,29 @@ import { pool } from "../../config/db.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../utils/appError.js";
 
-const CLIENTE_PROFILE_IDS = [4];
+const CLIENTE_PROFILE_IDS = [2, 4];
 
 const isBcryptHash = (hash = "") => {
-    return /^$2[aby]$/.test(hash);
+    return /^\$2[aby]\$\d{2}\$/.test(hash);
 };
 
 const md5 = (value) => {
     return crypto.createHash("md5").update(value).digest("hex");
 };
 
+
 const verifyPassword = async (plainPassword, storedHash) => {
     if (!storedHash) return { valid: false, needsUpgrade: false };
 
+    const password = String(plainPassword).trim();
+
     if (isBcryptHash(storedHash)) {
-        const valid = await bcrypt.compare(plainPassword, storedHash);
+        const valid = await bcrypt.compare(password, storedHash);
         return { valid, needsUpgrade: false };
     }
 
-    const validLegacy = md5(plainPassword) === String(storedHash).toLowerCase();
+    const validLegacy = md5(password) === String(storedHash).toLowerCase();
+
     return { valid: validLegacy, needsUpgrade: validLegacy };
 };
 
@@ -63,13 +67,6 @@ export const loginService = async (usuario, password) => {
         throw new AppError("Usuario sin cliente asociado", 403);
     }
 
-/*     if (user.estatus !== null && user.estatus !== undefined) {
-        const active = String(user.estatus).toUpperCase();
-        if (active !== "1" && active !== "ACTIVO") {
-            throw new AppError("Usuario inactivo", 403);
-        }
-    } *///no existe este campo en la tabla sis_usuario
-
     const passwordCheck = await verifyPassword(password, user.password);
 
     if (!passwordCheck.valid) {
@@ -77,11 +74,12 @@ export const loginService = async (usuario, password) => {
     }
 
     if (passwordCheck.needsUpgrade) {
-        const newHash = await bcrypt.hash(password, 10);
-        await pool.query("UPDATE sis_usuario SET password = ? WHERE id = ?", [
-            newHash,
-            user.id,
-        ]);
+        const newHash = await bcrypt.hash(password.trim(), 10);
+
+        await pool.query(
+            "UPDATE sis_usuario SET password = ? WHERE id = ?",
+            [newHash, user.id]
+        );
     }
 
     const token = buildToken(user);
@@ -127,17 +125,19 @@ export const changePasswordService = async (
     }
 
     const user = rows[0];
+
     const passwordCheck = await verifyPassword(currentPassword, user.password);
 
     if (!passwordCheck.valid) {
         throw new AppError("Password actual incorrecto", 400);
     }
 
-    const newHash = await bcrypt.hash(newPassword, 10);
-    await pool.query("UPDATE sis_usuario SET password = ? WHERE id = ?", [
-        newHash,
-        userId,
-    ]);
+    const newHash = await bcrypt.hash(newPassword.trim(), 10);
+
+    await pool.query(
+        "UPDATE sis_usuario SET password = ? WHERE id = ?",
+        [newHash, userId]
+    );
 
     return { updated: true };
 };
@@ -154,9 +154,9 @@ export const registerService = async (data) => {
         rfc,
         curp
     } = data;
-    
+
     if (!usuario || !password || !nombre || !email) {
-        throw new Error("Datos incompletos");
+        throw new AppError("Datos incompletos", 400);
     }
 
     const [exist] = await pool.query(
@@ -165,10 +165,10 @@ export const registerService = async (data) => {
     );
 
     if (exist.length > 0) {
-        throw new Error("El usuario o correo ya existe");
+        throw new AppError("El usuario o correo ya existe", 400);
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password.trim(), 10);
 
     const [result] = await pool.query(
         `INSERT INTO sis_usuario 
