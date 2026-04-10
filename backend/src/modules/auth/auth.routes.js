@@ -11,6 +11,7 @@ router.post(
     "/login",
     loginLimiter,
     loginValidator,
+    /* validateRequest, */
     login
 );
 
@@ -20,6 +21,7 @@ router.post(
     "/change-password",
     verifyToken,
     changePasswordValidator,
+    /* validateRequest, */
     changePassword
 );
 
