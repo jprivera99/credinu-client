@@ -6,6 +6,8 @@ import { AuthUser } from "@/lib/types";
 import { ClientSidebar } from "@/components/ClientSidebar";
 import { ClientTopbar } from "@/components/ClientTopbar";
 
+const BYPASS_AUTH = process.env.NEXT_PUBLIC_BYPASS_AUTH === "true";
+
 interface ClientShellProps {
     children: React.ReactNode;
 }
@@ -16,6 +18,18 @@ export function ClientShell({ children}: ClientShellProps) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     useEffect(() => {
+        if (BYPASS_AUTH) {
+            setUser({
+                id: 0,
+                nombre: "Usuario Demo",
+                usuario: "demo.cliente",
+                email: "demo@credinu.mx",
+                perfil_id: 4,
+                cliente_id: 0,
+            });
+            return;
+        }
+
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -32,6 +46,10 @@ export function ClientShell({ children}: ClientShellProps) {
     }, [router]);
 
     const handleLogout = () => {
+        if (BYPASS_AUTH) {
+            return;
+        }
+
         localStorage.removeItem("token");
         router.replace("/login");
     };
