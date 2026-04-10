@@ -1,6 +1,10 @@
 import { Router } from "express";
+import { verifyToken } from "../../middleware/auth.middleware.js";
+import { validateRequest } from "../../middleware/validateRequest.middleware.js";
+import { loginValidator } from "./auth.validators.js";
+import { changePasswordValidator } from "./auth.validators.js";
 import { body } from "express-validator";
-import { login } from "./auth.controller.js";
+import { login, me, changePassword } from "./auth.controller.js";
 import { register } from "./auth.controller.js";
 import { loginLimiter } from "../../middleware/loginLimiter.js";
 
@@ -8,14 +12,20 @@ const router = Router();
 
 router.post(
     "/login",
-    [
-        body("usuario").notEmpty().withMessage("Usuario requerido"),
-        body("password").isLength({ min: 4 }).withMessage("Password inválido")
-    ],
     loginLimiter,
+    loginValidator,
+    validateRequest,
     login
 );
 
-router.post("/register", register);
+router.get("/me", verifyToken, me);
+
+router.post(
+    "/change-password",
+    verifyToken,
+    changePasswordValidator,
+    validateRequest,
+    changePassword
+);
 
 export default router;
