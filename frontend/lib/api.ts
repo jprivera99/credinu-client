@@ -6,6 +6,7 @@ import type {
   LoginResponse,
   ProductItem,
   UpdateClientProfilePayload,
+  RegisterPayload,
 } from "./types";
 
 const API_URL =
@@ -78,6 +79,13 @@ export function changePassword(payload: ChangePasswordPayload) {
   return apiFetch<{ updated: boolean }>("/auth/change-password", {
     method: "POST",
     auth: true,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function registerRequest(payload: RegisterPayload) {
+  return apiFetch<{ id: number; usuario: string }>("/auth/register", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }
