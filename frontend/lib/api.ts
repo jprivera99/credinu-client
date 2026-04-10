@@ -1,34 +1,61 @@
-const API_URL = "http://localhost:3001/api";
+import type {
+  ApplicationItem,
+  AuthUser,
+  ClientProfile,
+  LoginResponse,
+  ProductItem,
+} from "./types";
 
-export const loginRequest = async (data: {
-  usuario: string;
-  password: string;
-}) => {
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
-  const json = await res.json();
+type FetchOptions = RequestInit & {
+  auth?: boolean;
+};
 
-  if (!res.ok) {
-    throw new Error(json.message || "Error en login");
+async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const headers = new Headers(options.headers || {});
+  headers.set("Content-Type", "application/json");
+
+  if (options.auth && typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
   }
 
-  return json;
-};
-
-export const getPerfil = async () => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/user/perfil`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
   });
 
-  return res.json();
-};
+  const json = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(json.message || "Ocurrió un error");
+  }
+
+  return (json.data ?? json) as T;
+}
+
+export function loginRequest(payload: { usuario: string; password: string }) {
+  return apiFetch<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getMe() {
+  return apiFetch<AuthUser>("/auth/me", { auth: true });
+}
+
+export function getClientProducts() {
+  return apiFetch<ProductItem[]>("/products", { auth: true });
+}
+
+export function getClientApplications() {
+  return apiFetch<ApplicationItem[]>("/applications", { auth: true });
+}
+
+export function getClientProfile() {
+  return apiFetch<ClientProfile>("/user/me", { auth: true });
+}
