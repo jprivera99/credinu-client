@@ -41,6 +41,19 @@ export interface ClientProfile {
     domicilio_numero: string | null;
 }
 
+export interface UpdateClientProfilePayload {
+    email?: string | null,
+    telefono_movil? : string | null,
+    domicilio_cp?: string | null,
+    domicilio_calle?: string | null,
+    domicilio_numero?: string | null,
+}
+
+export interface ChangePasswordPayload {
+    currentPassword: string;
+    newPassword: string;
+}
+
 export type RegisterPayload = {
   usuario: string;
   password: string;
