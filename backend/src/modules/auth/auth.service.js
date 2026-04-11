@@ -144,7 +144,6 @@ export const changePasswordService = async (
 
 export const registerService = async (data) => {
     const {
-        usuario,
         nombre,
         apellido_paterno,
         apellido_materno,
@@ -154,13 +153,13 @@ export const registerService = async (data) => {
         curp
     } = data;
 
-    if (!usuario || !nombre || !email) {
+    if (!nombre || !email) {
         throw new AppError("Datos incompletos", 400);
     }
 
     const [exist] = await pool.query(
-        "SELECT id FROM sis_usuario WHERE usuario = ? OR email = ? LIMIT 1",
-        [usuario, email]
+        "SELECT id FROM sis_usuario WHERE email = ? LIMIT 1",
+        [email]
     );
 
     if (exist.length > 0) {
@@ -183,7 +182,7 @@ export const registerService = async (data) => {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
-            usuario,
+            email,
             nombre,
             apellido_paterno || "",
             apellido_materno || "",

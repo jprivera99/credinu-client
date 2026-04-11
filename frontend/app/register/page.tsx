@@ -8,7 +8,6 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    usuario: "",
     email: "",
     nombre: "",
     apellido_paterno: "",
