@@ -145,7 +145,6 @@ export const changePasswordService = async (
 export const registerService = async (data) => {
     const {
         usuario,
-        password,
         nombre,
         apellido_paterno,
         apellido_materno,
@@ -168,13 +167,10 @@ export const registerService = async (data) => {
         throw new AppError("El usuario o correo ya existe", 400);
     }
 
-    const hashedPassword = await bcrypt.hash(password.trim(), 10);
-
     const [result] = await pool.query(
         `INSERT INTO sis_usuario 
         (
             usuario,
-            password,
             nombre,
             apellido_paterno,
             apellido_materno,
@@ -185,10 +181,9 @@ export const registerService = async (data) => {
             perfil_id,
             fecha_registro
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
             usuario,
-            hashedPassword,
             nombre,
             apellido_paterno || "",
             apellido_materno || "",
