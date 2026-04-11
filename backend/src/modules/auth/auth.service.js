@@ -154,7 +154,7 @@ export const registerService = async (data) => {
         curp
     } = data;
 
-    if (!usuario || !password || !nombre || !email) {
+    if (!usuario || !nombre || !email) {
         throw new AppError("Datos incompletos", 400);
     }
 
