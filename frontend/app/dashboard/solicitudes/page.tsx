@@ -32,7 +32,7 @@ export default function SolicitudesPage() {
                     <table className="portal-table">
                         <thead>
                             <tr>
-                                <th>Folio</th>
+                                <th>No.Solicitud</th>
                                 <th>Producto</th>
                                 <th>Estatus</th>
                                 <th>Fecha</th>

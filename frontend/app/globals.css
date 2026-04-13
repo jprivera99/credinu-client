@@ -464,3 +464,70 @@ input {
     padding-right: 18px;
   }
 }
+
+/* Menu desplegable Usuario */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 10px 8px 8px;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #b15564, #8f3145);
+}
+
+.user-name {
+  color: #1f2a37;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 210px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16);
+  padding: 8px;
+  z-index: 50;
+}
+
+.user-dropdown-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.user-dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.user-dropdown-item.danger {
+  color: #b42318;
+}
