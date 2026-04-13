@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginRequest } from "@/lib/api";
+import Link from "next/link";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -10,65 +11,78 @@ export default function LoginPage() {
     const [usuario, setUsuario] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const handleLogin = async (e: any) => {
-        e.preventDefault();
+    const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setError("");
+        setLoading(true);
 
         try {
             const data = await loginRequest({ usuario, password });
-
             localStorage.setItem("token", data.token);
-
-            router.push("/dashboard");
-
-        } catch (err: any) {
-            setError(err.message);
+            router.push("/dashboard/productos");
+        } catch (loginError) {
+            const message =
+                loginError instanceof Error
+                    ? loginError.message
+                    : "No fue posible iniciar sesión";
+            setError(message);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="login-screen">
+            <div className="login-panel">
+                <section className="login-copy">
+                    <p className="hero-kicker">CredinU</p>
+                    <h1>Portal Cliente</h1>
+                    <p>
+                        Accede con tu usuario para consultar productos, solicitudes y tus
+                        datos personales.
+                    </p>
+                </section>
 
-            <form
-                onSubmit={handleLogin}
-                className="bg-white p-8 rounded-xl shadow-md w-80"
-            >
-                <h2 className="text-xl font-bold mb-4">Login</h2>
+                <form className="login-form" onSubmit={handleLogin}>
+                    <h2 className="login-title">Iniciar sesión</h2>
 
-                {error && <p className="text-red-500">{error}</p>}
+                    {error ? <p className="error-copy">{error}</p> : null}
 
-                <input
-                    type="text"
-                    placeholder="Usuario"
-                    value={usuario}
-                    onChange={(e) => setUsuario(e.target.value)}
-                    className="w-full p-2 mb-3 border rounded"
-                />
+                    <label>
+                        <span>Usuario</span>
+                        <input
+                            type="text"
+                            value={usuario}
+                            onChange={(e) => setUsuario(e.target.value)}
+                            placeholder="Tu usuario"
+                            autoComplete="username"
+                        />
+                    </label>
 
-                <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-2 mb-3 border rounded"
-                />
+                    <label>
+                        <span>Contraseña</span>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Tu contraseña"
+                            autoComplete="current-password"
+                        />
+                    </label>
 
-                {/* BOTÓN */}
-                <button className="w-full bg-blue-600 text-white p-2 rounded">
-                    Entrar
-                </button>
-
-                {/* REGISTER */}
-                <p className="text-center text-sm mt-4">
-                    ¿No tienes cuenta?{" "}
-                    <span
-                        className="text-blue-600 cursor-pointer"
-                        onClick={() => router.push("/register")}
-                    >
-                        Regístrate
-                    </span>
-                </p>
-            </form>
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Entrando..." : "Entrar"}
+                    </button>
+                    <p className="login-register-copy">
+                        ¿No tienes cuenta?{" "}
+                        <Link href="/register" className="login-register-link">
+                            Regístrate
+                        </Link>
+                    </p>
+                </form>
+            </div>
         </div>
     );
 }
