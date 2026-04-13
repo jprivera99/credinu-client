@@ -792,3 +792,49 @@ input {
   }
 }
 
+/* Estilos para el logo credinu en login */
+.login-wordmark {
+  margin: 0 0 18px;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-size: clamp(3.2rem, 9vw, 19rem);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.02em;
+}
+
+.login-wordmark-left {
+  background: linear-gradient(180deg, #4aa7e6 0%, #2f72b6 45%, #2f3f90 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 10px 26px rgba(47, 114, 182, 0.25);
+}
+
+.login-wordmark-right {
+  background: linear-gradient(180deg, #49c63d 0%, #33a432 45%, #1e6d2a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 10px 26px rgba(51, 164, 50, 0.24);
+}
+
+.login-copy h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  line-height: 1.02;
+  margin: 0 0 14px;
+}
+
+.login-lead {
+  font-size: clamp(1.05rem, 1.4vw, 1.28rem);
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+@media (max-width: 980px) {
+  .login-wordmark {
+    font-size: clamp(2.3rem, 12vw, 4.2rem);
+    margin-bottom: 12px;
+  }
+}

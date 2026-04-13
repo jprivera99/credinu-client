@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginRequest } from "@/lib/api";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -37,7 +38,10 @@ export default function LoginPage() {
         <div className="login-screen">
             <div className="login-panel">
                 <section className="login-copy">
-                    <p className="hero-kicker">CredinU</p>
+                    <p className="login-wordmark" aria-label="CredinU">
+                        <span className="login-wordmark-left">Credi</span>
+                        <span className="login-wordmark-right">nU</span>
+                    </p>
                     <h1>Portal Cliente</h1>
                     <p>
                         Accede con tu usuario para consultar productos, solicitudes y tus
