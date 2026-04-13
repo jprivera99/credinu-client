@@ -42,7 +42,6 @@ export default function LoginPage() {
                         <span className="login-wordmark-left">Credi</span>
                         <span className="login-wordmark-right">nU</span>
                     </p>
-                    <h1>Portal Cliente</h1>
                     <p>
                         Accede con tu usuario para consultar productos, solicitudes y tus
                         datos personales.
