@@ -667,3 +667,128 @@ input {
 .login-register-link:hover {
   text-decoration: underline;
 }
+
+/* Estilos para el registro */
+.register-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.register-panel {
+  width: min(1080px, 96%);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  padding: 30px;
+}
+
+.register-header {
+  margin-bottom: 18px;
+}
+
+.register-header h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  color: var(--text);
+}
+
+.register-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.register-error {
+  background: rgba(180, 35, 24, 0.1);
+  color: #b42318;
+  border: 1px solid rgba(180, 35, 24, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.register-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.register-input {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.register-input:focus {
+  border-color: rgba(31, 94, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.16);
+}
+
+.register-span-2 {
+  grid-column: span 2;
+}
+
+.register-terms {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.register-submit {
+  width: 100%;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--brand), #ef4d42);
+  color: white;
+  padding: 13px 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.register-footer {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.register-link {
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .register-panel {
+    padding: 22px;
+  }
+
+  .register-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .register-span-2 {
+    grid-column: auto;
+  }
+}
+

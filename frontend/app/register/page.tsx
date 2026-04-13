@@ -93,74 +93,95 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div className="register-screen">
+      <form onSubmit={handleSubmit} className="register-panel">
+        <div className="register-header">
+          <p className="hero-kicker">CredinU</p>
+          <h2>Registro de Clientes</h2>
+          <p>Completa tus datos para comenzar</p>
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white w-full max-w-5xl p-8 rounded-2xl shadow-md"
-      >
-        <h2 className="text-3xl font-bold text-center mb-2">
-          Registro de Clientes
-        </h2>
+        {error ? <div className="register-error">{error}</div> : null}
 
-        <p className="text-center text-gray-500 mb-6">
-          Completa tus datos para comenzar
-        </p>
+        <div className="register-grid">
+          <input
+            name="email"
+            placeholder="Correo electrónico"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-        {error && (
-          <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+          <input
+            name="nombre"
+            placeholder="Nombre(s)"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-        <div className="grid grid-cols-2 gap-4">
+          <input
+            name="apellido_paterno"
+            placeholder="Apellido paterno"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-          <input name="email" placeholder="Correo electrónico" onChange={handleChange} className="input" />
+          <input
+            name="apellido_materno"
+            placeholder="Apellido materno"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-          <input name="nombre" placeholder="Nombre(s)" onChange={handleChange} className="input" />
-          <input name="apellido_paterno" placeholder="Apellido Paterno" onChange={handleChange} className="input" />
+          <input
+            name="fecha_nacimiento"
+            type="date"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-          <input name="apellido_materno" placeholder="Apellido Materno" onChange={handleChange} className="input" />
-          <input name="fecha_nacimiento" type="date" onChange={handleChange} className="input" />
-
-          <select name="sexo" onChange={handleChange} className="input">
+          <select name="sexo" onChange={handleChange} className="register-input">
             <option value="">Sexo</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
           </select>
 
-          <input name="telefono" placeholder="Teléfono" onChange={handleChange} className="input" />
+          <input
+            name="telefono"
+            placeholder="Teléfono"
+            onChange={handleChange}
+            className="register-input"
+          />
 
-          <input name="rfc" placeholder="RFC" onChange={handleChange} className="input" />
-          <input name="curp" placeholder="CURP" onChange={handleChange} className="input" />
+          <input
+            name="rfc"
+            placeholder="RFC"
+            onChange={handleChange}
+            className="register-input"
+          />
 
+          <input
+            name="curp"
+            placeholder="CURP"
+            onChange={handleChange}
+            className="register-input register-span-2"
+          />
         </div>
 
-        <div className="mt-6 text-sm">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="terms" onChange={handleChange} />
-            Acepto los términos y condiciones
-          </label>
-        </div>
+        <label className="register-terms">
+          <input type="checkbox" name="terms" onChange={handleChange} />
+          Acepto los términos y condiciones
+        </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
-        >
+        <button type="submit" disabled={loading} className="register-submit">
           {loading ? "Registrando..." : "CONTINUAR"}
         </button>
 
-        <p className="text-center text-sm mt-4">
+        <p className="register-footer">
           ¿Ya tienes cuenta?{" "}
-          <span
-            className="text-blue-600 cursor-pointer"
-            onClick={() => router.push("/login")}
-          >
+          <span className="register-link" onClick={() => router.push("/login")}>
             Inicia sesión
           </span>
         </p>
-
       </form>
     </div>
   );
