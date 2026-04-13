@@ -70,10 +70,11 @@ export function ClientSidebar({
     <>
       <aside className={"portal-sidebar " + (open ? "is-open" : "")}>
         <div className="portal-brand">
-          <span className="portal-brand-mark">CR</span>
           <div>
-            <p className="portal-brand-title">CredinU</p>
-            <p className="portal-brand-copy">Portal del cliente</p>
+            <p className="portal-brand-wordmark" aria-label="CredinU">
+              <span className="portal-brand-wordmark-left">Credi</span>
+              <span className="portal-brand-wordmark-right">nU</span>
+            </p>
           </div>
         </div>
 

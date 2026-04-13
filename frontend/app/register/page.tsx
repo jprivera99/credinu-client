@@ -17,7 +17,9 @@ export default function RegisterPage() {
     rfc: "",
     curp: "",
     telefono: "",
-    terms: false
+    aviso_privacidad:false,
+    tratamiento_datos:false,
+    terminos_condiciones: false
   });
 
   const [error, setError] = useState("");
@@ -73,8 +75,16 @@ export default function RegisterPage() {
       return setError("CURP requerido");
     }
 
-    if (!form.terms) {
+    if (!form.terminos_condiciones) {
       return setError("Debes aceptar los términos");
+    }
+
+    if (!form.tratamiento_datos){
+      return setError("Debes de autorizar las políticas de tratamiento de datos personales");
+    }
+
+    if (!form.aviso_privacidad){
+      return setError("Debes de aceptar el Aviso de privacidad");
     }
 
     try {
@@ -100,7 +110,6 @@ export default function RegisterPage() {
             <span className="register-wordmark-left">Credi</span>
             <span className="register-wordmark-right">nU</span>
           </p>
-          <h2>Registro de Clientes</h2>
           <p>Completa tus datos para comenzar</p>
         </div>
 
@@ -170,13 +179,25 @@ export default function RegisterPage() {
           />
         </div>
 
-        <label className="register-terms">
-          <input type="checkbox" name="terms" onChange={handleChange} />
-          Acepto los términos y condiciones
+      <div className="register-checklist">
+         <label className="register-terms">
+          <input type="checkbox" name="terminos_condiciones" onChange={handleChange} />
+          He leído y acepto los <span className="register-link">Términos y Condiciones</span>
         </label>
 
+        <label className="register-terms">
+          <input type="checkbox" name="tratamiento_datos" onChange={handleChange} />
+          He leído y acepto las <span className="register-link">Políticas de Tratamiento de Datos Personales</span>
+        </label>
+
+        <label className="register-terms">
+          <input type="checkbox" name="aviso_privacidad" onChange={handleChange} />
+          He leído y acepto el <span className="register-link">Aviso de Privacidad</span>
+        </label>
+      </div>
+       
         <button type="submit" disabled={loading} className="register-submit">
-          {loading ? "Registrando..." : "CONTINUAR"}
+          {loading ? "Registrando..." : "REGISTRAR"}
         </button>
 
         <p className="register-footer">

@@ -48,8 +48,11 @@ export function ClientTopbar({ user, onMenu, onLogout }: ClientTopbarProps) {
                 <span />
             </button>
 
-            <div>
-                <p className="portal-kicker">Cliente</p>
+            <div className="portal-topbar-title">
+                <p className="portal-mini-wordmark" aria-label="CredinU">
+                    <span className="portal-mini-wordmark-left">Credi</span>
+                    <span className="portal-mini-wordmark-right">nU</span>
+                </p>
                 <h1 className="portal-heading">Bienvenido a tu portal</h1>
             </div>
 

@@ -924,3 +924,166 @@ input {
     max-width: 280px;
   }
 }
+
+/* Estilos casillas de terminos y aviso de privacidad */
+.register-checklist {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.register-terms {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ===== Dashboard theme aligned with login/register ===== */
+:root {
+  --dash-blue-1: #4aa7e6;
+  --dash-blue-2: #2f72b6;
+  --dash-blue-3: #2f3f90;
+  --dash-green-1: #49c63d;
+  --dash-green-2: #33a432;
+  --dash-green-3: #1e6d2a;
+}
+
+.portal-shell {
+  background:
+    radial-gradient(circle at top right, rgba(74, 167, 230, 0.10), transparent 30%),
+    radial-gradient(circle at top left, rgba(73, 198, 61, 0.08), transparent 28%),
+    linear-gradient(180deg, #f8f3eb 0%, #f2ece1 100%);
+}
+
+.portal-sidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 246, 239, 0.94));
+  border-right: 1px solid rgba(31, 42, 55, 0.09);
+}
+
+.portal-brand-mark {
+  background: linear-gradient(135deg, #b15564, #6b5be7);
+}
+
+.portal-brand-wordmark {
+  margin: 0;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 1.95rem;
+  display: inline-flex;
+  gap: 0.01em;
+}
+
+.portal-brand-wordmark-left {
+  background: linear-gradient(180deg, var(--dash-blue-1) 0%, var(--dash-blue-2) 45%, var(--dash-blue-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.portal-brand-wordmark-right {
+  background: linear-gradient(180deg, var(--dash-green-1) 0%, var(--dash-green-2) 45%, var(--dash-green-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.portal-nav-item {
+  color: #3d5788;
+}
+
+.portal-nav-item.is-active {
+  background: linear-gradient(135deg, rgba(74, 167, 230, 0.18), rgba(73, 198, 61, 0.16));
+  color: #1f2a37;
+  box-shadow: inset 0 0 0 1px rgba(47, 114, 182, 0.12);
+}
+
+.portal-nav-item:hover {
+  background: rgba(47, 114, 182, 0.10);
+}
+
+.portal-topbar {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.28));
+  border-bottom: 1px solid rgba(31, 42, 55, 0.08);
+  padding-top: 18px;
+  padding-bottom: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.portal-topbar-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portal-mini-wordmark {
+  margin: 0;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  font-size: 1.05rem;
+  display: inline-flex;
+  gap: 0.01em;
+}
+
+.portal-mini-wordmark-left {
+  background: linear-gradient(180deg, var(--dash-blue-1) 0%, var(--dash-blue-2) 50%, var(--dash-blue-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.portal-mini-wordmark-right {
+  background: linear-gradient(180deg, var(--dash-green-1) 0%, var(--dash-green-2) 50%, var(--dash-green-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.portal-kicker {
+  color: #d24b41;
+}
+
+.portal-heading {
+  color: #1f2a37;
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, #b15564, #8f3145);
+}
+
+.hero-panel,
+.table-card,
+.form-card,
+.empty-state {
+  border: 1px solid rgba(47, 114, 182, 0.10);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+/* Keep account dropdown above dashboard cards */
+.portal-main {
+  position: relative;
+}
+
+.portal-topbar {
+  position: relative;
+  z-index: 40;
+  overflow: visible;
+}
+
+.portal-content {
+  position: relative;
+  z-index: 1;
+}
+
+.user-menu {
+  position: relative;
+  z-index: 60;
+}
+
+.user-dropdown {
+  z-index: 120;
+}
