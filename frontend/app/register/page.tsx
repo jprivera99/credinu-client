@@ -96,7 +96,10 @@ export default function RegisterPage() {
     <div className="register-screen">
       <form onSubmit={handleSubmit} className="register-panel">
         <div className="register-header">
-          <p className="hero-kicker">CredinU</p>
+          <p className="register-wordmark" aria-label="CredinU">
+            <span className="register-wordmark-left">Credi</span>
+            <span className="register-wordmark-right">nU</span>
+          </p>
           <h2>Registro de Clientes</h2>
           <p>Completa tus datos para comenzar</p>
         </div>

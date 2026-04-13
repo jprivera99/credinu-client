@@ -753,18 +753,6 @@ input {
   font-size: 0.95rem;
 }
 
-.register-submit {
-  width: 100%;
-  margin-top: 16px;
-  border: 0;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--brand), #ef4d42);
-  color: white;
-  padding: 13px 16px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
 .register-submit:disabled {
   opacity: 0.65;
   cursor: not-allowed;
@@ -799,6 +787,59 @@ input {
   .register-span-2 {
     grid-column: auto;
   }
+}
+
+/* Wordmark registro: igual al login, pero un poco mas pequeño */
+.register-wordmark {
+  margin: 0 0 12px;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.8rem, 4.8vw, 3.3rem);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.02em;
+  width: fit-content;
+}
+
+.register-wordmark-left {
+  background: linear-gradient(180deg, #4aa7e6 0%, #2f72b6 45%, #2f3f90 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.register-wordmark-right {
+  background: linear-gradient(180deg, #49c63d 0%, #33a432 45%, #1e6d2a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Boton registro igual al login */
+.register-submit {
+  width: 100%;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2f72b6 0%, #2f5aa7 45%, #2ea83a 100%);
+  color: #fff;
+  padding: 13px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(47, 114, 182, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.register-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 14px 28px rgba(47, 114, 182, 0.3);
+}
+
+.register-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 /* Estilos para el logo credinu en login */
