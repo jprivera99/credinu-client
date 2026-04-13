@@ -490,7 +490,7 @@ input {
   place-items: center;
   color: #fff;
   font-weight: 700;
-  background: linear-gradient(135deg, #b15564, #8f3145);
+  background: linear-gradient(135deg, #2f72b6 0%, #2f5aa7 45%, #2ea83a 100%);
 }
 
 .user-name {
@@ -1049,10 +1049,6 @@ input {
 
 .portal-heading {
   color: #1f2a37;
-}
-
-.user-avatar {
-  background: linear-gradient(135deg, #b15564, #8f3145);
 }
 
 .hero-panel,
