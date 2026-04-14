@@ -1083,3 +1083,86 @@ input {
 .user-dropdown {
   z-index: 120;
 }
+
+.register-link-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+.privacy-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.58);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 200;
+}
+
+.privacy-modal {
+  width: min(680px, 100%);
+  max-height: 82vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid rgba(31, 42, 55, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.38);
+  padding: 28px 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.privacy-modal-title {
+  margin: 0 0 16px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1f2a37;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(31, 42, 55, 0.1);
+}
+
+.privacy-modal-content {
+  flex: 1;
+  color: #334155;
+  line-height: 1.65;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.privacy-modal-content p {
+  margin: 0 0 12px;
+}
+
+.privacy-modal-content ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.privacy-modal-content li {
+  margin-bottom: 4px;
+}
+
+.privacy-modal-close {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 13px 14px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2f72b6 0%, #2f5aa7 45%, #2ea83a 100%);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.privacy-modal-close:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}

@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
+import { PrivacyModal } from "@/components/PrivacyModal";
 
 export default function RegisterPage() {
+
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -17,13 +19,14 @@ export default function RegisterPage() {
     rfc: "",
     curp: "",
     telefono: "",
-    aviso_privacidad:false,
-    tratamiento_datos:false,
+    aviso_privacidad: false,
+    tratamiento_datos: false,
     terminos_condiciones: false
   });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [openPrivacyModal, setOpenPrivacyModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -79,11 +82,11 @@ export default function RegisterPage() {
       return setError("Debes aceptar los términos");
     }
 
-    if (!form.tratamiento_datos){
+    if (!form.tratamiento_datos) {
       return setError("Debes de autorizar las políticas de tratamiento de datos personales");
     }
 
-    if (!form.aviso_privacidad){
+    if (!form.aviso_privacidad) {
       return setError("Debes de aceptar el Aviso de privacidad");
     }
 
@@ -179,23 +182,23 @@ export default function RegisterPage() {
           />
         </div>
 
-      <div className="register-checklist">
-         <label className="register-terms">
-          <input type="checkbox" name="terminos_condiciones" onChange={handleChange} />
-          He leído y acepto los <span className="register-link">Términos y Condiciones</span>
-        </label>
+        <div className="register-checklist">
+          <label className="register-terms">
+            <input type="checkbox" name="terminos_condiciones" onChange={handleChange} />
+            He leído y acepto los <span className="register-link">Términos y Condiciones</span>
+          </label>
 
-        <label className="register-terms">
-          <input type="checkbox" name="tratamiento_datos" onChange={handleChange} />
-          He leído y acepto las <span className="register-link">Políticas de Tratamiento de Datos Personales</span>
-        </label>
+          <label className="register-terms">
+            <input type="checkbox" name="tratamiento_datos" onChange={handleChange} />
+            He leído y acepto las <span className="register-link">Políticas de Tratamiento de Datos Personales</span>
+          </label>
 
-        <label className="register-terms">
-          <input type="checkbox" name="aviso_privacidad" onChange={handleChange} />
-          He leído y acepto el <span className="register-link">Aviso de Privacidad</span>
-        </label>
-      </div>
-       
+          <label className="register-terms"> <input type="checkbox" name="aviso_privacidad" onChange={handleChange} /> He leído y acepto el{" "}
+            <button type="button" className="register-link register-link-button" onClick={() => setOpenPrivacyModal(true)} > Aviso de Privacidad
+            </button>
+          </label>
+        </div>
+
         <button type="submit" disabled={loading} className="register-submit">
           {loading ? "Registrando..." : "REGISTRAR"}
         </button>
@@ -207,6 +210,10 @@ export default function RegisterPage() {
           </span>
         </p>
       </form>
+
+      {openPrivacyModal ? (
+        <PrivacyModal onClose={() => setOpenPrivacyModal(false)} />
+      ) : null}
     </div>
   );
 }
