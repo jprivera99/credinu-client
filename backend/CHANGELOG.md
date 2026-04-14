@@ -32,6 +32,7 @@ Formato basado en **Keep a Changelog** y versionado semántico.
 
 ---
 ## [1.1.0] - 2026-04-09
+
 ### Agregado
 - Creación de appError.js en donde se usara para lanzar errores controlados desde servicios. 
 - Creación de responses.js que se utilizara para estandarizar respuestas.
@@ -43,6 +44,7 @@ Formato basado en **Keep a Changelog** y versionado semántico.
 ---
 
 ## [1.0.0] - 2026-04-09
+
 ### Agregado
 - Configuración inicial del servidor.
 - Conexión a base de datos MySQL.
