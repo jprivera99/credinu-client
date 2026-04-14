@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
+import { TermsModal } from "@/components/TermsModal";
+import { TreatmentDataModal } from "@/components/TreatmentDataModal";
 
 export default function RegisterPage() {
 
@@ -27,6 +29,8 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [openPrivacyModal, setOpenPrivacyModal] = useState(false);
+  const [openTermsModal, setOpenTermsModal] = useState(false);
+  const [openTreatmentModal, setOpenTreatmentModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -185,12 +189,26 @@ export default function RegisterPage() {
         <div className="register-checklist">
           <label className="register-terms">
             <input type="checkbox" name="terminos_condiciones" onChange={handleChange} />
-            He leído y acepto los <span className="register-link">Términos y Condiciones</span>
+            He leído y acepto los{" "}
+            <button
+              type="button"
+              className="register-link register-link-button"
+              onClick={() => setOpenTermsModal(true)}
+            >
+              Términos y Condiciones
+            </button>
           </label>
 
           <label className="register-terms">
             <input type="checkbox" name="tratamiento_datos" onChange={handleChange} />
-            He leído y acepto las <span className="register-link">Políticas de Tratamiento de Datos Personales</span>
+            He leído y acepto las{" "}
+            <button
+              type="button"
+              className="register-link register-link-button"
+              onClick={() => setOpenTreatmentModal(true)}
+            >
+              Políticas de Tratamiento de Datos Personales
+            </button>
           </label>
 
           <label className="register-terms"> <input type="checkbox" name="aviso_privacidad" onChange={handleChange} /> He leído y acepto el{" "}
@@ -213,6 +231,22 @@ export default function RegisterPage() {
 
       {openPrivacyModal ? (
         <PrivacyModal onClose={() => setOpenPrivacyModal(false)} />
+      ) : null}
+
+      {openTermsModal ? (
+        <TermsModal onClose={() => setOpenTermsModal(false)} />
+      ) : null}
+
+      {openTreatmentModal ? (
+        <TreatmentDataModal
+          onClose={() => setOpenTreatmentModal(false)}
+          onAccept={() =>
+            setForm((prev) => ({
+              ...prev,
+              tratamiento_datos: true,
+            }))
+          }
+        />
       ) : null}
     </div>
   );
