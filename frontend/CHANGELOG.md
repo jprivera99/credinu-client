@@ -5,6 +5,9 @@ Todos los cambios importantes del sistema se documentan en este archivo.
 Formato basado en **Keep a Changelog** y versionado semántico.
 
 ---
+## [1.4.0] - 2026-04-15
+### Agregado
+- Se agrega input con el select de estado de nacimiento en register/pgae.tsx
 
 ## [1.3.0] - 2026-04-10
 
