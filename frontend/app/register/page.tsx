@@ -18,6 +18,7 @@ export default function RegisterPage() {
     apellido_materno: "",
     fecha_nacimiento: "",
     sexo: "",
+    estado_nacimiento: "",
     rfc: "",
     curp: "",
     telefono: "",
@@ -162,6 +163,43 @@ export default function RegisterPage() {
             <option value="">Sexo</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
+          </select>
+
+          <select name="estado_nacimiento" onChange={handleChange} className="register-input register-span-2">
+            <option value="">Estado de nacimiento</option>
+            <option value="AGS">Aguascalientes</option>
+            <option value="BC">Baja California</option>
+            <option value="BCS">Baja California Sur</option>
+            <option value="CAM">Campeche</option>
+            <option value="CHIS">Chiapas</option>
+            <option value="CHIH">Chihuahua</option>
+            <option value="CDMX">Ciudad de México</option>
+            <option value="COAH">Coahuila</option>
+            <option value="COL">Colima</option>
+            <option value="DGO">Durango</option>
+            <option value="GTO">Guanajuato</option>
+            <option value="GRO">Guerrero</option>
+            <option value="HGO">Hidalgo</option>
+            <option value="JAL">Jalisco</option>
+            <option value="MEX">Estado de México</option>
+            <option value="MICH">Michoacán</option>
+            <option value="MOR">Morelos</option>
+            <option value="NAY">Nayarit</option>
+            <option value="NL">Nuevo León</option>
+            <option value="OAX">Oaxaca</option>
+            <option value="PUE">Puebla</option>
+            <option value="QRO">Querétaro</option>
+            <option value="QROO">Quintana Roo</option>
+            <option value="SLP">San Luis Potosí</option>
+            <option value="SIN">Sinaloa</option>
+            <option value="SON">Sonora</option>
+            <option value="TAB">Tabasco</option>
+            <option value="TAMS">Tamaulipas</option>
+            <option value="TLAX">Tlaxcala</option>
+            <option value="VER">Veracruz</option>
+            <option value="YUC">Yucatán</option>
+            <option value="ZAC">Zacatecas</option>
+            <option value="EXT">Extranjero</option>
           </select>
 
           <input
