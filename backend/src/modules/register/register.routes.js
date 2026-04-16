@@ -5,7 +5,8 @@ import {
     validatePhone,
     validateSMS,
     sendCode, 
-    validateCode
+    validateCode,
+    validateRegister
 } from './register.controller.js';
 
 const router = Router();
@@ -16,5 +17,6 @@ router.get('/validate-phone', validatePhone);
 router.post('/validate-sms', validateSMS);
 router.post("/send-code", sendCode);
 router.post("/validate-code", validateCode);
+router.post("/validate", validateRegister);
 
 export default router;

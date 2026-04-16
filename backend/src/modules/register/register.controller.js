@@ -5,7 +5,8 @@ import {
     validatePhoneService,
     validateSMSService,
     sendCodeService,
-    validateCodeService
+    validateCodeService,
+    validateRegisterService
 } from "./register.service.js";
 
 export const preRegister = async (req, res, next) => {
@@ -61,6 +62,16 @@ export const validateCode = async (req, res, next) => {
     try {
         const data = await validateCodeService(req.body);
         return ok(res, data, "Código validado");
+    } catch (error) {
+        return next(error);
+    }
+};
+
+// VALIDAR REGISTRO
+export const validateRegister = async (req, res, next) => {
+    try {
+        const data = await validateRegisterService(req.body);
+        return ok(res, data, "Datos válidos");
     } catch (error) {
         return next(error);
     }

@@ -160,6 +160,65 @@ const enviarCorreo = (correo, passwordTemp, token) => {
     `);
 };
 
+export const validateRegisterService = async ({ correo, telefono, rfc, curp }) => {
+
+    // VALIDAR CORREO
+    const [correoRows] = await pool.query(
+        `SELECT id FROM sis_usuario WHERE email = ? LIMIT 1`,
+        [correo]
+    );
+
+    if (correoRows.length > 0) {
+        throw new Error("Correo ya registrado");
+    }
+
+    // VALIDAR TELÉFONO
+    const [telefonoRows] = await pool.query(
+        `SELECT id FROM cliente WHERE telefono_movil = ? LIMIT 1`,
+        [telefono]
+    );
+
+    if (telefonoRows.length > 0) {
+        throw new Error("Teléfono ya registrado");
+    }
+
+    // VALIDAR RFC (YA EXISTE)
+    const [rfcRows] = await pool.query(
+        `SELECT id FROM cliente WHERE rfc = ? LIMIT 1`,
+        [rfc]
+    );
+
+    if (rfcRows.length > 0) {
+        throw new Error("RFC ya registrado");
+    }
+
+    // VALIDAR CURP (YA EXISTE)
+    const [curpRows] = await pool.query(
+        `SELECT id FROM cliente WHERE curp = ? LIMIT 1`,
+        [curp]
+    );
+
+    if (curpRows.length > 0) {
+        throw new Error("CURP ya registrado");
+    }
+
+    // VALIDAR FORMATO RFC
+    const rfcRegex = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
+    if (!rfcRegex.test(rfc)) {
+        throw new Error("RFC inválido");
+    }
+
+    // VALIDAR FORMATO CURP
+    const curpRegex = /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]{2}$/;
+    if (!curpRegex.test(curp)) {
+        throw new Error("CURP inválido");
+    }
+
+    return {
+        valid: true
+    };
+};
+
 //---------------------------------------------------------------
 
 // VALIDAR CORREO

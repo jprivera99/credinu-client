@@ -1,8 +1,7 @@
 import {
     loginService,
     getMeService,
-    changePasswordService,
-    registerService,
+    changePasswordService
 } from "./auth.service.js";
 import { ok } from "../../utils/responses.js";
 
