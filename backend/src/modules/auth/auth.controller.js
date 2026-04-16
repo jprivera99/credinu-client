@@ -38,22 +38,3 @@ export const changePassword = async (req, res, next) => {
         return next(error);
     }
 };
-
-export const register = async (req, res) => {
-    try {
-
-        const data = req.body;
-
-        const user = await registerService(data);
-
-        res.status(201).json({
-            message: "Usuario registrado correctamente",
-            data: user
-        });
-
-    } catch (error) {
-        res.status(400).json({
-            message: error.message
-        });
-    }
-};

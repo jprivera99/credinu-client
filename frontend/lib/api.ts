@@ -84,7 +84,7 @@ export function changePassword(payload: ChangePasswordPayload) {
 }
 
 export function registerRequest(payload: RegisterPayload) {
-  return apiFetch<{ id: number; usuario: string }>("/auth/register", {
+  return apiFetch<{ id: number; usuario: string }>("/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
