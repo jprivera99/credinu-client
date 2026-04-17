@@ -45,14 +45,48 @@ export default function RegisterPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    const newValue =
+      e.target instanceof HTMLInputElement && e.target.type === "checkbox"
+        ? e.target.checked
+        : value;
 
     setForm({
       ...form,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+
+    setForm({
+      ...form,
+      [name]: checked,
     });
   };
 
@@ -99,7 +133,6 @@ export default function RegisterPage() {
       console.error("Error RFC:", err);
     }
   };
-  
 
   useEffect(() => {
     const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } =
@@ -108,13 +141,17 @@ export default function RegisterPage() {
     if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento)
       return;
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
     timeoutRef.current = setTimeout(() => {
       generarRFCPreview();
     }, 600);
 
-    return () => clearTimeout(timeoutRef.current);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [
     form.nombre,
     form.apellido_paterno,
@@ -124,10 +161,14 @@ export default function RegisterPage() {
 
   //--------------------------------- LOGICA DE REGISTRO ------------------
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
+
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      return setError("Correo inválido");
+    }
 
     if (!form.nombre) return setError("Nombre requerido");
     if (!form.apellido_paterno) return setError("Apellido paterno requerido");
@@ -137,8 +178,8 @@ export default function RegisterPage() {
       return setError("Debes ser mayor de edad");
     }
 
-    if (form.telefono.length !== 10) {
-      return setError("El teléfono debe tener 10 dígitos");
+    if (!/^\d{10}$/.test(form.telefono)) {
+      return setError("El teléfono debe tener 10 dígitos numéricos");
     }
 
     if (!form.rfc) {
@@ -289,11 +330,7 @@ export default function RegisterPage() {
             className="register-input"
           />
 
-          <select
-            name="sexo"
-            onChange={handleChange}
-            className="register-input"
-          >
+          <select name="sexo" onChange={handleSelectChange} className="register-input">
             <option value="">Sexo</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
@@ -301,7 +338,7 @@ export default function RegisterPage() {
 
           <select
             name="estado_nacimiento"
-            onChange={handleChange}
+            onChange={handleSelectChange}
             className="register-input register-span-2"
           >
             <option value="">Estado de nacimiento</option>
