@@ -6,6 +6,7 @@ import { registerRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
+import { ConfirmDataModal } from "@/components/ConfirmDataModal";
 
 export default function RegisterPage() {
 
@@ -32,6 +33,7 @@ export default function RegisterPage() {
   const [openPrivacyModal, setOpenPrivacyModal] = useState(false);
   const [openTermsModal, setOpenTermsModal] = useState(false);
   const [openTreatmentModal, setOpenTreatmentModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -95,6 +97,10 @@ export default function RegisterPage() {
       return setError("Debes de aceptar el Aviso de privacidad");
     }
 
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmRegister = async () => {
     try {
       setLoading(true);
 
@@ -107,6 +113,7 @@ export default function RegisterPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+      setShowConfirmModal(false);
     }
   };
 
@@ -286,6 +293,16 @@ export default function RegisterPage() {
           }
         />
       ) : null}
+
+      {showConfirmModal && (
+        <ConfirmDataModal
+          rfc={form.rfc}
+          curp={form.curp}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirmRegister}
+        />
+      )}
+
     </div>
   );
 }
