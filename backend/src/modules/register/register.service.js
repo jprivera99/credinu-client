@@ -292,7 +292,7 @@ export const validateCodeService = async ({ telefono, codigo }) => {
 };
 
 // CALCULAR RFC
-export const calcularRFCService = (nombre, apPat, apMat, fecha) => {
+export const calcularRFCService = (nombre, apellido_paterno, apellido_materno, fecha_nacimiento) => {
   const clean = (str) =>
     str
       .toUpperCase()
@@ -302,18 +302,18 @@ export const calcularRFCService = (nombre, apPat, apMat, fecha) => {
       .replace(/[^A-Z]/g, "");
 
   nombre = clean(nombre);
-  apPat = clean(apPat);
-  apMat = clean(apMat);
+  apellido_paterno = clean(apellido_paterno);
+  apellido_materno = clean(apellido_materno);
 
-  let rfc = apPat[0] || "X";
+  let rfc = apellido_paterno[0] || "X";
 
-  const vocal = apPat.slice(1).match(/[AEIOU]/);
+  const vocal = apellido_paterno.slice(1).match(/[AEIOU]/);
   rfc += vocal ? vocal[0] : "X";
 
-  rfc += apMat[0] || "X";
+  rfc += apellido_materno[0] || "X";
   rfc += nombre[0] || "X";
 
-  const [year, month, day] = fecha.split("-");
+  const [year, month, day] = fecha_nacimiento.split("-");
   rfc += year.slice(2) + month + day;
 
   return rfc;

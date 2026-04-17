@@ -7,6 +7,8 @@ import type {
   ProductItem,
   UpdateClientProfilePayload,
   RegisterPayload,
+  PdfDataPayload,
+  RFCResponse,
 } from "./types";
 
 const API_URL =
@@ -90,19 +92,9 @@ export function registerRequest(payload: RegisterPayload) {
   });
 }
 
-export const calcularRFCRequest = async (data: {
-  nombre: string;
-  apPaterno: string;
-  apMaterno: string;
-  fechaNacimiento: string;
-}) => {
-  const res = await fetch("register/send-rfc", {
+export function calcularRFCRequest(payload: PdfDataPayload) {
+  return apiFetch<RFCResponse>("/register/send-rfc", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-
-  if (!res.ok) throw new Error("Error RFC");
-
-  return res.json();
 }

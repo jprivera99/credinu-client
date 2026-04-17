@@ -72,30 +72,34 @@ export default function RegisterPage() {
     return edad;
   };
 
-const generarRFCPreview = async () => {
-  const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } = form;
+  const generarRFCPreview = async () => {
+    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } =
+      form;
 
-  if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento)
-    return;
+    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento)
+      return;
 
-  try {
-    const data = await calcularRFCRequest({
-      nombre: nombre,
-      apPaterno: apellido_paterno,
-      apMaterno: apellido_materno,
-      fechaNacimiento: fecha_nacimiento,
-    });
+    try {
+      const data = await calcularRFCRequest({
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        fecha_nacimiento,
+      });
 
-    if (!data?.rfc) return;
+      console.log("RFC recibido:", data);
 
-    setForm((prev) => ({
-      ...prev,
-      rfc: data.rfc,
-    }));
-  } catch (err) {
-    console.error(err);
-  }
-};
+      if (!data?.rfc) return;
+
+      setForm((prev) => ({
+        ...prev,
+        rfc: data.rfc,
+      }));
+    } catch (err) {
+      console.error("Error RFC:", err);
+    }
+  };
+  
 
   useEffect(() => {
     const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } =
@@ -108,7 +112,7 @@ const generarRFCPreview = async () => {
 
     timeoutRef.current = setTimeout(() => {
       generarRFCPreview();
-    }, 600); // 600ms después de que deja de escribir
+    }, 600);
 
     return () => clearTimeout(timeoutRef.current);
   }, [
@@ -345,8 +349,8 @@ const generarRFCPreview = async () => {
 
           <input
             name="rfc"
-            placeholder="RFC"
-            onChange={handleChange}
+            value={form.rfc}
+            readOnly
             className="register-input"
           />
 
