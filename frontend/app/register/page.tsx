@@ -11,6 +11,7 @@ import { SelectChannelModal } from "@/components/SelectChannelModal";
 import { VerifyCodeModal } from "@/components/VerifyCodeModal";
 import { SuccessRegisterModal } from "@/components/SuccessRegisterModal";
 import { LoadingModal } from "@/components/LoadingModal";
+import { FinalRegisterModal } from "@/components/FinalRegisterModal";
 
 export default function RegisterPage() {
 
@@ -42,6 +43,7 @@ export default function RegisterPage() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showFinalModal, setShowFinalModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -138,15 +140,15 @@ export default function RegisterPage() {
       setLoading(true);
       setError("");
 
-      console.log("Código ingresado:", codigo);
-
       if (codigo !== "123456") {
         throw new Error("Código incorrecto");
       }
-      // 👉 NO registras todavía
 
       setShowVerifyModal(false);
-      setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowSuccessModal(true);
+      }, 100);
 
     } catch (err: any) {
       setError(err.message);
@@ -173,13 +175,19 @@ export default function RegisterPage() {
     try {
       await registerRequest(form);
 
-      router.push("/login");
+      setShowLoadingModal(false);
+
+      setShowFinalModal(true);
 
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setShowLoadingModal(false);
     }
+  };
+
+  const handleFinishFinal = () => {
+    setShowFinalModal(false);
+    router.push("/login");
   };
 
   return (
@@ -380,6 +388,8 @@ export default function RegisterPage() {
           telefono={form.telefono}
           onVerify={handleVerifyCode}
           onResend={handleResendCode}
+          onClose={() => setShowVerifyModal(false)}
+          error={error}
         />
       )}
 
@@ -389,6 +399,10 @@ export default function RegisterPage() {
 
       {showLoadingModal && (
         <LoadingModal />
+      )}
+
+      {showFinalModal && (
+        <FinalRegisterModal onFinish={handleFinishFinal} />
       )}
 
     </div>

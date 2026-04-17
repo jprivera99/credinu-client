@@ -5,9 +5,59 @@ Todos los cambios importantes del sistema se documentan en este archivo.
 Formato basado en **Keep a Changelog** y versionado semántico.
 
 ---
+
+## [1.5.0] - 2026-04-17
+
+### Agregado
+- Implementación completa del flujo de registro en `register/page.tsx`.
+- Validaciones en formulario:
+  - Nombre y apellidos requeridos
+  - Edad mínima (18 años)
+  - Teléfono de 10 dígitos
+  - RFC (13 caracteres)
+  - CURP obligatorio
+  - Aceptación de términos, aviso de privacidad y tratamiento de datos
+
+- Flujo de modales paso a paso:
+  - Confirmación de RFC y CURP (`ConfirmDataModal`)
+  - Selección de canal de verificación SMS / WhatsApp (`SelectChannelModal`)
+  - Ingreso de código de verificación (`VerifyCodeModal`)
+  - Modal de éxito de validación (`SuccessRegisterModal`)
+  - Modal de carga durante registro (`LoadingModal`)
+  - Modal final de registro exitoso (`FinalRegisterModal`)
+
+- Lógica de control de estados para modales:
+  - `showConfirmModal`
+  - `showChannelModal`
+  - `showVerifyModal`
+  - `showSuccessModal`
+  - `showLoadingModal`
+  - `showFinalModal`
+
+- Simulación de envío y validación de código SMS/WhatsApp.
+
+### Mejorado
+- Optimización del flujo UX:
+  - Validaciones antes de enviar código SMS para evitar costos.
+  - Separación entre validación de código y registro real.
+- Flujo guiado tipo aplicación bancaria (step-by-step).
+- Reutilización de estilos de modales (`privacy-modal`).
+- Manejo centralizado del estado del formulario.
+
+### Corregido
+- Error donde los modales se renderizaban como contenido normal (problema de estilos/z-index).
+- Inconsistencia entre clases (`modal-overlay` vs `privacy-modal`).
+- Error en flujo donde el modal de verificación se cerraba incorrectamente.
+- Problema al mostrar el modal de éxito después de validar código.
+- Ajustes en eventos de botones (validar / reenviar código).
+
+---
+
 ## [1.4.0] - 2026-04-15
 ### Agregado
 - Se agrega input con el select de estado de nacimiento en register/pgae.tsx
+
+---
 
 ## [1.3.0] - 2026-04-10
 

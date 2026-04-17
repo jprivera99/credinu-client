@@ -6,6 +6,7 @@ interface VerifyCodeModalProps {
   telefono: string;
   onVerify: (codigo: string) => void;
   onResend: () => void;
+  error?: string;
 }
 
 export function VerifyCodeModal({

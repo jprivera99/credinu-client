@@ -2,8 +2,11 @@
 
 export const LoadingModal = () => {
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ textAlign: "center" }}>
+    <div className="privacy-modal-backdrop">
+      <div
+        className="privacy-modal"
+        style={{ textAlign: "center" }}
+      >
         <h3>Procesando registro...</h3>
         <div className="spinner"></div>
       </div>
