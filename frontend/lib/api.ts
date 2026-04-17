@@ -84,8 +84,25 @@ export function changePassword(payload: ChangePasswordPayload) {
 }
 
 export function registerRequest(payload: RegisterPayload) {
-  return apiFetch<{ id: number; usuario: string }>("/register", {
+  return apiFetch<{ id: number; usuario: string }>("register/pre-register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export const calcularRFCRequest = async (data: {
+  nombre: string;
+  apPaterno: string;
+  apMaterno: string;
+  fechaNacimiento: string;
+}) => {
+  const res = await fetch("register/send-rfc", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Error RFC");
+
+  return res.json();
 }

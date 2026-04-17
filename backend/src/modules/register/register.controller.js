@@ -6,7 +6,8 @@ import {
     validateSMSService,
     sendCodeService,
     validateCodeService,
-    validateRegisterService
+    validateRegisterService,
+    calcularRFCService 
 } from "./register.service.js";
 
 export const preRegister = async (req, res, next) => {
@@ -75,4 +76,26 @@ export const validateRegister = async (req, res, next) => {
     } catch (error) {
         return next(error);
     }
+};
+
+export const calcularRFCController = async (req, res) => {
+  try {
+    const { nombre, apPaterno, apMaterno, fechaNacimiento } = req.body;
+
+    if (!nombre || !apPaterno || !apMaterno || !fechaNacimiento) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
+
+    const rfc = calcularRFCService(
+      nombre,
+      apPaterno,
+      apMaterno,
+      fechaNacimiento
+    );
+
+    return res.json({ rfc });
+
+  } catch (error) {
+    return res.status(500).json({ error: "Error al calcular RFC" });
+  }
 };

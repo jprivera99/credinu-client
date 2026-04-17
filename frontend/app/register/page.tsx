@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
+import { calcularRFCRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
@@ -14,7 +16,6 @@ import { LoadingModal } from "@/components/LoadingModal";
 import { FinalRegisterModal } from "@/components/FinalRegisterModal";
 
 export default function RegisterPage() {
-
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -30,7 +31,7 @@ export default function RegisterPage() {
     telefono: "",
     aviso_privacidad: false,
     tratamiento_datos: false,
-    terminos_condiciones: false
+    terminos_condiciones: false,
   });
 
   const [error, setError] = useState("");
@@ -44,13 +45,14 @@ export default function RegisterPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
+  const timeoutRef = useRef(null);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
 
     setForm({
       ...form,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     });
   };
 
@@ -70,6 +72,54 @@ export default function RegisterPage() {
     return edad;
   };
 
+const generarRFCPreview = async () => {
+  const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } = form;
+
+  if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento)
+    return;
+
+  try {
+    const data = await calcularRFCRequest({
+      nombre: nombre,
+      apPaterno: apellido_paterno,
+      apMaterno: apellido_materno,
+      fechaNacimiento: fecha_nacimiento,
+    });
+
+    if (!data?.rfc) return;
+
+    setForm((prev) => ({
+      ...prev,
+      rfc: data.rfc,
+    }));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+  useEffect(() => {
+    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } =
+      form;
+
+    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento)
+      return;
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      generarRFCPreview();
+    }, 600); // 600ms después de que deja de escribir
+
+    return () => clearTimeout(timeoutRef.current);
+  }, [
+    form.nombre,
+    form.apellido_paterno,
+    form.apellido_materno,
+    form.fecha_nacimiento,
+  ]);
+
+  //--------------------------------- LOGICA DE REGISTRO ------------------
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -87,8 +137,8 @@ export default function RegisterPage() {
       return setError("El teléfono debe tener 10 dígitos");
     }
 
-    if (form.rfc.length !== 13) {
-      return setError("RFC inválido (13 caracteres)");
+    if (!form.rfc) {
+      return setError("RFC requerido");
     }
 
     if (!form.curp) {
@@ -100,7 +150,9 @@ export default function RegisterPage() {
     }
 
     if (!form.tratamiento_datos) {
-      return setError("Debes de autorizar las políticas de tratamiento de datos personales");
+      return setError(
+        "Debes de autorizar las políticas de tratamiento de datos personales",
+      );
     }
 
     if (!form.aviso_privacidad) {
@@ -116,7 +168,6 @@ export default function RegisterPage() {
   };
 
   const handleSelectChannel = async (method: "sms" | "whatsapp") => {
-
     try {
       setLoading(true);
       console.log("Enviar código vía:", method);
@@ -126,14 +177,12 @@ export default function RegisterPage() {
 
       setShowChannelModal(false);
       setShowVerifyModal(true);
-
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleVerifyCode = async (codigo: string) => {
     try {
@@ -149,7 +198,6 @@ export default function RegisterPage() {
       setTimeout(() => {
         setShowSuccessModal(true);
       }, 100);
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -162,7 +210,6 @@ export default function RegisterPage() {
       console.log("Reenviando código...");
 
       alert("Código reenviado");
-
     } catch (err: any) {
       setError(err.message);
     }
@@ -178,7 +225,6 @@ export default function RegisterPage() {
       setShowLoadingModal(false);
 
       setShowFinalModal(true);
-
     } catch (err: any) {
       setError(err.message);
       setShowLoadingModal(false);
@@ -239,13 +285,21 @@ export default function RegisterPage() {
             className="register-input"
           />
 
-          <select name="sexo" onChange={handleChange} className="register-input">
+          <select
+            name="sexo"
+            onChange={handleChange}
+            className="register-input"
+          >
             <option value="">Sexo</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
           </select>
 
-          <select name="estado_nacimiento" onChange={handleChange} className="register-input register-span-2">
+          <select
+            name="estado_nacimiento"
+            onChange={handleChange}
+            className="register-input register-span-2"
+          >
             <option value="">Estado de nacimiento</option>
             <option value="AGS">Aguascalientes</option>
             <option value="BC">Baja California</option>
@@ -306,7 +360,11 @@ export default function RegisterPage() {
 
         <div className="register-checklist">
           <label className="register-terms">
-            <input type="checkbox" name="terminos_condiciones" onChange={handleChange} />
+            <input
+              type="checkbox"
+              name="terminos_condiciones"
+              onChange={handleChange}
+            />
             He leído y acepto los{" "}
             <button
               type="button"
@@ -318,7 +376,11 @@ export default function RegisterPage() {
           </label>
 
           <label className="register-terms">
-            <input type="checkbox" name="tratamiento_datos" onChange={handleChange} />
+            <input
+              type="checkbox"
+              name="tratamiento_datos"
+              onChange={handleChange}
+            />
             He leído y acepto las{" "}
             <button
               type="button"
@@ -329,8 +391,21 @@ export default function RegisterPage() {
             </button>
           </label>
 
-          <label className="register-terms"> <input type="checkbox" name="aviso_privacidad" onChange={handleChange} /> He leído y acepto el{" "}
-            <button type="button" className="register-link register-link-button" onClick={() => setOpenPrivacyModal(true)} > Aviso de Privacidad
+          <label className="register-terms">
+            {" "}
+            <input
+              type="checkbox"
+              name="aviso_privacidad"
+              onChange={handleChange}
+            />{" "}
+            He leído y acepto el{" "}
+            <button
+              type="button"
+              className="register-link register-link-button"
+              onClick={() => setOpenPrivacyModal(true)}
+            >
+              {" "}
+              Aviso de Privacidad
             </button>
           </label>
         </div>
@@ -397,14 +472,9 @@ export default function RegisterPage() {
         <SuccessRegisterModal onFinish={handleFinishSuccess} />
       )}
 
-      {showLoadingModal && (
-        <LoadingModal />
-      )}
+      {showLoadingModal && <LoadingModal />}
 
-      {showFinalModal && (
-        <FinalRegisterModal onFinish={handleFinishFinal} />
-      )}
-
+      {showFinalModal && <FinalRegisterModal onFinish={handleFinishFinal} />}
     </div>
   );
 }
