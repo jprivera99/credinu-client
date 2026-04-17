@@ -9,6 +9,8 @@ import { TreatmentDataModal } from "@/components/TreatmentDataModal";
 import { ConfirmDataModal } from "@/components/ConfirmDataModal";
 import { SelectChannelModal } from "@/components/SelectChannelModal";
 import { VerifyCodeModal } from "@/components/VerifyCodeModal";
+import { SuccessRegisterModal } from "@/components/SuccessRegisterModal";
+import { LoadingModal } from "@/components/LoadingModal";
 
 export default function RegisterPage() {
 
@@ -38,6 +40,8 @@ export default function RegisterPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showChannelModal, setShowChannelModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -132,26 +136,22 @@ export default function RegisterPage() {
   const handleVerifyCode = async (codigo: string) => {
     try {
       setLoading(true);
+      setError("");
 
       console.log("Código ingresado:", codigo);
 
-      // Simulación
       if (codigo !== "123456") {
         throw new Error("Código incorrecto");
       }
+      // 👉 NO registras todavía
 
-      alert("Código verificado correctamente");
-
-      await registerRequest(form);
-
-      alert("Registro completado");
-      router.push("/login");
+      setShowVerifyModal(false);
+      setShowSuccessModal(true);
 
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-      setShowVerifyModal(false);
     }
   };
 
@@ -163,6 +163,22 @@ export default function RegisterPage() {
 
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleFinishSuccess = async () => {
+    setShowSuccessModal(false);
+    setShowLoadingModal(true);
+
+    try {
+      await registerRequest(form);
+
+      router.push("/login");
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setShowLoadingModal(false);
     }
   };
 
@@ -365,6 +381,14 @@ export default function RegisterPage() {
           onVerify={handleVerifyCode}
           onResend={handleResendCode}
         />
+      )}
+
+      {showSuccessModal && (
+        <SuccessRegisterModal onFinish={handleFinishSuccess} />
+      )}
+
+      {showLoadingModal && (
+        <LoadingModal />
       )}
 
     </div>
