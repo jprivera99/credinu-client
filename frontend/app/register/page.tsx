@@ -7,6 +7,8 @@ import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
 import { ConfirmDataModal } from "@/components/ConfirmDataModal";
+import { SelectChannelModal } from "@/components/SelectChannelModal";
+import { VerifyCodeModal } from "@/components/VerifyCodeModal";
 
 export default function RegisterPage() {
 
@@ -34,6 +36,8 @@ export default function RegisterPage() {
   const [openTermsModal, setOpenTermsModal] = useState(false);
   const [openTreatmentModal, setOpenTreatmentModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showChannelModal, setShowChannelModal] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
@@ -100,20 +104,65 @@ export default function RegisterPage() {
     setShowConfirmModal(true);
   };
 
-  const handleConfirmRegister = async () => {
+  const handleConfirmRegister = () => {
+    setShowConfirmModal(false);
+    setShowChannelModal(true);
+  };
+
+  const handleSelectChannel = async (method: "sms" | "whatsapp") => {
+
+    try {
+      setLoading(true);
+      console.log("Enviar código vía:", method);
+
+      // Simulación
+      alert(`Código enviado por ${method.toUpperCase()}`);
+
+      setShowChannelModal(false);
+      setShowVerifyModal(true);
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleVerifyCode = async (codigo: string) => {
     try {
       setLoading(true);
 
+      console.log("Código ingresado:", codigo);
+
+      // Simulación
+      if (codigo !== "123456") {
+        throw new Error("Código incorrecto");
+      }
+
+      alert("Código verificado correctamente");
+
       await registerRequest(form);
 
-      alert("Registro exitoso");
+      alert("Registro completado");
       router.push("/login");
 
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-      setShowConfirmModal(false);
+      setShowVerifyModal(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      console.log("Reenviando código...");
+
+      alert("Código reenviado");
+
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -300,6 +349,21 @@ export default function RegisterPage() {
           curp={form.curp}
           onClose={() => setShowConfirmModal(false)}
           onConfirm={handleConfirmRegister}
+        />
+      )}
+
+      {showChannelModal && (
+        <SelectChannelModal
+          onClose={() => setShowChannelModal(false)}
+          onSelect={handleSelectChannel}
+        />
+      )}
+
+      {showVerifyModal && (
+        <VerifyCodeModal
+          telefono={form.telefono}
+          onVerify={handleVerifyCode}
+          onResend={handleResendCode}
         />
       )}
 
