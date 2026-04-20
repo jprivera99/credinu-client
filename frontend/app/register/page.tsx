@@ -208,14 +208,25 @@ export default function RegisterPage() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [
-    form.nombre,
-    form.apellido_paterno,
-    form.apellido_materno,
-    form.fecha_nacimiento,
-    form.sexo,
-    form.estado_nacimiento,
+  }, [form.nombre, form.apellido_paterno, form.apellido_materno, form.fecha_nacimiento, form.sexo, form.estado_nacimiento
   ]);
+
+  //institutions
+  const [institutions, setInstitutions] = useState<{ id: number; nombre: string }[]>([]);
+
+  useEffect(() => {
+    const fetchInstitutions = async () => {
+      try {
+        const res = await fetch("/institutions");
+        const data = await res.json();
+        setInstitutions(data);
+      } catch (err) {
+        console.error("Error fetching institutions:", err);
+      }
+    }; }, [
+    form.nombre,
+  ]);
+
 
 
   //--------------------------------- LOGICA DE REGISTRO ------------------
@@ -457,6 +468,15 @@ export default function RegisterPage() {
             readOnly
             className="register-input register-span-2"
           />
+
+          <select name="institucion" className="register-input register-span-2">
+            <option value="">Seleccionar</option>
+            {institutions.map((inst) => (
+              <option key={inst.id} value={inst.id}>
+                {inst.nombre}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="register-checklist">
