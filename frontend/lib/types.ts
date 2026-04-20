@@ -79,3 +79,7 @@ export type CurpDataPayload = {
   sexo: string;
   estado_nacimiento: string;
 }
+
+export type InstitucionDataPayload = {
+  query: string;
+}

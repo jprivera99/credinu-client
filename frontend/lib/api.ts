@@ -9,6 +9,7 @@ import type {
   RegisterPayload,
   PdfDataPayload,
   CurpDataPayload,
+  InstitucionDataPayload
 } from "./types";
 
 const API_URL =
@@ -102,6 +103,13 @@ export function calcularRFCRequest(payload: PdfDataPayload) {
 export function calcularCURPRequest(payload: CurpDataPayload) {
   return apiFetch<{ curp: string }>("/register/send-curp", {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getInstitutionsRequest(payload: InstitucionDataPayload) {
+  return apiFetch<{ id: number; nombre: string }[]>("/institutions/get-institutions", {
+    method: "GET",
     body: JSON.stringify(payload),
   });
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
+import { getInstitutionsRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
@@ -161,10 +162,23 @@ export default function RegisterPage() {
   ]);
 
   const generarCURPPreview = async () => {
-    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento, sexo, estado_nacimiento} =
-      form;
+    const {
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      fecha_nacimiento,
+      sexo,
+      estado_nacimiento,
+    } = form;
 
-    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !sexo || !estado_nacimiento)
+    if (
+      !nombre ||
+      !apellido_paterno ||
+      !apellido_materno ||
+      !fecha_nacimiento ||
+      !sexo ||
+      !estado_nacimiento
+    )
       return;
 
     try {
@@ -174,7 +188,7 @@ export default function RegisterPage() {
         apellido_materno,
         fecha_nacimiento,
         sexo,
-        estado_nacimiento
+        estado_nacimiento,
       });
 
       console.log("CURP recibido:", data);
@@ -191,10 +205,23 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento, sexo, estado_nacimiento } =
-      form;
+    const {
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      fecha_nacimiento,
+      sexo,
+      estado_nacimiento,
+    } = form;
 
-    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !sexo || !estado_nacimiento)
+    if (
+      !nombre ||
+      !apellido_paterno ||
+      !apellido_materno ||
+      !fecha_nacimiento ||
+      !sexo ||
+      !estado_nacimiento
+    )
       return;
 
     if (timeoutRef.current) {
@@ -208,26 +235,37 @@ export default function RegisterPage() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [form.nombre, form.apellido_paterno, form.apellido_materno, form.fecha_nacimiento, form.sexo, form.estado_nacimiento
+  }, [
+    form.nombre,
+    form.apellido_paterno,
+    form.apellido_materno,
+    form.fecha_nacimiento,
+    form.sexo,
+    form.estado_nacimiento,
   ]);
 
   //institutions
-  const [institutions, setInstitutions] = useState<{ id: number; nombre: string }[]>([]);
+  const [institutions, setInstitutions] = useState<
+    { id: number; nombre: string }[]
+  >([]);
 
   useEffect(() => {
-    const fetchInstitutions = async () => {
+    const obtenerInstituciones = async () => {
       try {
-        const res = await fetch("/institutions");
-        const data = await res.json();
+        const data = await getInstitutionsRequest();
+
+        console.log("Instituciones:", data);
+
+        if (!data) return;
+
         setInstitutions(data);
       } catch (err) {
-        console.error("Error fetching institutions:", err);
+        console.error("Error instituciones:", err);
       }
-    }; }, [
-    form.nombre,
-  ]);
+    };
 
-
+    obtenerInstituciones();
+  }, []);
 
   //--------------------------------- LOGICA DE REGISTRO ------------------
 
@@ -400,7 +438,11 @@ export default function RegisterPage() {
             className="register-input"
           />
 
-          <select name="sexo" onChange={handleSelectChange} className="register-input">
+          <select
+            name="sexo"
+            onChange={handleSelectChange}
+            className="register-input"
+          >
             <option value="">Sexo</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
