@@ -8,7 +8,7 @@ import type {
   UpdateClientProfilePayload,
   RegisterPayload,
   PdfDataPayload,
-  RFCResponse,
+  CurpDataPayload,
 } from "./types";
 
 const API_URL =
@@ -93,7 +93,14 @@ export function registerRequest(payload: RegisterPayload) {
 }
 
 export function calcularRFCRequest(payload: PdfDataPayload) {
-  return apiFetch<RFCResponse>("/register/send-rfc", {
+  return apiFetch<{ rfc: string }>("/register/send-rfc", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function calcularCURPRequest(payload: CurpDataPayload) {
+  return apiFetch<{ curp: string }>("/register/send-curp", {
     method: "POST",
     body: JSON.stringify(payload),
   });

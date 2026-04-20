@@ -71,6 +71,11 @@ export type PdfDataPayload = {
   fecha_nacimiento: string;
 };
 
-export type RFCResponse = {
-  rfc: string;
-};
+export type CurpDataPayload = {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  fecha_nacimiento: string;
+  sexo: string;
+  estado_nacimiento: string;
+}

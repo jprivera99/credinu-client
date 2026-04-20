@@ -8,6 +8,7 @@ import {
   validateCodeService,
   validateRegisterService,
   calcularRFCService,
+  calcularCURPService,
 } from "./register.service.js";
 
 export const preRegister = async (req, res, next) => {
@@ -78,6 +79,7 @@ export const validateRegister = async (req, res, next) => {
   }
 };
 
+// CALCULAR RFC
 export const calcularRFCController = async (req, res) => {
   try {
     const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento } =
@@ -102,5 +104,43 @@ export const calcularRFCController = async (req, res) => {
     return res.json({ rfc });
   } catch (error) {
     return res.status(500).json({ error: "Error al calcular RFC" });
+  }
+};
+
+// CALCULAR CURP
+export const calcularCURPController = async (req, res) => {
+  try {
+    const {
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      fecha_nacimiento,
+      sexo,
+      estado_nacimiento,
+    } = req.body;
+
+    if (
+      !nombre ||
+      !apellido_paterno ||
+      !apellido_materno ||
+      !fecha_nacimiento ||
+      !sexo ||
+      !estado_nacimiento
+    ) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
+
+    const curp = calcularCURPService(
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      fecha_nacimiento,
+      sexo,
+      estado_nacimiento,
+    );
+
+    return res.json({ curp });
+  } catch (error) {
+    return res.status(500).json({ error: "Error al calcular CURP" });
   }
 };

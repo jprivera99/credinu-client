@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
+import { calcularCURPRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
@@ -158,6 +159,64 @@ export default function RegisterPage() {
     form.apellido_materno,
     form.fecha_nacimiento,
   ]);
+
+  const generarCURPPreview = async () => {
+    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento, sexo, estado_nacimiento} =
+      form;
+
+    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !sexo || !estado_nacimiento)
+      return;
+
+    try {
+      const data = await calcularCURPRequest({
+        nombre,
+        apellido_paterno,
+        apellido_materno,
+        fecha_nacimiento,
+        sexo,
+        estado_nacimiento
+      });
+
+      console.log("CURP recibido:", data);
+
+      if (!data?.curp) return;
+
+      setForm((prev) => ({
+        ...prev,
+        curp: data.curp,
+      }));
+    } catch (err) {
+      console.error("Error CURP:", err);
+    }
+  };
+
+  useEffect(() => {
+    const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento, sexo, estado_nacimiento } =
+      form;
+
+    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !sexo || !estado_nacimiento)
+      return;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      generarCURPPreview();
+    }, 600);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [
+    form.nombre,
+    form.apellido_paterno,
+    form.apellido_materno,
+    form.fecha_nacimiento,
+    form.sexo,
+    form.estado_nacimiento,
+  ]);
+
 
   //--------------------------------- LOGICA DE REGISTRO ------------------
 
@@ -394,7 +453,8 @@ export default function RegisterPage() {
           <input
             name="curp"
             placeholder="CURP"
-            onChange={handleChange}
+            value={form.curp}
+            readOnly
             className="register-input register-span-2"
           />
         </div>

@@ -7,7 +7,8 @@ import {
   sendCode,
   validateCode,
   validateRegister,
-  calcularRFCController
+  calcularRFCController,
+  calcularCURPController
 } from "./register.controller.js";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.post("/send-code", sendCode);
 router.post("/validate-code", validateCode);
 router.post("/validate", validateRegister);
 router.post("/send-rfc", calcularRFCController);
+router.post("/send-curp", calcularCURPController);
 
 export default router;
