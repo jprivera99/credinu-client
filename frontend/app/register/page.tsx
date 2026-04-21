@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
@@ -51,20 +51,6 @@ export default function RegisterPage() {
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-
-    setForm({
-      ...form,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : name === "institucion"
-            ? Number(value)
-            : value,
-    });
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -445,35 +431,35 @@ export default function RegisterPage() {
           <input
             name="email"
             placeholder="Correo electrónico"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
           <input
             name="nombre"
             placeholder="Nombre(s)"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
           <input
             name="apellido_paterno"
             placeholder="Apellido paterno"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
           <input
             name="apellido_materno"
             placeholder="Apellido materno"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
           <input
             name="fecha_nacimiento"
             type="date"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
@@ -531,7 +517,7 @@ export default function RegisterPage() {
           <input
             name="telefono"
             placeholder="Teléfono"
-            onChange={handleChange}
+            onChange={handleInputChange}
             className="register-input"
           />
 
@@ -583,7 +569,7 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               name="terminos_condiciones"
-              onChange={handleChange}
+              onChange={handleCheckboxChange}
             />
             He leído y acepto los{" "}
             <button
@@ -599,7 +585,7 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               name="tratamiento_datos"
-              onChange={handleChange}
+              onChange={handleCheckboxChange}
             />
             He leído y acepto las{" "}
             <button
@@ -616,7 +602,7 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               name="aviso_privacidad"
-              onChange={handleChange}
+              onChange={handleCheckboxChange}
             />{" "}
             He leído y acepto el{" "}
             <button
