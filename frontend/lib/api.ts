@@ -8,7 +8,8 @@ import type {
   UpdateClientProfilePayload,
   RegisterPayload,
   PdfDataPayload,
-  CurpDataPayload
+  CurpDataPayload,
+  SendCodePayload,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -122,4 +123,14 @@ export function getInstitutionRequest(institucionId: number) {
   }>(`/institutions/get-institution?id=${institucionId}`, {
     method: "GET",
   });
+}
+
+export function sendCodeRequest(payload: SendCodePayload) {
+  return apiFetch<{ success: boolean; message?: string }>(
+    "/rem/send-code",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
 }

@@ -80,3 +80,10 @@ export type CurpDataPayload = {
   estado_nacimiento: string;
 }
 
+export type SendCodePayload = {
+  canal: "SMS" | "WHATSAPP";
+  phone: string;
+  nombre_cliente: string;
+  retry?: boolean;
+}
+

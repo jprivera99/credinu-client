@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import registerRoutes from './modules/register/register.routes.js';
 import institutionsRoutes from "./modules/institutions/institutions.router.js";
+import remRoutes from "./modules/rem/rem.routes.js";
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/api/v1", apiRoutes);
 app.use("/api/auth", authRoutes);
 app.use('/api/register', registerRoutes);
 app.use('/api/institutions', institutionsRoutes);
+app.use("/api/rem", remRoutes);
 
 // Middleware de manejo de errores
 app.use(errorHandler);

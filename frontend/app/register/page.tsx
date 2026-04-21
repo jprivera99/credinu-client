@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { registerRequest } from "@/lib/api";
+import { sendCodeRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
 import { getInstitutionsRequest } from "@/lib/api";
@@ -254,6 +255,7 @@ export default function RegisterPage() {
     obtenerInstituciones();
   }, []);
 
+  //selected institution
   const [selectedInstitution, setSelectedInstitution] = useState<{
     id: number;
     nombre: string;
@@ -345,13 +347,19 @@ export default function RegisterPage() {
     setShowChannelModal(true);
   };
 
-  const handleSelectChannel = async (method: "sms" | "whatsapp") => {
+  const handleSelectChannel = async (method: "SMS" | "WHATSAPP") => {
     try {
       setLoading(true);
-      console.log("Enviar código vía:", method);
 
-      // Simulación
-      alert(`Código enviado por ${method.toUpperCase()}`);
+      const nombreCompleto = `${form.nombre} ${form.apellido_paterno} ${form.apellido_materno}`;
+
+      const res = await sendCodeRequest({
+        canal: method,
+        phone: form.telefono,
+        nombre_cliente: nombreCompleto,
+      });
+
+      console.log("Código enviado:", res);
 
       setShowChannelModal(false);
       setShowVerifyModal(true);
