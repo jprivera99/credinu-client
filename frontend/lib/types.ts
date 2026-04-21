@@ -80,6 +80,3 @@ export type CurpDataPayload = {
   estado_nacimiento: string;
 }
 
-export type InstitucionDataPayload = {
-  query: string;
-}

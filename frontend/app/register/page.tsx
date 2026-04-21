@@ -7,6 +7,7 @@ import { registerRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
 import { getInstitutionsRequest } from "@/lib/api";
+import { getInstitutionRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
@@ -31,6 +32,8 @@ export default function RegisterPage() {
     rfc: "",
     curp: "",
     telefono: "",
+    institucion: "",
+    empresa_hija: "",
     aviso_privacidad: false,
     tratamiento_datos: false,
     terminos_condiciones: false,
@@ -49,19 +52,17 @@ export default function RegisterPage() {
   const [showFinalModal, setShowFinalModal] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-
-    const newValue =
-      e.target instanceof HTMLInputElement && e.target.type === "checkbox"
-        ? e.target.checked
-        : value;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
 
     setForm({
       ...form,
-      [name]: newValue,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "institucion"
+            ? Number(value)
+            : value,
     });
   };
 
@@ -266,6 +267,44 @@ export default function RegisterPage() {
 
     obtenerInstituciones();
   }, []);
+
+  const [selectedInstitution, setSelectedInstitution] = useState<{
+    id: number;
+    nombre: string;
+    empresas_hijas: { id: number; nombre: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    const obtenerInstitucion = async () => {
+      if (!form.institucion) {
+        setSelectedInstitution(null);
+
+        setForm((prev) => ({
+          ...prev,
+          empresa_hija: "",
+        }));
+
+        return;
+      }
+
+      try {
+        const data = await getInstitutionRequest(Number(form.institucion));
+
+        setSelectedInstitution(data);
+
+        if (!data.empresas_hijas?.length) {
+          setForm((prev) => ({
+            ...prev,
+            empresa_hija: "",
+          }));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    obtenerInstitucion();
+  }, [form.institucion]);
 
   //--------------------------------- LOGICA DE REGISTRO ------------------
 
@@ -511,7 +550,11 @@ export default function RegisterPage() {
             className="register-input register-span-2"
           />
 
-          <select name="institucion" className="register-input register-span-2">
+          <select
+            name="institucion"
+            onChange={handleSelectChange}
+            className="register-input"
+          >
             <option value="">Seleccionar</option>
             {institutions.map((inst) => (
               <option key={inst.id} value={inst.id}>
@@ -519,6 +562,20 @@ export default function RegisterPage() {
               </option>
             ))}
           </select>
+
+          {selectedInstitution &&
+            selectedInstitution.empresas_hijas &&
+            selectedInstitution.empresas_hijas.length > 0 && (
+              <select name="empresa_hija" className="register-input">
+                <option value="">Seleccionar sucursal</option>
+
+                {selectedInstitution.empresas_hijas.map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>
+                    {empresa.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
         </div>
 
         <div className="register-checklist">

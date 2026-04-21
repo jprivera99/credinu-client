@@ -8,12 +8,10 @@ import type {
   UpdateClientProfilePayload,
   RegisterPayload,
   PdfDataPayload,
-  CurpDataPayload,
-  InstitucionDataPayload
+  CurpDataPayload
 } from "./types";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL  || "http://localhost:3001/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 type FetchOptions = RequestInit & {
   auth?: boolean;
@@ -21,7 +19,7 @@ type FetchOptions = RequestInit & {
 
 async function apiFetch<T>(
   path: string,
-  options: FetchOptions = {}
+  options: FetchOptions = {},
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
@@ -107,9 +105,21 @@ export function calcularCURPRequest(payload: CurpDataPayload) {
   });
 }
 
-export function getInstitutionsRequest(payload: InstitucionDataPayload) {
-  return apiFetch<{ id: number; nombre: string }[]>("/institutions/get-institutions", {
+export function getInstitutionsRequest() {
+  return apiFetch<{ id: number; nombre: string }[]>(
+    "/institutions/get-institutions",
+    {
+      method: "GET",
+    }
+  );
+}
+
+export function getInstitutionRequest(institucionId: number) {
+  return apiFetch<{
+    id: number;
+    nombre: string;
+    empresas_hijas: { id: number; nombre: string }[];
+  }>(`/institutions/get-institution?id=${institucionId}`, {
     method: "GET",
-    body: JSON.stringify(payload),
   });
 }
