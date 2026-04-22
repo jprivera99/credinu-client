@@ -6,24 +6,21 @@ interface VerifyCodeModalProps {
   telefono: string;
   onVerify: (codigo: string) => void;
   onResend: () => void;
+  onClose: () => void;
   error?: string;
 }
 
 export function VerifyCodeModal({
   telefono,
   onVerify,
-  onResend
+  onResend,
 }: VerifyCodeModalProps) {
-
   const [codigo, setCodigo] = useState("");
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
-    if (timer === 0) {
-      setCanResend(true);
-      return;
-    }
+    if (timer <= 0) return;
 
     const interval = setInterval(() => {
       setTimer((prev) => prev - 1);
@@ -59,10 +56,7 @@ export function VerifyCodeModal({
   return (
     <div className="privacy-modal-backdrop">
       <div className="privacy-modal">
-
-        <h3 className="privacy-modal-title">
-          Verifica tu código
-        </h3>
+        <h3 className="privacy-modal-title">Verifica tu código</h3>
 
         <div className="privacy-modal-content">
           <p>Ingresa el código enviado a:</p>
@@ -78,20 +72,17 @@ export function VerifyCodeModal({
               marginTop: "15px",
               fontSize: "20px",
               textAlign: "center",
-              letterSpacing: "8px"
+              letterSpacing: "8px",
             }}
           />
 
           {/* ⏱️ Timer */}
           <p style={{ marginTop: "10px", fontSize: "12px" }}>
-            {canResend
-              ? "Puedes reenviar el código"
-              : `Reenviar en ${timer}s`}
+            {canResend ? "Puedes reenviar el código" : `Reenviar en ${timer}s`}
           </p>
         </div>
 
         <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-
           {/* REENVIAR */}
           <button
             type="button"
@@ -110,7 +101,6 @@ export function VerifyCodeModal({
           >
             Validar
           </button>
-
         </div>
       </div>
     </div>

@@ -144,6 +144,8 @@ export default function RegisterPage() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     form.nombre,
     form.apellido_paterno,
@@ -225,6 +227,8 @@ export default function RegisterPage() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     form.nombre,
     form.apellido_paterno,
