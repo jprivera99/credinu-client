@@ -1,3 +1,4 @@
+//ENDPOINTS DE PRUEBA - NO TOCAR
 export const sendToRem = async (clienteId) => {
   try {
     console.log(`Enviando cliente ${clienteId} a REM...`);
@@ -26,7 +27,7 @@ export const validateSMSRem = async ({ telefono, codigo }) => {
   return { valid: false };
 };
 
-
+//ENPOINT REALES
 export const sendCodeService = async ({
   canal,
   phone,
@@ -36,23 +37,13 @@ export const sendCodeService = async ({
   const id_cliente = phone;
 
   if (canal === "SMS") {
-    return await sendCodeSMS(
-      id_cliente,
-      phone,
-      nombre_cliente,
-      retry
-    );
+    return await sendCodeSMS(id_cliente, phone, nombre_cliente, retry);
   } else {
     return await sendCodeWhatsapp(id_cliente, phone);
   }
 };
 
-const sendCodeSMS = async (
-  id_cliente,
-  phone,
-  nombre_cliente,
-  retry
-) => {
+const sendCodeSMS = async (id_cliente, phone, nombre_cliente, retry) => {
   const url = `${process.env.REM_URL}otp/create/sms`;
 
   const body = {
@@ -72,7 +63,7 @@ const sendCodeSMS = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.REM_APIKEY}`,
+      "Rem-Apikey": process.env.REM_APIKEY,
     },
     body: JSON.stringify(body),
   });
@@ -83,7 +74,6 @@ const sendCodeSMS = async (
 
   return data;
 };
-
 
 const sendCodeWhatsapp = async (id_cliente, phone) => {
   const url = `${process.env.REM_URL}otp/create/whatsapp`;
@@ -98,7 +88,7 @@ const sendCodeWhatsapp = async (id_cliente, phone) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.REM_APIKEY}`,
+      "Rem-Apikey": process.env.REM_APIKEY,
     },
     body: JSON.stringify(body),
   });
@@ -106,6 +96,36 @@ const sendCodeWhatsapp = async (id_cliente, phone) => {
   const data = await res.json();
 
   console.log("REM WHATSAPP:", data);
+
+  return data;
+};
+
+// Función para verificar el código OTP
+export const validateCodeService = async ({
+  phone,
+  code,
+  canal = "SMS",
+}) => {
+  const url = `${process.env.REM_URL}otp/validate`;
+
+  const body = {
+    user: phone,
+    code: code,
+    type: canal, // "SMS" o "WHATSAPP"
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "rem-apikey": process.env.REM_APIKEY,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+
+  console.log("REM VALIDATE:", data);
 
   return data;
 };

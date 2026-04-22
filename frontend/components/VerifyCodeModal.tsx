@@ -32,7 +32,7 @@ export function VerifyCodeModal({
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleChange = (e: any) => {
+  const handleInputChange = (e: any) => {
     const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 6) {
       setCodigo(value);
@@ -71,7 +71,7 @@ export function VerifyCodeModal({
           <input
             type="text"
             value={codigo}
-            onChange={handleChange}
+            onChange={handleInputChange}
             maxLength={6}
             placeholder="------"
             style={{

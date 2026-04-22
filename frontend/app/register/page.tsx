@@ -9,6 +9,7 @@ import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
 import { getInstitutionsRequest } from "@/lib/api";
 import { getInstitutionRequest } from "@/lib/api";
+import { validateCodeRequest } from "@/lib/api";
 import { PrivacyModal } from "@/components/PrivacyModal";
 import { TermsModal } from "@/components/TermsModal";
 import { TreatmentDataModal } from "@/components/TreatmentDataModal";
@@ -35,6 +36,7 @@ export default function RegisterPage() {
     telefono: "",
     institucion: "",
     empresa_hija: "",
+    canal: "" as "SMS" | "WHATSAPP" | "",
     aviso_privacidad: false,
     tratamiento_datos: false,
     terminos_condiciones: false,
@@ -361,10 +363,19 @@ export default function RegisterPage() {
 
       console.log("Código enviado:", res);
 
+      setForm((prev) => ({
+        ...prev,
+        canal: method,
+      }));
+
       setShowChannelModal(false);
       setShowVerifyModal(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error desconocido");
+      }
     } finally {
       setLoading(false);
     }
@@ -375,7 +386,17 @@ export default function RegisterPage() {
       setLoading(true);
       setError("");
 
-      if (codigo !== "123456") {
+      const res = await validateCodeRequest({
+        phone: form.telefono,
+        code: codigo,
+        canal: form.canal,
+      });
+
+      console.log("Validación:", res);
+
+      const isValid = res.data?.result?.match;
+
+      if (!isValid) {
         throw new Error("Código incorrecto");
       }
 
@@ -384,8 +405,12 @@ export default function RegisterPage() {
       setTimeout(() => {
         setShowSuccessModal(true);
       }, 100);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error desconocido");
+      }
     } finally {
       setLoading(false);
     }
@@ -396,8 +421,12 @@ export default function RegisterPage() {
       console.log("Reenviando código...");
 
       alert("Código reenviado");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error desconocido");
+      }
     }
   };
 
@@ -411,9 +440,13 @@ export default function RegisterPage() {
       setShowLoadingModal(false);
 
       setShowFinalModal(true);
-    } catch (err: any) {
-      setError(err.message);
-      setShowLoadingModal(false);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+        setShowLoadingModal(false);
+      } else {
+        setError("Error desconocido");
+      }
     }
   };
 

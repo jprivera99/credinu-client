@@ -10,6 +10,8 @@ import type {
   PdfDataPayload,
   CurpDataPayload,
   SendCodePayload,
+  validateCodePayload,
+  ValidateCodeResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -111,7 +113,7 @@ export function getInstitutionsRequest() {
     "/institutions/get-institutions",
     {
       method: "GET",
-    }
+    },
   );
 }
 
@@ -126,11 +128,15 @@ export function getInstitutionRequest(institucionId: number) {
 }
 
 export function sendCodeRequest(payload: SendCodePayload) {
-  return apiFetch<{ success: boolean; message?: string }>(
-    "/rem/send-code",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }
-  );
+  return apiFetch<{ success: boolean; message?: string }>("/rem/send-code", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function validateCodeRequest(payload: validateCodePayload) {
+  return apiFetch<ValidateCodeResponse>("/rem/validate-code", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 interface SelectChannelModalProps {
   onClose: () => void;
-  onSelect: (method: "sms" | "whatsapp") => void;
+  onSelect: (method: "SMS" | "WHATSAPP") => void;
 }
 
 export function SelectChannelModal({
@@ -39,7 +39,7 @@ export function SelectChannelModal({
           <button
             type="button"
             className="privacy-modal-close"
-            onClick={() => onSelect("sms")}
+            onClick={() => onSelect("SMS")}
           >
             SMS
           </button>
@@ -47,7 +47,7 @@ export function SelectChannelModal({
           <button
             type="button"
             className="privacy-modal-close"
-            onClick={() => onSelect("whatsapp")}
+            onClick={() => onSelect("WHATSAPP")}
           >
             WhatsApp
           </button>

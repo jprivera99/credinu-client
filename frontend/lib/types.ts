@@ -78,12 +78,31 @@ export type CurpDataPayload = {
   fecha_nacimiento: string;
   sexo: string;
   estado_nacimiento: string;
-}
+};
 
 export type SendCodePayload = {
   canal: "SMS" | "WHATSAPP";
   phone: string;
   nombre_cliente: string;
   retry?: boolean;
-}
+};
 
+export type validateCodePayload = {
+  phone: string;
+  code: string;
+  canal: string;
+};
+
+export type ValidateCodeResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    success: boolean;
+    result: {
+      user: string;
+      validated_at: string;
+      type: string;
+      match: boolean;
+    };
+  };
+};
