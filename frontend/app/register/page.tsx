@@ -361,6 +361,7 @@ export default function RegisterPage() {
 
       console.log("Email:", emailRes);
       console.log("Phone:", phoneRes);
+      console.log("RFC:", rfcRes);
 
       if (emailRes.exists) {
         return setError("El correo ya está registrado");
@@ -368,6 +369,10 @@ export default function RegisterPage() {
 
       if (phoneRes.exists) {
         return setError("El teléfono ya está registrado");
+      }
+
+      if (rfcRes.exists) {
+        return setError("El RFC ya está registrado");
       }
 
       setShowConfirmModal(true);

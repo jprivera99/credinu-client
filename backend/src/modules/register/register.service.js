@@ -1,6 +1,6 @@
 import { pool } from "../../config/db.js";
 import crypto from "crypto";
-import { sendToRem, sendSMSRem, validateSMSRem } from "../rem/rem.service.js";
+import { updatePersonRem } from "../rem/rem.service.js";
 
 // PRE REGISTER (USANDO TRIGGER)
 export const preRegisterService = async (data) => {
@@ -102,7 +102,7 @@ export const preRegisterService = async (data) => {
       rfc,
       curp,
       institucion,
-      account_id,
+      "",
       fecha_nacimiento,
       nacimiento_estado,
       nacimiento_entidad_federativa,
@@ -141,7 +141,16 @@ export const preRegisterService = async (data) => {
 
   // 9. ENVIAR A REM
 
-  await sendToRem(clienteId);
+  await updatePersonRem({
+    id: clienteId,
+    telefono_movil: telefono,
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    nacimiento_fecha: fecha_nacimiento,
+    rfc,
+    curp,
+  });
 
   // 10. ENVIAR CORREO
 
@@ -253,6 +262,18 @@ export const validatePhoneService = async (telefono) => {
   const [rows] = await pool.query(
     `SELECT id FROM cliente WHERE telefono_movil = ? LIMIT 1`,
     [telefono],
+  );
+
+  return {
+    exists: rows.length > 0,
+  };
+};
+
+// VALIDAR RFC
+export const validateRFCService = async (rfc) => {
+  const [rows] = await pool.query(
+    `SELECT id FROM cliente WHERE rfc = ? LIMIT 1`,
+    [rfc],
   );
 
   return {

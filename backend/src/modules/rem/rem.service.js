@@ -1,31 +1,4 @@
-//ENDPOINTS DE PRUEBA - NO TOCAR
-export const sendToRem = async (clienteId) => {
-  try {
-    console.log(`Enviando cliente ${clienteId} a REM...`);
-    return true;
-  } catch (error) {
-    console.error("Error enviando a REM:", error);
-    throw new Error("Error en REM");
-  }
-};
-
-export const sendSMSRem = async ({ telefono, canal }) => {
-  console.log(`Enviando código vía ${canal} a ${telefono}`);
-
-  return {
-    success: true,
-  };
-};
-
-export const validateSMSRem = async ({ telefono, codigo }) => {
-  console.log(`Validando código ${codigo} para ${telefono}`);
-
-  if (codigo === "123456") {
-    return { valid: true };
-  }
-
-  return { valid: false };
-};
+import { insertProcessRemLog } from "./processRem.service.js";
 
 //ENPOINT REALES
 export const sendCodeService = async ({
@@ -101,11 +74,7 @@ const sendCodeWhatsapp = async (id_cliente, phone) => {
 };
 
 // Función para verificar el código OTP
-export const validateCodeService = async ({
-  phone,
-  code,
-  canal = "SMS",
-}) => {
+export const validateCodeService = async ({ phone, code, canal = "SMS" }) => {
   const url = `${process.env.REM_URL}otp/validate`;
 
   const body = {
@@ -128,4 +97,56 @@ export const validateCodeService = async ({
   console.log("REM VALIDATE:", data);
 
   return data;
+};
+
+// Función para actualizar o crear persona en REM
+export const updatePersonRem = async ({
+  id,
+  telefono_movil,
+  nombre,
+  apellido_paterno,
+  apellido_materno,
+  nacimiento_fecha,
+  rfc,
+  curp,
+}) => {
+  const url = `${process.env.REM_URL}person/update`;
+
+  const body = {
+    id: id,
+    telefono_movil,
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    nacimiento_fecha,
+    rfc,
+    curp,
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "rem-apikey": process.env.REM_APIKEY,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    console.log("REM UPDATE PERSON:", data);
+
+    await insertProcessRemLog({
+      tipo: "ACTUALIZACION_CLIENTE",
+      id_rem: id,
+      url,
+      data: body,
+      respuesta: data,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error actualizando en REM:", error);
+    throw error;
+  }
 };
