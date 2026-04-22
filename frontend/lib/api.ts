@@ -87,13 +87,16 @@ export function changePassword(payload: ChangePasswordPayload) {
   });
 }
 
+// Funciones para registro de usuarios-----------------------------------------
+
 export function registerRequest(payload: RegisterPayload) {
-  return apiFetch<{ id: number; usuario: string }>("register/pre-register", {
+  return apiFetch<{ id: number; usuario: string }>("/register/pre-register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
+// Api para calcular RFC
 export function calcularRFCRequest(payload: PdfDataPayload) {
   return apiFetch<{ rfc: string }>("/register/send-rfc", {
     method: "POST",
@@ -101,6 +104,7 @@ export function calcularRFCRequest(payload: PdfDataPayload) {
   });
 }
 
+// Api para calcular CURP
 export function calcularCURPRequest(payload: CurpDataPayload) {
   return apiFetch<{ curp: string }>("/register/send-curp", {
     method: "POST",
@@ -108,6 +112,28 @@ export function calcularCURPRequest(payload: CurpDataPayload) {
   });
 }
 
+// Api para validar correo
+export function validateEmailRequest(correo: string) {
+  return apiFetch<{ exists: boolean }>("/register/validate-email?correo=" + correo, {
+    method: "GET",
+  });
+}
+
+// Api para validar teléfono
+export function validatePhoneRequest(telefono: string) {
+  return apiFetch<{ exists: boolean }>("/register/validate-phone?phone=" + telefono, {
+    method: "GET",
+  });
+}
+
+//Api para validar RFC
+export function validateRFCRequest(rfc: string) {
+  return apiFetch<{ exists: boolean }>("/register/validate-rfc?rfc=" + rfc, {
+    method: "GET",
+  });
+}
+
+// Apis para instituciones
 export function getInstitutionsRequest() {
   return apiFetch<{ id: number; nombre: string }[]>(
     "/institutions/get-institutions",
@@ -127,6 +153,7 @@ export function getInstitutionRequest(institucionId: number) {
   });
 }
 
+// Apis para REM
 export function sendCodeRequest(payload: SendCodePayload) {
   return apiFetch<{ success: boolean; message?: string }>("/rem/send-code", {
     method: "POST",

@@ -1,8 +1,10 @@
+import e from "express";
 import { ok } from "../../utils/responses.js";
 import {
   preRegisterService,
   validateEmailService,
   validatePhoneService,
+  validateRFCService,
   validateSMSService,
   sendCodeService,
   validateCodeService,
@@ -32,8 +34,18 @@ export const validateEmail = async (req, res, next) => {
 
 export const validatePhone = async (req, res, next) => {
   try {
-    const { telefono } = req.query;
+    const telefono = req.query.phone.replace(/\D/g, "");
     const data = await validatePhoneService(telefono);
+    return ok(res, data);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const validateRFCController = async (req, res, next) => {
+  try {
+    const { rfc } = req.query;
+    const data = await validateRFCService(rfc);
     return ok(res, data);
   } catch (error) {
     return next(error);

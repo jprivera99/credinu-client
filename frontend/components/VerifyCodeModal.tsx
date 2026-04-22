@@ -29,6 +29,12 @@ export function VerifyCodeModal({
     return () => clearInterval(interval);
   }, [timer]);
 
+  useEffect(() => {
+    if (timer === 0) {
+      setCanResend(true);
+    }
+  }, [timer]);
+
   const handleInputChange = (e: any) => {
     const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 6) {
@@ -46,6 +52,8 @@ export function VerifyCodeModal({
   };
 
   const handleResend = () => {
+    console.log("CLICK RESEND", { canResend });
+
     if (!canResend) return;
 
     setTimer(60);
@@ -76,7 +84,7 @@ export function VerifyCodeModal({
             }}
           />
 
-          {/* ⏱️ Timer */}
+          {/* Timer */}
           <p style={{ marginTop: "10px", fontSize: "12px" }}>
             {canResend ? "Puedes reenviar el código" : `Reenviar en ${timer}s`}
           </p>

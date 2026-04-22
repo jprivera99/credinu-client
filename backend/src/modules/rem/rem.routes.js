@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendCode, validateCode } from "./rem.controller.js";
+import { sendCode, validateCode} from "./rem.controller.js";
 
 const router = Router();
 

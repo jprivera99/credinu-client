@@ -7,6 +7,9 @@ import { registerRequest } from "@/lib/api";
 import { sendCodeRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
+import { validateEmailRequest } from "@/lib/api";
+import { validatePhoneRequest } from "@/lib/api";
+import { validateRFCRequest } from "@/lib/api";
 import { getInstitutionsRequest } from "@/lib/api";
 import { getInstitutionRequest } from "@/lib/api";
 import { validateCodeRequest } from "@/lib/api";
@@ -24,7 +27,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    email: "",
+    correo: "",
     nombre: "",
     apellido_paterno: "",
     apellido_materno: "",
@@ -307,7 +310,7 @@ export default function RegisterPage() {
 
     setError("");
 
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+    if (!/^\S+@\S+\.\S+$/.test(form.correo)) {
       return setError("Correo inválido");
     }
 
@@ -323,12 +326,14 @@ export default function RegisterPage() {
       return setError("El teléfono debe tener 10 dígitos numéricos");
     }
 
-    if (!form.rfc) {
-      return setError("RFC requerido");
-    }
+    if (!form.rfc) return setError("RFC requerido");
+    if (!form.curp) return setError("CURP requerido");
+    if (!form.institucion) return setError("Institución requerida");
 
-    if (!form.curp) {
-      return setError("CURP requerido");
+    if (selectedInstitution?.empresas_hijas?.length) {
+      if (!form.empresa_hija) {
+        return setError("Sucursal requerida");
+      }
     }
 
     if (!form.terminos_condiciones) {
@@ -345,7 +350,36 @@ export default function RegisterPage() {
       return setError("Debes de aceptar el Aviso de privacidad");
     }
 
-    setShowConfirmModal(true);
+    try {
+      setLoading(true);
+
+      const [emailRes, phoneRes, rfcRes] = await Promise.all([
+        validateEmailRequest(form.correo),
+        validatePhoneRequest(form.telefono),
+        validateRFCRequest(form.rfc),
+      ]);
+
+      console.log("Email:", emailRes);
+      console.log("Phone:", phoneRes);
+
+      if (emailRes.exists) {
+        return setError("El correo ya está registrado");
+      }
+
+      if (phoneRes.exists) {
+        return setError("El teléfono ya está registrado");
+      }
+
+      setShowConfirmModal(true);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error al validar datos");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmRegister = () => {
@@ -398,7 +432,7 @@ export default function RegisterPage() {
 
       console.log("Validación:", res);
 
-      const isValid = res.data?.result?.match;
+      const isValid = res?.result?.match ?? false;
 
       if (!isValid) {
         throw new Error("Código incorrecto");
@@ -422,15 +456,33 @@ export default function RegisterPage() {
 
   const handleResendCode = async () => {
     try {
-      console.log("Reenviando código...");
+      setLoading(true);
+      setError("");
+
+      if (!form.canal) {
+        throw new Error("No hay canal seleccionado");
+      }
+
+      const nombreCompleto = `${form.nombre} ${form.apellido_paterno} ${form.apellido_materno}`;
+
+      const res = await sendCodeRequest({
+        canal: form.canal,
+        phone: form.telefono,
+        nombre_cliente: nombreCompleto,
+        retry: true,
+      });
+
+      console.log("Código reenviado:", res);
 
       alert("Código reenviado");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Error desconocido");
+        setError("Error al reenviar código");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -474,7 +526,7 @@ export default function RegisterPage() {
 
         <div className="register-grid">
           <input
-            name="email"
+            name="correo"
             placeholder="Correo electrónico"
             onChange={handleInputChange}
             className="register-input"

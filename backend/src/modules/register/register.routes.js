@@ -3,6 +3,7 @@ import {
   preRegister,
   validateEmail,
   validatePhone,
+  validateRFCController,
   validateSMS,
   sendCode,
   validateCode,
@@ -16,6 +17,7 @@ const router = Router();
 router.post("/pre-register", preRegister);
 router.get("/validate-email", validateEmail);
 router.get("/validate-phone", validatePhone);
+router.get("/validate-rfc", validateRFCController);
 router.post("/validate-sms", validateSMS);
 router.post("/send-code", sendCode);
 router.post("/validate-code", validateCode);

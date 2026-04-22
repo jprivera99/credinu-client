@@ -47,12 +47,34 @@ export const preRegisterService = async (data) => {
     throw new Error("Teléfono ya registrado");
   }
 
-  // 4. GENERAR PASSWORD Y TOKEN
+  // 4. VALIDAR RFC
+
+  const [rfcRows] = await pool.query(
+    `SELECT id FROM cliente WHERE rfc = ? LIMIT 1`,
+    [rfc],
+  );
+
+  if (rfcRows.length > 0) {
+    throw new Error("RFC ya registrado");
+  }
+
+  // 5. VALIDAR CURP
+
+  const [curpRows] = await pool.query(
+    `SELECT id FROM cliente WHERE curp = ? LIMIT 1`,
+    [curp],
+  );
+
+  if (curpRows.length > 0) {
+    throw new Error("CURP ya registrado");
+  }
+
+  // 6. GENERAR PASSWORD Y TOKEN
 
   const passwordTemp = generarPasswordTemporal();
   const token = generarToken();
 
-  // 5. INSERT PRE_REGISTRO (DISPARA TRIGGER)
+  // 7. INSERT PRE_REGISTRO (DISPARA TRIGGER)
 
   const [preResult] = await pool.query(
     `INSERT INTO pre_registro (
@@ -91,7 +113,7 @@ export const preRegisterService = async (data) => {
 
   const preregistroId = preResult.insertId;
 
-  // 6. OBTENER USUARIO GENERADO POR TRIGGER
+  // 8. OBTENER USUARIO GENERADO POR TRIGGER
 
   const [userRows] = await pool.query(
     `SELECT id, cliente_id 
@@ -117,11 +139,11 @@ export const preRegisterService = async (data) => {
     [telefono, nombre, rfc, curp, clienteId],
   );
 
-  // 8. ENVIAR A REM
+  // 9. ENVIAR A REM
 
   await sendToRem(clienteId);
 
-  // 9. ENVIAR CORREO
+  // 10. ENVIAR CORREO
 
   enviarCorreo(correo, passwordTemp, token);
 

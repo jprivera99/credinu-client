@@ -2,7 +2,7 @@ export interface AuthUser {
   id: number;
   nombre: string;
   usuario: string;
-  email?: string | null;
+  correo?: string | null;
   perfil_id: number;
   cliente_id: number;
 }
@@ -34,7 +34,7 @@ export interface ClientProfile {
   apellido_materno: string;
   rfc: string;
   curp: string;
-  email: string | null;
+  correo: string | null;
   telefono_movil: string | null;
   domicilio_cp: string | null;
   domicilio_calle: string | null;
@@ -42,7 +42,7 @@ export interface ClientProfile {
 }
 
 export interface UpdateClientProfilePayload {
-  email?: string | null;
+  correo?: string | null;
   telefono_movil?: string | null;
   domicilio_cp?: string | null;
   domicilio_calle?: string | null;
@@ -58,7 +58,7 @@ export type RegisterPayload = {
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string;
-  email: string;
+  correo: string;
   telefono?: string;
   rfc?: string;
   curp?: string;
@@ -95,14 +95,10 @@ export type validateCodePayload = {
 
 export type ValidateCodeResponse = {
   success: boolean;
-  message: string;
-  data: {
-    success: boolean;
-    result: {
-      user: string;
-      validated_at: string;
-      type: string;
-      match: boolean;
-    };
+  result: {
+    user: string;
+    validated_at: string;
+    type: string;
+    match: boolean;
   };
 };
