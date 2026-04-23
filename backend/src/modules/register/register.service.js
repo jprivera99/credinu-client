@@ -1,6 +1,5 @@
 import { pool } from "../../config/db.js";
 import crypto from "crypto";
-import { updatePersonRem } from "../rem/rem.service.js";
 
 // PRE REGISTER (USANDO TRIGGER)
 export const preRegisterService = async (data) => {
@@ -139,20 +138,7 @@ export const preRegisterService = async (data) => {
     [telefono, nombre, rfc, curp, clienteId],
   );
 
-  // 9. ENVIAR A REM
-
-  await updatePersonRem({
-    id: clienteId,
-    telefono_movil: telefono,
-    nombre,
-    apellido_paterno,
-    apellido_materno,
-    nacimiento_fecha: fecha_nacimiento,
-    rfc,
-    curp,
-  });
-
-  // 10. ENVIAR CORREO
+  // 9. ENVIAR CORREO
 
   enviarCorreo(correo, passwordTemp, token);
 

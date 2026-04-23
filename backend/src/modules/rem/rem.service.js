@@ -139,7 +139,7 @@ export const updatePersonRem = async ({
 
     await insertProcessRemLog({
       tipo: "ACTUALIZACION_CLIENTE",
-      id_rem: id,
+      id_relacion: id,
       url,
       data: body,
       respuesta: data,

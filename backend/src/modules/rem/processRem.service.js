@@ -2,7 +2,7 @@ import { pool } from "../../config/db.js";
 
 export const insertProcessRemLog = async ({
   tipo = "",
-  proceso = "REM",
+  proceso = "",
   id_rem = null,
   relacion = "Cliente",
   id_relacion = null,
