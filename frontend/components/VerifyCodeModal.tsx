@@ -14,6 +14,8 @@ export function VerifyCodeModal({
   telefono,
   onVerify,
   onResend,
+  onClose,
+  error,
 }: VerifyCodeModalProps) {
   const [codigo, setCodigo] = useState("");
   const [timer, setTimer] = useState(60);
@@ -35,10 +37,10 @@ export function VerifyCodeModal({
     }
   }, [timer]);
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 6) {
-      setCodigo(value);
+      setCodigo(e.target.value);
     }
   };
 
@@ -67,6 +69,8 @@ export function VerifyCodeModal({
         <h3 className="privacy-modal-title">Verifica tu código</h3>
 
         <div className="privacy-modal-content">
+
+          {error && <div className="register-error">{error}</div>}
           <p>Ingresa el código enviado a:</p>
           <strong>{telefono}</strong>
 

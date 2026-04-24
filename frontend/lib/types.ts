@@ -64,6 +64,13 @@ export type RegisterPayload = {
   curp?: string;
 };
 
+export type RegisterDataPayload = {
+  correo: string;
+  telefono?: string;
+  rfc?: string;
+  curp?: string;
+};
+
 export type PdfDataPayload = {
   nombre: string;
   apellido_paterno: string;

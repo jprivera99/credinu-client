@@ -7,9 +7,7 @@ import { registerRequest } from "@/lib/api";
 import { sendCodeRequest } from "@/lib/api";
 import { calcularRFCRequest } from "@/lib/api";
 import { calcularCURPRequest } from "@/lib/api";
-import { validateEmailRequest } from "@/lib/api";
-import { validatePhoneRequest } from "@/lib/api";
-import { validateRFCRequest } from "@/lib/api";
+import { validateRegisterRequest } from "@/lib/api";
 import { getInstitutionsRequest } from "@/lib/api";
 import { getInstitutionRequest } from "@/lib/api";
 import { validateCodeRequest } from "@/lib/api";
@@ -353,27 +351,12 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-      const [emailRes, phoneRes, rfcRes] = await Promise.all([
-        validateEmailRequest(form.correo),
-        validatePhoneRequest(form.telefono),
-        validateRFCRequest(form.rfc),
-      ]);
-
-      console.log("Email:", emailRes);
-      console.log("Phone:", phoneRes);
-      console.log("RFC:", rfcRes);
-
-      if (emailRes.exists) {
-        return setError("El correo ya está registrado");
-      }
-
-      if (phoneRes.exists) {
-        return setError("El teléfono ya está registrado");
-      }
-
-      if (rfcRes.exists) {
-        return setError("El RFC ya está registrado");
-      }
+      await validateRegisterRequest({
+        correo: form.correo,
+        telefono: form.telefono,
+        rfc: form.rfc,
+        curp: form.curp,
+      });
 
       setShowConfirmModal(true);
     } catch (err: unknown) {

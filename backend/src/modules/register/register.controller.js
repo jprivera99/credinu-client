@@ -1,54 +1,22 @@
 import e from "express";
-import { ok } from "../../utils/responses.js";
+import { ok, fail } from "../../utils/responses.js";
+import { calcularRFCUtils } from "../../utils/rfc.js";
+import { calcularCURPUtils } from "../../utils/curp.js";
 import {
   preRegisterService,
-  validateEmailService,
-  validatePhoneService,
-  validateRFCService,
   validateSMSService,
   sendCodeService,
   validateCodeService,
   validateRegisterService,
-  calcularRFCService,
-  calcularCURPService,
 } from "./register.service.js";
 
-export const preRegister = async (req, res, next) => {
+export const preRegister = async (req, res) => {
   try {
     const data = await preRegisterService(req.body);
     return ok(res, data, "Registro exitoso");
   } catch (error) {
-    return next(error);
-  }
-};
-
-export const validateEmail = async (req, res, next) => {
-  try {
-    const { correo } = req.query;
-    const data = await validateEmailService(correo);
-    return ok(res, data);
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const validatePhone = async (req, res, next) => {
-  try {
-    const telefono = req.query.phone.replace(/\D/g, "");
-    const data = await validatePhoneService(telefono);
-    return ok(res, data);
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const validateRFCController = async (req, res, next) => {
-  try {
-    const { rfc } = req.query;
-    const data = await validateRFCService(rfc);
-    return ok(res, data);
-  } catch (error) {
-    return next(error);
+    console.error("ERROR PRE-REGISTER:", error);
+    return fail(res, error.message || "Error interno", 500);
   }
 };
 
@@ -82,12 +50,12 @@ export const validateCode = async (req, res, next) => {
 };
 
 // VALIDAR REGISTRO
-export const validateRegister = async (req, res, next) => {
+export const validateRegister = async (req, res) => {
   try {
     const data = await validateRegisterService(req.body);
-    return ok(res, data, "Datos válidos");
+    return ok(res, data, "Validación correcta");
   } catch (error) {
-    return next(error);
+    return fail(res, error.message, 400);
   }
 };
 
@@ -106,7 +74,7 @@ export const calcularRFCController = async (req, res) => {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 
-    const rfc = calcularRFCService(
+    const rfc = calcularRFCUtils(
       nombre,
       apellido_paterno,
       apellido_materno,
@@ -142,7 +110,7 @@ export const calcularCURPController = async (req, res) => {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 
-    const curp = calcularCURPService(
+    const curp = calcularCURPUtils(
       nombre,
       apellido_paterno,
       apellido_materno,
