@@ -4,6 +4,8 @@ import { enviarCorreoPreRegistroCliente } from "../mail/mail.service.js";
 
 // PRE REGISTER (USANDO TRIGGER)
 export const preRegisterService = async (data) => {
+  console.log("Iniciando pre-registro...");
+
   const {
     correo,
     telefono,
@@ -20,13 +22,13 @@ export const preRegisterService = async (data) => {
     genero,
   } = data;
 
-  // 1. VALIDACIONES BÁSICAS
-
+  // 1. VALIDACIONES
+  console.log("Validando datos básicos...");
   if (!correo) throw new Error("Correo requerido");
   if (!telefono) throw new Error("Teléfono requerido");
 
-  // 2. VALIDAR CORREO
-
+  // 2. CORREO
+  console.log("Validando correo...");
   const [correoRows] = await pool.query(
     `SELECT id FROM sis_usuario WHERE usuario = ? LIMIT 1`,
     [correo],
@@ -36,8 +38,8 @@ export const preRegisterService = async (data) => {
     throw new Error("Correo ya registrado");
   }
 
-  // 3. VALIDAR TELÉFONO
-
+  // 3. TELÉFONO
+  console.log("Validando teléfono...");
   const [telefonoRows] = await pool.query(
     `SELECT id FROM cliente WHERE telefono_movil = ? LIMIT 1`,
     [telefono],
@@ -47,8 +49,8 @@ export const preRegisterService = async (data) => {
     throw new Error("Teléfono ya registrado");
   }
 
-  // 4. VALIDAR RFC
-
+  // 4. RFC
+  console.log("Validando RFC...");
   const [rfcRows] = await pool.query(
     `SELECT id FROM cliente WHERE rfc = ? LIMIT 1`,
     [rfc],
@@ -58,8 +60,8 @@ export const preRegisterService = async (data) => {
     throw new Error("RFC ya registrado");
   }
 
-  // 5. VALIDAR CURP
-
+  // 5. CURP
+  console.log("Validando CURP...");
   const [curpRows] = await pool.query(
     `SELECT id FROM cliente WHERE curp = ? LIMIT 1`,
     [curp],
@@ -69,30 +71,20 @@ export const preRegisterService = async (data) => {
     throw new Error("CURP ya registrado");
   }
 
-  // 6. GENERAR PASSWORD Y TOKEN
-
+  // 6. PASSWORD Y TOKEN
+  console.log("Generando password y token...");
   const passwordTemp = generarPasswordTemporal();
   const token = generarToken();
 
-  // 7. INSERT PRE_REGISTRO (DISPARA TRIGGER)
-
+  // 7. INSERT PRE_REGISTRO
+  console.log("Insertando pre_registro...");
   const [preResult] = await pool.query(
     `INSERT INTO pre_registro (
-            correo,
-            telefono,
-            nombre,
-            apellido_paterno,
-            apellido_materno,
-            rfc,
-            curp,
-            institucion,
-            account_id,
-            nacimiento_fecha,
-            nacimiento_estado,
-            nacimiento_entidad_federativa,
-            genero,
-            token
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      correo, telefono, nombre, apellido_paterno, apellido_materno,
+      rfc, curp, institucion, account_id,
+      nacimiento_fecha, nacimiento_estado,
+      nacimiento_entidad_federativa, genero, token
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       correo,
       telefono,
@@ -112,14 +104,12 @@ export const preRegisterService = async (data) => {
   );
 
   const preregistroId = preResult.insertId;
+  console.log("pre_registro insertado:", preregistroId);
 
-  // 8. OBTENER USUARIO GENERADO POR TRIGGER
-
+  // 8. TRIGGER
+  console.log("Buscando usuario generado por trigger...");
   const [userRows] = await pool.query(
-    `SELECT id, cliente_id 
-         FROM sis_usuario 
-         WHERE preregistro_id = ? 
-         LIMIT 1`,
+    `SELECT id, cliente_id FROM sis_usuario WHERE preregistro_id = ? LIMIT 1`,
     [preregistroId],
   );
 
@@ -130,17 +120,22 @@ export const preRegisterService = async (data) => {
   const userId = userRows[0].id;
   const clienteId = userRows[0].cliente_id;
 
-  // 9. ACTUALIZAR CLIENTE
+  console.log("Usuario generado:", userId);
+  console.log("Cliente generado:", clienteId);
 
+  // 9. UPDATE CLIENTE
+  console.log("Actualizando cliente...");
   await pool.query(
     `UPDATE cliente 
-         SET telefono_movil = ?, nombre = ?, rfc = ?, curp = ?
-         WHERE id = ?`,
+     SET telefono_movil = ?, nombre = ?, rfc = ?, curp = ?
+     WHERE id = ?`,
     [telefono, nombre, rfc, curp, clienteId],
   );
 
-  // 10. ENVIAR CORREO
+  console.log("Cliente actualizado");
 
+  // 10. CORREO
+  console.log("Enviando correo...");
   await enviarCorreoPreRegistroCliente({
     correo,
     token,
@@ -148,7 +143,16 @@ export const preRegisterService = async (data) => {
     pass: passwordTemp,
   });
 
-  return ok(res, data, "Registro exitoso");
+  console.log("Correo enviado");
+
+  console.log("Pre-registro completado");
+
+  return {
+    success: true,
+    preregistroId,
+    userId,
+    clienteId,
+  };
 };
 
 // PASSWORD TEMPORAL
