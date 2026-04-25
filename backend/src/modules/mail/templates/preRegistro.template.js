@@ -4,7 +4,8 @@ export const preRegistroTemplate = ({
   pass,
   token,
 }) => {
-  const link = `${process.env.FRONT_URL}/cambiar-password?key=${token}&key2=${pass}`;
+  const link = `${process.env.FRONT_URL}/change-password?token=${token}`;
+  console.log("FRONT_URL:", process.env.FRONT_URL);
 
   return `
     <div style="text-align:center; width:80%;">

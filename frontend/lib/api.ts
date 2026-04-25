@@ -154,3 +154,12 @@ export function validateCodeRequest(payload: validateCodePayload) {
     body: JSON.stringify(payload),
   });
 }
+
+// ---------------Api para actualizar contraseña
+
+export function changePasswordRequest(payload: ChangePasswordPayload) {
+  return apiFetch<{ updated: boolean }>("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

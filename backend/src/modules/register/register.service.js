@@ -1,6 +1,7 @@
 import { pool } from "../../config/db.js";
 import crypto from "crypto";
 import { enviarCorreoPreRegistroCliente } from "../mail/mail.service.js";
+import { generateSecureToken, hashToken } from "../utils/token.js";
 
 // PRE REGISTER (USANDO TRIGGER)
 export const preRegisterService = async (data) => {

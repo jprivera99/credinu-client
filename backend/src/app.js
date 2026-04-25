@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import { env } from "./config/env.js";
@@ -13,6 +14,9 @@ import institutionsRoutes from "./modules/institutions/institutions.router.js";
 import remRoutes from "./modules/rem/rem.routes.js";
 
 const app = express();
+
+// Cargar variables de entorno
+dotenv.config();
 
 // Seguridad básica
 app.use(helmet());

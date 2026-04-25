@@ -17,12 +17,6 @@ router.post(
 
 router.get("/me", verifyToken, me);
 
-router.post(
-    "/change-password",
-    verifyToken,
-    changePasswordValidator,
-    /* validateRequest, */
-    changePassword
-);
+router.post("/change-password",verifyToken,changePasswordValidator,changePassword);
 
 export default router;

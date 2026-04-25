@@ -25,15 +25,17 @@ export const me = async (req, res, next) => {
 };
 
 export const changePassword = async (req, res, next) => {
-    try {
-        const { currentPassword, newPassword } = req.body;
-        const data = await changePasswordService(
-            req.user.id,
-            currentPassword,
-            newPassword
-        );
-        return ok(res, data, "Password actualizado");
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    const { token, tempPass, newPassword } = req.body;
+
+    const data = await changePasswordService({
+      token,
+      tempPass,
+      newPassword,
+    });
+
+    return ok(res, data, "Contraseña actualizada");
+  } catch (error) {
+    next(error);
+  }
 };
