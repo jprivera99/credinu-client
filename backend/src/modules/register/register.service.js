@@ -180,6 +180,16 @@ export const validateRegisterService = async ({
   if (correoRows.length > 0) {
     throw new Error("Correo ya registrado");
   }
+  
+  // VALIDAR CORREO 2
+  const [emailRows] = await pool.query(
+    `SELECT id FROM sis_usuario WHERE usuario = ? LIMIT 1`,
+    [correo],
+  );
+
+  if (emailRows.length > 0) {
+    throw new Error("Correo ya registrado");
+  }
 
   // VALIDAR TELÉFONO
   const [telefonoRows] = await pool.query(

@@ -12,12 +12,35 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendEmail = async ({ to, subject, html }) => {
-  return await transporter.sendMail({
-    from: `"CrediNú" <${process.env.MAIL_FROM}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    console.log("Configurando transporter...");
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    console.log("Enviando correo a:", to);
+
+    const info = await transporter.sendMail({
+      from: `"CrediNú" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+
+    console.log("Correo enviado:", info.messageId);
+
+    return info;
+  } catch (error) {
+    console.error("Error enviando correo:", error);
+    throw error;
+  }
 };
 
 export const enviarCorreoPreRegistroCliente = async ({
@@ -26,6 +49,8 @@ export const enviarCorreoPreRegistroCliente = async ({
   nombre,
   pass,
 }) => {
+  console.log("Preparando correo para:", correo);
+
   const html = preRegistroTemplate({
     nombre,
     correo,
