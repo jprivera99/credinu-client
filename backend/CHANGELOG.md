@@ -2,7 +2,92 @@
 
 Todos los cambios importantes del sistema se documentan en este archivo.
 
-Formato basado en **Keep a Changelog** y versionado semántico.
+Formato basado en --Keep a Changelog-- y versionado semántico.
+
+---
+
+## [1.4.3] - 2026-04-24 
+
+### Agregado
+
+- Sistema de envío de correos:
+
+  - `mail.service.js`
+  - `preRegistro.template.js`
+- Envío de correo de pre-registro con:
+
+  - Usuario (correo)
+  - Password temporal
+  - Link de cambio de contraseña
+
+### Agregado
+
+- Endpoint `POST /auth/change-password`:
+
+  - Cambio de contraseña mediante token
+  - Validación de token
+  - Actualización segura de contraseña
+
+### Mejorado
+
+- Manejo de errores centralizado con `errorHandler`.
+
+### Corregido
+
+- Error `ok is not defined` en servicios.
+- Error de conexión SMTP (`ECONNREFUSED`).
+- Configuración de variables de entorno para envío de correos.
+
+---
+
+## [1.4.2] - 2026-04-23
+
+### Agregado
+
+- Generación de password temporal.
+- Generación de token de activación.
+- Actualización de datos en tabla `cliente` después del registro.
+
+### Agregado
+
+- Endpoint para envío de código de verificación (SMS / WhatsApp).
+- Endpoint para validación de código (`validateCode`).
+
+---
+
+## [1.4.1] - 2026-04-22
+
+### Agregado
+
+- Endpoint `POST /register/validate-register` para validación previa.
+- Validaciones de:
+
+  - Correo duplicado (`sis_usuario`)
+  - Teléfono duplicado (`cliente`)
+  - RFC duplicado
+  - CURP duplicado
+
+### Agregado
+
+- Validación de formato:
+
+  - RFC (regex)
+  - CURP (regex)
+
+---
+
+## [1.4.0] - 2026-04-21
+
+### Agregado
+
+- Creación del módulo `register` en backend con estructura:
+
+  - `register.controller.js`
+  - `register.routes.js`
+  - `register.service.js`
+- Endpoint `POST /register/pre-register` para pre-registro de usuarios.
+- Inserción en tabla `pre_registro`.
+- Integración con trigger para creación automática de usuario.
 
 ---
 

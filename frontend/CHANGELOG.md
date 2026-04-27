@@ -2,11 +2,112 @@
 
 Todos los cambios importantes del sistema se documentan en este archivo.
 
-Formato basado en **Keep a Changelog** y versionado semántico.
+Formato basado en --Keep a Changelog-- y versionado semántico.
 
 ---
 
-## [1.5.0] - 2026-04-17
+## [1.3.6] - 2026-04-24
+
+### Agregado
+
+- Flujo completo de registro:
+
+  - Confirmación de datos
+  - Selección de canal
+  - Envío de código
+  - Validación de código
+  - Registro final
+
+### Agregado
+
+- Modales adicionales:
+
+  - `SuccessRegisterModal`
+  - `LoadingModal`
+  - `FinalRegisterModal`
+
+### Agregado
+
+- Página `/change-password`:
+
+  - Lectura de token desde URL
+  - Validación de contraseña
+  - Confirmación de contraseña
+
+### Agregado
+
+- Modal de éxito en cambio de contraseña con redirección automática.
+
+### Corregido
+
+- Error en uso de `Promise.all`.
+- Error en envío de parámetros en `validateRegisterRequest`.
+- Error de `setState` dentro de `useEffect`.
+- Manejo correcto del token en cambio de contraseña.
+- Corrección en visualización de modales.
+
+---
+
+## [1.3.5] - 2026-04-23
+
+### Agregado
+
+- Generación automática de:
+
+  - RFC (preview)
+  - CURP (preview)
+- Integración de:
+
+  - `sendCodeRequest`
+  - `validateCodeRequest`
+
+### Agregado
+
+- Modales:
+
+  - `ConfirmDataModal`
+  - `SelectChannelModal`
+  - `VerifyCodeModal`
+
+---
+
+## [1.3.4] - 2026-04-22
+
+### Agregado
+
+- Integración con backend:
+
+  - `validateRegisterRequest`
+- Validaciones en frontend:
+
+  - Correo válido
+  - Teléfono de 10 dígitos
+  - Mayoría de edad
+  - Campos obligatorios
+
+### Mejorado
+
+- Manejo de errores desde backend en frontend.
+
+---
+
+## [1.3.3] - 2026-04-21
+
+### Agregado
+
+- Creación de pantalla `/register`.
+- Formulario inicial de registro.
+- Campos:
+
+  - Correo
+  - Nombre
+  - Apellidos
+  - Fecha de nacimiento
+  - Teléfono
+
+---
+
+## [1.3.2] - 2026-04-17
 
 ### Agregado
 - Implementación completa del flujo de registro en `register/page.tsx`.
@@ -53,7 +154,7 @@ Formato basado en **Keep a Changelog** y versionado semántico.
 
 ---
 
-## [1.4.0] - 2026-04-15
+## [1.3.1] - 2026-04-15
 ### Agregado
 - Se agrega input con el select de estado de nacimiento en register/pgae.tsx
 

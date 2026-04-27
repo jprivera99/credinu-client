@@ -1,7 +1,6 @@
 import { pool } from "../../config/db.js";
 import crypto from "crypto";
 import { enviarCorreoPreRegistroCliente } from "../mail/mail.service.js";
-import { generateSecureToken, hashToken } from "../utils/token.js";
 
 // PRE REGISTER (USANDO TRIGGER)
 export const preRegisterService = async (data) => {
@@ -135,7 +134,17 @@ export const preRegisterService = async (data) => {
 
   console.log("Cliente actualizado");
 
-  // 10. CORREO
+  // 10. UPDATE USUARIO (TOKEN_EXPIRY)
+  console.log("Actualizando usuario con token y password...");
+  const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+  await pool.query(
+    `UPDATE sis_usuario 
+     SET token_expiry = ?
+     WHERE id = ?`,
+    [tokenExpiry, clienteId],
+  );
+
+  // 11. CORREO
   console.log("Enviando correo...");
   await enviarCorreoPreRegistroCliente({
     correo,
