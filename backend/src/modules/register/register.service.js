@@ -135,13 +135,13 @@ export const preRegisterService = async (data) => {
   console.log("Cliente actualizado");
 
   // 10. UPDATE USUARIO (TOKEN_EXPIRY)
-  console.log("Actualizando usuario con token y password...");
+  console.log("Actualizando usuario (token_expiry)...");
   const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
   await pool.query(
     `UPDATE sis_usuario 
      SET token_expiry = ?
      WHERE id = ?`,
-    [tokenExpiry, clienteId],
+    [tokenExpiry, userId],
   );
 
   // 11. CORREO

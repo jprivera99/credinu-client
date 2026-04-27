@@ -244,22 +244,46 @@ export default function RegisterPage() {
     { id: number; nombre: string }[]
   >([]);
 
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false);
+  const [errorInstitutions, setErrorInstitutions] = useState("");
+
   useEffect(() => {
+    let mounted = true;
+
     const obtenerInstituciones = async () => {
       try {
+        setLoadingInstitutions(true);
+        setErrorInstitutions("");
+
+        console.log("Cargando instituciones...");
+
         const data = await getInstitutionsRequest();
+
+        if (!mounted) return;
 
         console.log("Instituciones:", data);
 
-        if (!data) return;
+        if (!data || !Array.isArray(data)) {
+          throw new Error("Formato inválido de instituciones");
+        }
 
         setInstitutions(data);
       } catch (err) {
-        console.error("Error instituciones:", err);
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+      } finally {
+        if (mounted) setLoadingInstitutions(false);
       }
     };
 
     obtenerInstituciones();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   //selected institution
@@ -621,12 +645,24 @@ export default function RegisterPage() {
             className="register-input register-span-2"
           />
 
+          {errorInstitutions && (
+            <div className="register-error">{errorInstitutions}</div>
+          )}
+
           <select
             name="institucion"
             onChange={handleSelectChange}
             className="register-input"
+            disabled={loadingInstitutions || !!errorInstitutions}
           >
-            <option value="">Seleccionar</option>
+            <option value="">
+              {loadingInstitutions
+                ? "Cargando instituciones..."
+                : errorInstitutions
+                  ? "Error al cargar instituciones"
+                  : "Seleccionar"}
+            </option>
+
             {institutions.map((inst) => (
               <option key={inst.id} value={inst.id}>
                 {inst.nombre}
