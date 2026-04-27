@@ -153,10 +153,6 @@ export const preRegisterService = async (data) => {
     pass: passwordTemp,
   });
 
-  console.log("Correo enviado");
-
-  console.log("Pre-registro completado");
-
   return {
     success: true,
     preregistroId,

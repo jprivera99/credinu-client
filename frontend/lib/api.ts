@@ -163,3 +163,13 @@ export function changePasswordRequest(payload: ChangePasswordPayload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function sendRecoverPasswordRequest(payload: { correo: string }) {
+  return apiFetch<{ success: boolean; message?: string }>(
+    "/auth/send-recover-password",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { pool } from "../../config/db.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../utils/appError.js";
+import { enviarCorreoRecuperacion } from "../../modules/mail/mail.service.js";
 
 const CLIENTE_PROFILE_IDS = [2, 4];
 
@@ -109,10 +110,7 @@ export const getMeService = async (userId) => {
   return rows[0];
 };
 
-export const changePasswordService = async ({
-  token,
-  newPassword,
-}) => {
+export const changePasswordService = async ({ token, newPassword }) => {
   // 1. Buscar preregistro
   const [rows] = await pool.query(
     `SELECT * FROM sis_usuario WHERE token = ? AND token_expiry > NOW() LIMIT 1`,
@@ -134,6 +132,38 @@ export const changePasswordService = async ({
      WHERE id = ?`,
     [newHash, user.id],
   );
+
+  return true;
+};
+
+export const SendEmailRecoveryPassword = async ({ correo }) => {
+  // 1. Buscar usuario
+  const [rows] = await pool.query(
+    `SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) AS nombre FROM sis_usuario WHERE usuario = ? LIMIT 1`,
+    [correo],
+  );
+  if (rows.length === 0) {
+    throw new Error("Correo no registrado");
+  }
+
+  const user = rows[0];
+
+  // 2. Generar token y expiración
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+  await pool.query(
+    `UPDATE sis_usuario 
+         SET token_expiry = ?, token = ?
+         WHERE id = ?`,
+    [tokenExpiry, token, user.id],
+  );
+
+  // 3. Envio de correo
+  await enviarCorreoRecuperacion({
+    correo,
+    token,
+    nombre: user.nombre,
+  });
 
   return true;
 };

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { preRegistroTemplate } from "./templates/preRegistro.template.js";
+import { resetPasswordTemplate } from "./templates/resetPassword.template.js";
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,
@@ -61,6 +62,22 @@ export const enviarCorreoPreRegistroCliente = async ({
   return await sendEmail({
     to: correo,
     subject: "Validación Correo CrediNú",
+    html,
+  });
+};
+
+export const enviarCorreoRecuperacion = async ({ correo, token, nombre }) => {
+  console.log("Preparando correo de recuperación para:", correo);
+
+  const html = resetPasswordTemplate({
+    nombre,
+    correo,
+    token,
+  });
+
+  return await sendEmail({
+    to: correo,
+    subject: "Recuperación de contraseña CrediNú",
     html,
   });
 };

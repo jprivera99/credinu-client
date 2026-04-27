@@ -1,7 +1,8 @@
 import {
     loginService,
     getMeService,
-    changePasswordService
+    changePasswordService,
+    SendEmailRecoveryPassword
 } from "./auth.service.js";
 import { ok } from "../../utils/responses.js";
 
@@ -37,4 +38,18 @@ export const changePassword = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const sendRecoverPassword = async (req, res, next) => {
+  try {
+    const { correo } = req.body;
+    
+    await SendEmailRecoveryPassword({
+      correo: correo,
+    });
+
+    return ok(res, null, "Correo de recuperación enviado");
+    } catch (error) {
+        next(error);
+    }
 };

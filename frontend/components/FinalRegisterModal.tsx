@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 
-export const FinalRegisterModal = ({ onFinish }: any) => {
+interface Props {
+  onFinish: () => void;
+}
+
+export const FinalRegisterModal = ({ onFinish }: Props) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
