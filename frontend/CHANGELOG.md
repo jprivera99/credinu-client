@@ -2,7 +2,7 @@
 
 Todos los cambios importantes del sistema se documentan en este archivo.
 
-Formato basado en --Keep a Changelog-- y versionado semántico.
+Formato basado en **Keep a Changelog** y versionado semántico.
 
 ---
 
