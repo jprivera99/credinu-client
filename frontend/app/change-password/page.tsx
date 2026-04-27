@@ -9,34 +9,83 @@ export default function CambiarPasswordPage() {
   const params = useSearchParams();
   const router = useRouter();
 
-  const token = params.get("key");
+  const token = params.get("token");
 
   const [password, setPassword] = useState<string>("");
   const [confirm, setConfirm] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showSuccessModal, setShowSuccessModal] =
-    useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
-  const handleSubmit = async () => {
-    if (loading) return;
+  const passwordRules = [
+    {
+      label: "Entre 8 y 16 caracteres",
+      valid: password.length >= 8 && password.length <= 16,
+    },
+    {
+      label: "Al menos una mayúscula",
+      valid: /[A-Z]/.test(password),
+    },
+    {
+      label: "Al menos una minúscula",
+      valid: /[a-z]/.test(password),
+    },
+    {
+      label: "Al menos un número",
+      valid: /\d/.test(password),
+    },
+    {
+      label: "Las contraseñas coinciden",
+      valid: password && confirm && password === confirm,
+    },
+  ];
 
-    setError("");
+  // VALIDACIÓN COMPLETA
+  const validatePassword = () => {
+    const newErrors: string[] = [];
 
-    if (!token) {
-      return setError("El enlace no es válido o ha expirado");
+    if (!password || !confirm) {
+      newErrors.push("Debes ingresar y confirmar la contraseña");
+      return newErrors;
     }
 
-    const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,16}$/;
+    if (password.length < 8 || password.length > 16) {
+      newErrors.push("Debe tener entre 8 y 16 caracteres");
+    }
 
-    if (!regex.test(password)) {
-      return setError(
-        "La contraseña debe tener entre 8 y 16 caracteres, incluir mayúsculas, minúsculas y números",
-      );
+    if (!/[A-Z]/.test(password)) {
+      newErrors.push("Debe incluir al menos una mayúscula");
+    }
+
+    if (!/[a-z]/.test(password)) {
+      newErrors.push("Debe incluir al menos una minúscula");
+    }
+
+    if (!/\d/.test(password)) {
+      newErrors.push("Debe incluir al menos un número");
     }
 
     if (password !== confirm) {
-      return setError("Las contraseñas no coinciden");
+      newErrors.push("Las contraseñas no coinciden");
+    }
+
+    return newErrors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // IMPORTANTE
+    if (loading) return;
+
+    setErrors([]);
+
+    if (!token) {
+      return setErrors(["El enlace no es válido o ha expirado"]);
+    }
+
+    const validationErrors = validatePassword();
+
+    if (validationErrors.length > 0) {
+      return setErrors(validationErrors);
     }
 
     try {
@@ -50,9 +99,9 @@ export default function CambiarPasswordPage() {
       setShowSuccessModal(true);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        setErrors([err.message]);
       } else {
-        setError("Error al cambiar la contraseña");
+        setErrors(["Error al cambiar la contraseña"]);
       }
     } finally {
       setLoading(false);
@@ -70,52 +119,82 @@ export default function CambiarPasswordPage() {
         <h2>Enlace inválido</h2>
         <p>El enlace ha expirado o no es válido.</p>
 
-        <button onClick={() => router.push("/login")}>
-          Ir a login
-        </button>
+        <button onClick={() => router.push("/login")}>Ir a login</button>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 400, margin: "auto" }}>
-      <h2>Cambiar contraseña</h2>
+    <div className="login-screen">
+      <div className="login-panel">
+        <section className="login-copy">
+          <p className="login-wordmark">
+            <span className="login-wordmark-left">Credi</span>
+            <span className="login-wordmark-right">nU</span>
+          </p>
+          <p>
+            Cambiar tu contraseña es fácil. Solo ingresa tu nueva contraseña y
+            confírmala para mantener tu cuenta segura.
+          </p>
+        </section>
 
-      {error && (
-        <div style={{ color: "red", marginBottom: 10 }}>
-          {error}
-        </div>
-      )}
+        <form className="login-form" onSubmit={handleSubmit}>
+          <h2 className="login-title">Cambio de contraseña</h2>
 
-      <input
-        type="password"
-        placeholder="Nueva contraseña"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        disabled={loading}
-        style={{ display: "block", marginBottom: 10, width: "100%" }}
-      />
+          {/* ERRORES */}
+          {errors.length > 0 && (
+            <div style={{ color: "red", marginBottom: 10 }}>
+              <ul style={{ paddingLeft: 18 }}>
+                {errors.map((err, i) => (
+                  <li key={i}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      <input
-        type="password"
-        placeholder="Confirmar contraseña"
-        value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
-        disabled={loading}
-        style={{ display: "block", marginBottom: 10, width: "100%" }}
-      />
+          <label>
+            <span>Nueva contraseña</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </label>
 
-      <button
-        onClick={handleSubmit}
-        disabled={loading || !password || !confirm}
-        style={{ width: "100%" }}
-      >
-        {loading ? "Guardando..." : "Guardar"}
-      </button>
-      
-      {showSuccessModal && (
-        <SuccessPasswordModal onFinish={handleFinish} />
-      )}
+          <label>
+            <span>Confirmar contraseña</span>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              disabled={loading}
+            />
+          </label>
+
+          <div style={{ marginTop: 10, fontSize: 13 }}>
+            {passwordRules.map((rule, i) => (
+              <div
+                key={i}
+                style={{
+                  color: rule.valid ? "green" : "#999",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span>{rule.valid ? "✔" : "○"}</span>
+                {rule.label}
+              </div>
+            ))}
+          </div>
+
+          <button type="submit" disabled={loading || !password || !confirm}>
+            {loading ? "Guardando..." : "Guardar"}
+          </button>
+        </form>
+      </div>
+      {showSuccessModal && <SuccessPasswordModal onFinish={handleFinish} />}
     </div>
   );
 }

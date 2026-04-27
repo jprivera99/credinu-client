@@ -111,12 +111,11 @@ export const getMeService = async (userId) => {
 
 export const changePasswordService = async ({
   token,
-  tempPass,
   newPassword,
 }) => {
   // 1. Buscar preregistro
   const [rows] = await pool.query(
-    `SELECT * FROM pre_registro WHERE token = ? AND token_expiry > NOW() LIMIT 1`,
+    `SELECT * FROM sis_usuario WHERE token = ? AND token_expiry > NOW() LIMIT 1`,
     [token],
   );
 
@@ -124,31 +123,16 @@ export const changePasswordService = async ({
     throw new Error("Token inválido o expirado");
   }
 
-  const preregistro = rows[0];
+  const user = rows[0];
 
-  // 2. Obtener usuario
-  const [userRows] = await pool.query(
-    `SELECT * FROM sis_usuario WHERE preregistro_id = ? LIMIT 1`,
-    [preregistro.id],
-  );
+  const newHash = await bcrypt.hash(newPassword.trim(), 10);
 
-  if (userRows.length === 0) {
-    throw new Error("Usuario no encontrado");
-  }
-
-  const user = userRows[0];
-
-  // 3. Validar contraseña temporal (igual que PHP)
-  if (user.password !== tempPass) {
-    throw new Error("Contraseña temporal inválida");
-  }
-
-  // 4. Actualizar contraseña
+  // 2. Actualizar contraseña
   await pool.query(
     `UPDATE sis_usuario 
      SET password = ?, reestablecer = 0 
      WHERE id = ?`,
-    [newPassword, user.id],
+    [newHash, user.id],
   );
 
   return true;

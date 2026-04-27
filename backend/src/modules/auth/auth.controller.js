@@ -26,11 +26,10 @@ export const me = async (req, res, next) => {
 
 export const changePassword = async (req, res, next) => {
   try {
-    const { token, tempPass, newPassword } = req.body;
+    const { token, newPassword } = req.body;
 
     const data = await changePasswordService({
       token,
-      tempPass,
       newPassword,
     });
 
