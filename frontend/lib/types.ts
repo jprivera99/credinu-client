@@ -109,3 +109,23 @@ export type ValidateCodeResponse = {
     match: boolean;
   };
 };
+
+//-------------------------------MODULO PRODUCTOS ------------------------------
+
+export type institutionItem = {
+  id: number;
+  nombre_comercial: string;
+  descripcion: string;
+  nombre?: string;
+  monto_min?: number;
+  monto_max?: number;
+  plazo_min?: number;
+  plazo_max?: number;
+  periodicidad?: string;
+  tasa?: number;
+
+  prod_simulador?: {
+    disponible_desde_mes: number;
+    disponible_desde_dia: number;
+  };
+};

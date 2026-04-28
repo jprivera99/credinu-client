@@ -1,3 +1,4 @@
+import { json } from "express";
 import { pool } from "../../config/db.js";
 
 function buildAvailabilityLabel(month, day) {
@@ -44,4 +45,44 @@ export const getProductsByAuthenticatedUser = async (userId) => {
         ),
 
     }));
+};
+
+export const getProductByInstitution = async (institucion_id) => {
+  const [productosInstitucion] = await pool.query(`
+    SELECT * 
+    FROM institucion_producto
+    WHERE institucion_id = ? 
+    AND IFNULL(borrado,0)=0
+    AND IFNULL(ocultar_cliente,0)=0
+  `, [institucion_id]);
+
+  if (!productosInstitucion.length) return [];
+
+  const [productos] = await pool.query(`SELECT * FROM producto`);
+  const mapProductos = {};
+
+  productos.forEach(p => {
+    mapProductos[p.id] = p;
+  });
+
+  for (let prod of productosInstitucion) {
+    if (prod.producto_id && mapProductos[prod.producto_id]) {
+      prod.nombre = mapProductos[prod.producto_id].nombre;
+    } else {
+      prod.nombre = "";
+    }
+
+    if (prod.id_producto_simulador) {
+      const [simulador] = await pool.query(`
+        SELECT * FROM simulador_producto WHERE id = ?
+      `, [prod.id_producto_simulador]);
+
+      prod.prod_simulador = simulador?.[0] || null;
+    } else {
+      prod.prod_simulador = null;
+    }
+  }
+
+  return productosInstitucion;
+  console.log("Productos por institución:", json(productosInstitucion));
 };

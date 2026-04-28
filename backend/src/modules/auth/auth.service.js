@@ -38,6 +38,7 @@ const buildToken = (user) => {
       perfil_id: user.perfil_id,
       cliente_id: user.cliente_id,
       usuario: user.usuario,
+      institucion_id: user.institucion_id,
     },
     env.jwtSecret,
     {
@@ -49,7 +50,7 @@ const buildToken = (user) => {
 
 export const loginService = async (usuario, password) => {
   const [rows] = await pool.query(
-    "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id FROM sis_usuario WHERE usuario = ? LIMIT 1",
+    "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id, institucion_id FROM sis_usuario WHERE usuario = ? LIMIT 1",
     [usuario],
   );
 
@@ -84,6 +85,10 @@ export const loginService = async (usuario, password) => {
 
   const token = buildToken(user);
 
+  // Logging para prueba de autenticación
+  console.log(`Usuario ${user.usuario} autenticado correctamente`);
+  console.log(`Perfil ID: ${user.perfil_id}, Cliente ID: ${user.cliente_id}, Institución ID: ${user.institucion_id}`);
+
   return {
     token,
     user: {
@@ -93,6 +98,7 @@ export const loginService = async (usuario, password) => {
       email: user.email,
       perfil_id: user.perfil_id,
       cliente_id: user.cliente_id,
+      institucion_id: user.institucion_id,
     },
   };
 };
@@ -110,6 +116,7 @@ export const getMeService = async (userId) => {
   return rows[0];
 };
 
+//Cambio de contraseña con token de recuperación
 export const changePasswordService = async ({ token, newPassword }) => {
   // 1. Buscar preregistro
   const [rows] = await pool.query(

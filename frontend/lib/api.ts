@@ -5,6 +5,7 @@ import type {
   ClientProfile,
   LoginResponse,
   ProductItem,
+  institutionItem,
   UpdateClientProfilePayload,
   RegisterPayload,
   RegisterDataPayload,
@@ -88,7 +89,7 @@ export function changePassword(payload: ChangePasswordPayload) {
   });
 }
 
-// Funciones para registro de usuarios-----------------------------------------
+// ------------------------------MODULO REGISTRO Y LOGIN ------------------------------
 
 export function registerRequest(payload: RegisterPayload) {
   return apiFetch<{ id: number; usuario: string }>("/register/pre-register", {
@@ -173,3 +174,17 @@ export function sendRecoverPasswordRequest(payload: { correo: string }) {
     },
   );
 }
+
+// ------------------------------MODULO PRODUCTO ------------------------------
+
+export function getProductosRequest() {
+  return apiFetch<institutionItem[]>("/products/institucion", {
+    method: "GET",
+    auth: true,
+  });
+}
+
+// ------------------------------MODULO COTIZACION ------------------------------
+
+
+
