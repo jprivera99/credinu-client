@@ -184,6 +184,13 @@ export function getProductosRequest() {
   });
 }
 
+export function getProductoById(producto_id: number) {
+  return apiFetch<any>(`/products/${producto_id}`, {
+    method: "GET",
+    auth: true,
+  });
+}
+
 // ------------------------------MODULO COTIZACION ------------------------------
 
 

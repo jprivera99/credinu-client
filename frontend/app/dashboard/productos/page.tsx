@@ -85,7 +85,7 @@ export default function ProductosPage() {
                 : [
                     `Monto: ${product.monto_min} - ${product.monto_max}`,
                     `Plazo: ${product.plazo_min} - ${product.plazo_max}`,
-                    `Periodicidad: ${product.periodicidad}`,
+                    `Periodicidad: ${product.descripcion || "N/A"}`,
                   ];
 
             const fecha = product.prod_simulador

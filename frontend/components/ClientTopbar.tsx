@@ -22,6 +22,7 @@ export function ClientTopbar({ user, onMenu, onLogout }: ClientTopbarProps) {
         const second = parts[1]?.[0] ?? "";
         return (first + second).toUpperCase();
     }, [user?.nombre]);
+    
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
