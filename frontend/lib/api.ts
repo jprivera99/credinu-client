@@ -187,4 +187,22 @@ export function getProductosRequest() {
 // ------------------------------MODULO COTIZACION ------------------------------
 
 
-
+export function cotizarRequest(payload: {
+  monto: number;
+  ingreso: number;
+  producto_id?: number;
+}) {
+  return apiFetch<
+    {
+      producto_id: number;
+      nombre: string;
+      monto_aprobado: number;
+      plazo: number;
+      pago_periodico: number;
+    }[]
+  >("/quotation/cotizar", {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify(payload),
+  });
+}
