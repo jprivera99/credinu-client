@@ -41,6 +41,18 @@ async function apiFetch<T>(
     headers,
   });
 
+  if (response.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
+    }
+
+    throw new Error("Sesión expirada");
+  }
+
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -185,7 +197,7 @@ export function getProductosRequest() {
 }
 
 export function getProductoById(producto_id: number) {
-  return apiFetch<any>(`/products/${producto_id}`, {
+  return apiFetch<null>(`/products/${producto_id}`, {
     method: "GET",
     auth: true,
   });
