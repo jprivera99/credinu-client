@@ -159,4 +159,5 @@ export type ApplicationItemNew = {
   estatus: string;
   estatus_id: number;
   producto?: string;
+  pago_semanal: number;
 };

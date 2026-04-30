@@ -6,7 +6,10 @@ export const cotizar = async (req, res) => {
     const institucion_id = req.user.institucion_id;
 
     if (!monto || !ingreso) {
-      return res.status(400).json({ message: "Datos incompletos" });
+      return res.status(400).json({
+        success: false,
+        message: "Datos incompletos",
+      });
     }
 
     const result = await cotizarService({
@@ -16,10 +19,18 @@ export const cotizar = async (req, res) => {
       institucion_id,
     });
 
-    res.json(result);
+    return res.json({
+      success: true,
+      data: result,
+    });
+
   } catch (error) {
     console.error("ERROR COTIZAR:", error);
-    res.status(500).json({ message: "Error al cotizar" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al cotizar",
+    });
   }
 };
 
@@ -35,9 +46,17 @@ export const getDetalle = async (req, res) => {
       institucion_id,
     });
 
-    res.json(result);
+    return res.json({
+      success: true,
+      data: result,
+    });
+
   } catch (error) {
     console.error("ERROR DETALLE:", error);
-    res.status(500).json({ message: "Error al obtener detalle" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener detalle",
+    });
   }
 };

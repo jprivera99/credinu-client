@@ -3,7 +3,24 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getDetalleCotizacion } from "@/lib/api";
-import { Pago, DetalleCotizacion } from "@/lib/types";
+
+type Pago = {
+  periodo: number;
+  saldo_inicial: number;
+  interes: number;
+  capital: number;
+  pago: number;
+  saldo_final: number;
+};
+
+type Detalle = {
+  producto: string;
+  monto: number;
+  plazo: number;
+  tasa: number;
+  pago: number;
+  tabla: Pago[];
+};
 
 export default function CotizacionDetallePage() {
   const searchParams = useSearchParams();
@@ -12,8 +29,8 @@ export default function CotizacionDetallePage() {
   const plazo = Number(searchParams.get("plazo") || 0);
   const producto_id = Number(searchParams.get("producto_id") || 0);
 
+  const [info, setInfo] = useState<Detalle | null>(null);
   const [tabla, setTabla] = useState<Pago[]>([]);
-  const [info, setInfo] = useState<DetalleCotizacion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,9 +45,12 @@ export default function CotizacionDetallePage() {
         producto_id,
       });
 
+      console.log("DETALLE RESPONSE:", data);
+
       setInfo(data);
-      setTabla(data.tabla);
+      setTabla(data?.tabla || []);
     } catch (err: any) {
+      console.error(err);
       setError(err.message || "Error al obtener detalle");
     } finally {
       setLoading(false);
@@ -47,98 +67,68 @@ export default function CotizacionDetallePage() {
     <section className="portal-stack">
       {/* HEADER */}
       <div className="hero-panel">
-        <div>
-          <h2>Detalle de cotización</h2>
-          <p>Simulación financiera del crédito</p>
-        </div>
+        <h2>Detalle de cotización</h2>
+        <p>Simulación real del crédito</p>
       </div>
 
-      {/* LOADING */}
       {loading && <p style={{ textAlign: "center" }}>Cargando...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* ERROR */}
-      {error && (
-        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
-      )}
-
-      {/* RESUMEN */}
+      {/* INFO TIPO CARD */}
       {info && (
         <div
-          className="product-card"
           style={{
+            border: "1px solid #0ea5e9",
+            borderRadius: "8px",
+            padding: "15px",
             textAlign: "center",
-            border: "2px solid #1e3a8a",
+            marginBottom: "20px",
           }}
         >
-          <h3 style={{ marginBottom: "10px" }}>{info.producto}</h3>
+          <h3 style={{ color: "red" }}>{info.producto}</h3>
 
-          <p>
-            💰 Monto: <b>${info.monto.toLocaleString()}</b>
-          </p>
-          <p>
-            📆 Plazo: <b>{info.plazo}</b>
-          </p>
-          <p>
-            📊 Tasa: <b>{info.tasa}%</b>
-          </p>
-
-          <h2 style={{ color: "#1e3a8a", marginTop: "10px" }}>
-            Pago por periodo: ${info.pago.toLocaleString()}
-          </h2>
+          <p>Monto: <b>${info.monto.toLocaleString()}</b></p>
+          <p>Plazo: <b>{info.plazo}</b></p>
+          <p>Tasa: <b>{info.tasa}%</b></p>
+          <p>Pago: <b>${info.pago.toLocaleString()}</b></p>
         </div>
       )}
 
-      {/* TABLA AMORTIZACIÓN */}
+      {/* TABLA */}
       {tabla.length > 0 && (
-        <div className="product-card">
-          <h4 style={{ textAlign: "center", marginBottom: "10px" }}>
-            Tabla de amortización
-          </h4>
+        <div
+          style={{
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            padding: "10px",
+            overflowX: "auto",
+          }}
+        >
+          <table style={{ width: "100%", fontSize: "12px" }}>
+            <thead style={{ background: "#f3f4f6" }}>
+              <tr>
+                <th>#</th>
+                <th>Saldo Inicial</th>
+                <th>Interés</th>
+                <th>Capital</th>
+                <th>Pago</th>
+                <th>Saldo Final</th>
+              </tr>
+            </thead>
 
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                fontSize: "12px",
-                borderCollapse: "collapse",
-              }}
-            >
-              <thead>
-                <tr style={{ background: "#1e3a8a", color: "#fff" }}>
-                  <th>#</th>
-                  <th>Saldo Inicial</th>
-                  <th>Interés</th>
-                  <th>Capital</th>
-                  <th>Pago</th>
-                  <th>Saldo Final</th>
+            <tbody>
+              {tabla.map((row) => (
+                <tr key={row.periodo}>
+                  <td>{row.periodo}</td>
+                  <td>${row.saldo_inicial.toLocaleString()}</td>
+                  <td>${row.interes.toLocaleString()}</td>
+                  <td>${row.capital.toLocaleString()}</td>
+                  <td>${row.pago.toLocaleString()}</td>
+                  <td>${row.saldo_final.toLocaleString()}</td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {tabla.map((row, index) => (
-                  <tr
-                    key={row.periodo}
-                    style={{
-                      background: index % 2 === 0 ? "#f9f9f9" : "#fff",
-                    }}
-                  >
-                    <td>{row.periodo}</td>
-                    <td>${row.saldo_inicial.toLocaleString()}</td>
-                    <td style={{ color: "red" }}>
-                      ${row.interes.toLocaleString()}
-                    </td>
-                    <td style={{ color: "green" }}>
-                      ${row.capital.toLocaleString()}
-                    </td>
-                    <td>
-                      <b>${row.pago.toLocaleString()}</b>
-                    </td>
-                    <td>${row.saldo_final.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
