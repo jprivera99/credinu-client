@@ -14,6 +14,7 @@ import institutionsRoutes from "./modules/institutions/institutions.router.js";
 import productsRoutes from "./modules/products/products.routes.js";
 import remRoutes from "./modules/rem/rem.routes.js";
 import quotationRoutes from "./modules/quotation/quotation.routes.js";
+import applicationRoutes from "./modules/applications/applications.routes.js";
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/institutions', institutionsRoutes);
 app.use("/api/rem", remRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/quotation", quotationRoutes);
+app.use("/api/applications", applicationRoutes);
 
 // Middleware de manejo de errores
 app.use(errorHandler);

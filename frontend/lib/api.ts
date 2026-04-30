@@ -1,5 +1,5 @@
 import type {
-  ApplicationItem,
+  ApplicationItemNew,
   AuthUser,
   ChangePasswordPayload,
   ClientProfile,
@@ -41,7 +41,7 @@ async function apiFetch<T>(
     headers,
   });
 
-  if (response.status === 401) {
+  /* if (response.status === 401) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
 
@@ -51,7 +51,7 @@ async function apiFetch<T>(
     }
 
     throw new Error("Sesión expirada");
-  }
+  } */
 
   const json = await response.json().catch(() => ({}));
 
@@ -77,9 +77,12 @@ export function getClientProducts() {
   return apiFetch<ProductItem[]>("/products", { auth: true });
 }
 
+// ------------------------------MODULO SOLICITUDES ------------------------------
 export function getClientApplications() {
-  return apiFetch<ApplicationItem[]>("/applications", { auth: true });
+  return apiFetch<ApplicationItemNew[]>("/applications", { auth: true });
 }
+
+// ------------------------------MODULO PERFIL ------------------------------
 
 export function getClientProfile() {
   return apiFetch<ClientProfile>("/user/me", { auth: true });

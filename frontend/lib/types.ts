@@ -129,3 +129,14 @@ export type institutionItem = {
     disponible_desde_dia: number;
   };
 };
+
+//-------------------------------MODULO SOLICITUDES ------------------------------
+
+export type ApplicationItemNew = {
+  id: number;
+  fecha_registro: string;
+  monto_credito: number;
+  estatus: string;
+  estatus_id: number;
+  producto?: string;
+};
