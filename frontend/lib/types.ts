@@ -130,6 +130,26 @@ export type institutionItem = {
   };
 };
 
+//-------------------------------MODULO COTIZACIONES -----------------------------
+
+export type Pago = {
+  periodo: number;
+  saldo_inicial: number;
+  interes: number;
+  capital: number;
+  pago: number;
+  saldo_final: number;
+};
+
+export type DetalleCotizacion = {
+  producto: string;
+  monto: number;
+  plazo: number;
+  tasa: number;
+  pago: number;
+  tabla: Pago[];
+};
+
 //-------------------------------MODULO SOLICITUDES ------------------------------
 
 export type ApplicationItemNew = {

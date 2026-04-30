@@ -2,134 +2,145 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getProductoById } from "@/lib/api";
-
-type Pago = {
-  periodo: number;
-  saldo_inicial: number;
-  interes: number;
-  capital: number;
-  pago: number;
-  saldo_final: number;
-};
+import { getDetalleCotizacion } from "@/lib/api";
+import { Pago, DetalleCotizacion } from "@/lib/types";
 
 export default function CotizacionDetallePage() {
   const searchParams = useSearchParams();
 
   const monto = Number(searchParams.get("monto") || 0);
   const plazo = Number(searchParams.get("plazo") || 0);
-  const producto_id = Number(searchParams.get("producto_id"));
+  const producto_id = Number(searchParams.get("producto_id") || 0);
 
   const [tabla, setTabla] = useState<Pago[]>([]);
-  const [producto, setProducto] = useState<any>(null);
+  const [info, setInfo] = useState<DetalleCotizacion | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    cargarProducto();
-  }, []);
-
-  useEffect(() => {
-    if (producto) generarTabla();
-  }, [producto]);
-
-  const cargarProducto = async () => {
+  const cargarDetalle = async () => {
     try {
-      const data = await getProductoById(producto_id);
-      setProducto(data);
-    } catch (err) {
-      console.error("Error cargando producto", err);
-    }
-  };
+      setLoading(true);
+      setError("");
 
-  const getTasaFromSimulador = () => {
-    try {
-      if (!producto?.prod_simulador?.tasas_periodos) return 0;
-
-      const tasas = JSON.parse(producto.prod_simulador.tasas_periodos);
-
-      const tasaStr = tasas?.tasa?.quincenal;
-
-      if (!tasaStr) return 0;
-
-      return Number(tasaStr) / 100;
-    } catch {
-      return 0;
-    }
-  };
-
-  const generarTabla = () => {
-    if (!monto || !plazo) return;
-
-    const tasa = getTasaFromSimulador();
-
-    const pagos: Pago[] = [];
-    let saldo = monto;
-
-    const pagoFijo =
-      (monto * tasa) / (1 - Math.pow(1 + tasa, -plazo));
-
-    for (let i = 1; i <= plazo; i++) {
-      const interes = saldo * tasa;
-      const capital = pagoFijo - interes;
-      const saldoFinal = saldo - capital;
-
-      pagos.push({
-        periodo: i,
-        saldo_inicial: Number(saldo.toFixed(2)),
-        interes: Number(interes.toFixed(2)),
-        capital: Number(capital.toFixed(2)),
-        pago: Number(pagoFijo.toFixed(2)),
-        saldo_final: Number(saldoFinal.toFixed(2)),
+      const data = await getDetalleCotizacion({
+        monto,
+        plazo,
+        producto_id,
       });
 
-      saldo = saldoFinal;
+      setInfo(data);
+      setTabla(data.tabla);
+    } catch (err: any) {
+      setError(err.message || "Error al obtener detalle");
+    } finally {
+      setLoading(false);
     }
-
-    setTabla(pagos);
   };
+
+  useEffect(() => {
+    if (monto && plazo && producto_id) {
+      cargarDetalle();
+    }
+  }, [monto, plazo, producto_id]);
 
   return (
     <section className="portal-stack">
+      {/* HEADER */}
       <div className="hero-panel">
         <div>
           <h2>Detalle de cotización</h2>
-          <p>Simulación con tasa real del producto</p>
+          <p>Simulación financiera del crédito</p>
         </div>
       </div>
 
-      <div className="product-card" style={{ textAlign: "center" }}>
-        <p>Monto: <b>${monto}</b></p>
-        <p>Plazo: <b>{plazo}</b></p>
-        <p>Tasa: <b>{(getTasaFromSimulador() * 100).toFixed(3)}%</b></p>
-      </div>
+      {/* LOADING */}
+      {loading && <p style={{ textAlign: "center" }}>Cargando...</p>}
 
-      <div className="product-card">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", fontSize: "12px" }}>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Saldo</th>
-                <th>Interés</th>
-                <th>Capital</th>
-                <th>Pago</th>
-                <th>Saldo Final</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tabla.map((row) => (
-                <tr key={row.periodo}>
-                  <td>{row.periodo}</td>
-                  <td>${row.saldo_inicial}</td>
-                  <td>${row.interes}</td>
-                  <td>${row.capital}</td>
-                  <td>${row.pago}</td>
-                  <td>${row.saldo_final}</td>
+      {/* ERROR */}
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+      )}
+
+      {/* RESUMEN */}
+      {info && (
+        <div
+          className="product-card"
+          style={{
+            textAlign: "center",
+            border: "2px solid #1e3a8a",
+          }}
+        >
+          <h3 style={{ marginBottom: "10px" }}>{info.producto}</h3>
+
+          <p>
+            💰 Monto: <b>${info.monto.toLocaleString()}</b>
+          </p>
+          <p>
+            📆 Plazo: <b>{info.plazo}</b>
+          </p>
+          <p>
+            📊 Tasa: <b>{info.tasa}%</b>
+          </p>
+
+          <h2 style={{ color: "#1e3a8a", marginTop: "10px" }}>
+            Pago por periodo: ${info.pago.toLocaleString()}
+          </h2>
+        </div>
+      )}
+
+      {/* TABLA AMORTIZACIÓN */}
+      {tabla.length > 0 && (
+        <div className="product-card">
+          <h4 style={{ textAlign: "center", marginBottom: "10px" }}>
+            Tabla de amortización
+          </h4>
+
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                fontSize: "12px",
+                borderCollapse: "collapse",
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#1e3a8a", color: "#fff" }}>
+                  <th>#</th>
+                  <th>Saldo Inicial</th>
+                  <th>Interés</th>
+                  <th>Capital</th>
+                  <th>Pago</th>
+                  <th>Saldo Final</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {tabla.map((row, index) => (
+                  <tr
+                    key={row.periodo}
+                    style={{
+                      background: index % 2 === 0 ? "#f9f9f9" : "#fff",
+                    }}
+                  >
+                    <td>{row.periodo}</td>
+                    <td>${row.saldo_inicial.toLocaleString()}</td>
+                    <td style={{ color: "red" }}>
+                      ${row.interes.toLocaleString()}
+                    </td>
+                    <td style={{ color: "green" }}>
+                      ${row.capital.toLocaleString()}
+                    </td>
+                    <td>
+                      <b>${row.pago.toLocaleString()}</b>
+                    </td>
+                    <td>${row.saldo_final.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

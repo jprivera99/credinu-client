@@ -16,6 +16,7 @@ import remRoutes from "./modules/rem/rem.routes.js";
 import quotationRoutes from "./modules/quotation/quotation.routes.js";
 import applicationRoutes from "./modules/applications/applications.routes.js";
 
+
 const app = express();
 
 // Cargar variables de entorno

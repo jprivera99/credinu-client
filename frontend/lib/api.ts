@@ -14,6 +14,7 @@ import type {
   SendCodePayload,
   validateCodePayload,
   ValidateCodeResponse,
+  DetalleCotizacion,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -223,6 +224,18 @@ export function cotizarRequest(payload: {
       pago_periodico: number;
     }[]
   >("/quotation/cotizar", {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getDetalleCotizacion(payload: {
+  monto: number;
+  plazo: number;
+  producto_id: number;
+}) {
+  return apiFetch<DetalleCotizacion>("/quotation/detalle", {
     method: "POST",
     auth: true,
     body: JSON.stringify(payload),

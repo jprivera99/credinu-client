@@ -125,7 +125,8 @@ export default function CotizacionPage() {
                 </h4>
 
                 <p style={{ textAlign: "center" }}>
-                  Préstamo hasta por: <b>${res.monto_aprobado}</b>
+                  Préstamo hasta por:{" "}
+                  <b>${res.monto_aprobado.toLocaleString()}</b>
                 </p>
 
                 <p style={{ textAlign: "center" }}>
@@ -133,7 +134,7 @@ export default function CotizacionPage() {
                 </p>
 
                 <p style={{ textAlign: "center" }}>
-                  Pago: <b>${res.pago_periodico}</b>
+                  Pago: <b>${res.pago_periodico.toLocaleString()}</b>
                 </p>
 
                 <div style={{ textAlign: "center", marginTop: "10px" }}>
@@ -158,6 +159,10 @@ export default function CotizacionPage() {
             ))}
           </div>
         </>
+      )}
+
+      {resultados.length === 0 && !loading && (
+        <p style={{ textAlign: "center" }}>No hay resultados</p>
       )}
     </section>
   );
