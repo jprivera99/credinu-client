@@ -4,6 +4,7 @@ export const cotizar = async (req, res) => {
   try {
     const { monto, ingreso, producto_id } = req.body;
     const institucion_id = req.user.institucion_id;
+    const cliente_id = req.user.id;
 
     if (!monto || !ingreso) {
       return res.status(400).json({
@@ -17,6 +18,7 @@ export const cotizar = async (req, res) => {
       ingreso: Number(ingreso),
       producto_id: producto_id ? Number(producto_id) : null,
       institucion_id,
+      cliente_id,
     });
 
     return res.json({
@@ -38,6 +40,7 @@ export const getDetalle = async (req, res) => {
   try {
     const { monto, plazo, producto_id } = req.body;
     const institucion_id = req.user.institucion_id;
+    const cliente_id = req.user.cliente_id;
 
     const result = await detalleService({
       monto,

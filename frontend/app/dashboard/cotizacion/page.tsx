@@ -38,23 +38,35 @@ export default function CotizacionPage() {
   };
 
   return (
-    <div className="register-screen">
-      <div className="register-panel">
+    <section className="portal-stack">
 
-        {/* HEADER */}
-        <div className="register-header">
-          <h2>Cotizador</h2>
+      {/* HEADER */}
+      <div className="hero-panel">
+        <div>
+          <p className="hero-kicker">Seguimiento</p>
+          <h2>Cotizador de crédito</h2>
           <p>Captura la información y presiona Cotizar</p>
         </div>
+      </div>
 
-        {/* ERROR */}
+      {/* FORMULARIO */}
+      <div className="hero-panel">
+
         {error && <div className="register-error">{error}</div>}
 
-        {/* FORM */}
-        <div className="register-grid">
+        {/* INPUTS CENTRADOS */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+            maxWidth: "500px",
+            margin: "0 auto",
+          }}
+        >
           <input
             type="number"
-            placeholder="Ingreso recibido en tu última nómina"
+            placeholder="Ingreso recibido"
             value={ingreso}
             onChange={(e) => setIngreso(e.target.value)}
             className="register-input"
@@ -62,71 +74,94 @@ export default function CotizacionPage() {
 
           <input
             type="number"
-            placeholder="¿Cuánto dinero necesitas?"
+            placeholder="Monto solicitado"
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
             className="register-input"
           />
         </div>
 
-        <button
-          onClick={handleCotizar}
-          disabled={loading}
-          className="register-submit"
-        >
-          {loading ? "COTIZANDO..." : "COTIZAR"}
-        </button>
-
-        {/* RESULTADOS */}
-        {resultados.length > 0 && (
-          <>
-            <div className="register-header" style={{ marginTop: "20px" }}>
-              <h3>Créditos disponibles para ti</h3>
-              <p>(Puedes modificar el monto y plazo en DETALLES)</p>
-            </div>
-
-            {/* GRID */}
-            <div className="register-grid">
-              {resultados.map((prod) => (
-                <div key={prod.producto_id} className="product-card">
-
-                  <h4 className="hero-kicker" style={{ color: "red" }}>
-                    {prod.nombre}
-                  </h4>
-
-                  <p>
-                    Préstamo hasta por:
-                    <br />
-                    <b>${prod.monto_aprobado.toLocaleString()}</b>
-                  </p>
-
-                  <p>
-                    en <b>{prod.plazo}</b> pagos
-                  </p>
-
-                  <p>
-                    Pago semanal:
-                    <br />
-                    <b>${prod.pago_semanal?.toLocaleString()}</b>
-                  </p>
-
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`
-                      )
-                    }
-                    className="register-submit"
-                    style={{ marginTop: "10px" }}
-                  >
-                    DETALLES
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        {/* BOTON CENTRADO */}
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <button
+            onClick={handleCotizar}
+            disabled={loading}
+            className="register-submit"
+            style={{
+              width: "300px",
+              maxWidth: "100%",
+            }}
+          >
+            {loading ? "COTIZANDO..." : "COTIZAR"}
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* RESULTADOS (ABAJO, NO A LA DERECHA) */}
+      {resultados.length > 0 && (
+        <div className="hero-panel">
+
+          <div>
+            <h3>Créditos disponibles para ti</h3>
+            <p>(Puedes modificar el monto y plazo en DETALLES)</p>
+          </div>
+
+          {/* GRID CORRECTO */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "20px",
+            }}
+          >
+            {resultados.map((prod) => (
+              <div
+                key={prod.producto_id}
+                className="product-card"
+                style={{
+                  padding: "20px",
+                  borderRadius: "12px",
+                  background: "#fff",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                  textAlign: "center",
+                }}
+              >
+                <h4 className="hero-kicker" style={{ color: "red" }}>
+                  {prod.nombre}
+                </h4>
+
+                <p>
+                  Préstamo hasta por:
+                  <br />
+                  <b>${prod.monto_aprobado.toLocaleString()}</b>
+                </p>
+
+                <p>
+                  en <b>{prod.plazo}</b> pagos
+                </p>
+
+                <p>
+                  Pago semanal:
+                  <br />
+                  <b>${prod.pago_semanal?.toLocaleString()}</b>
+                </p>
+
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`
+                    )
+                  }
+                  className="register-submit"
+                  style={{ marginTop: "10px" }}
+                >
+                  DETALLES
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
