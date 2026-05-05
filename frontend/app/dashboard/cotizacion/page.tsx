@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { cotizarRequest, detalleRequest } from "@/lib/api";
+import { useRouter } from "next/navigation";
+
 
 export default function CotizacionPage() {
-
   const [monto, setMonto] = useState("");
   const [ingreso, setIngreso] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [resultados, setResultados] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [detalle, setDetalle] = useState<any>(null);
 
   const [loading, setLoading] = useState(false);
-  const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+
+  
 
   // ================== COTIZAR ==================
   const handleCotizar = async () => {
@@ -33,6 +38,7 @@ export default function CotizacionPage() {
       });
 
       setResultados(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || "Error al cotizar");
     } finally {
@@ -40,28 +46,8 @@ export default function CotizacionPage() {
     }
   };
 
-  // ================== DETALLE ==================
-  const handleDetalle = async (prod: any) => {
-    try {
-      setLoadingDetalle(true);
-
-      const res = await detalleRequest({
-        producto_id: prod.producto_id,
-        monto: prod.monto_aprobado,
-        plazo: prod.plazo,
-      });
-
-      setDetalle(res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingDetalle(false);
-    }
-  };
-
   return (
     <section className="portal-stack">
-
       {/* HEADER */}
       <div className="hero-panel">
         <p className="hero-kicker">Seguimiento</p>
@@ -71,7 +57,6 @@ export default function CotizacionPage() {
 
       {/* FORM */}
       <div className="hero-panel">
-
         {error && <div className="register-error">{error}</div>}
 
         <div
@@ -147,15 +132,19 @@ export default function CotizacionPage() {
                 <p>
                   Pago:
                   <br />
-                  <b>${prod.pago_periodico?.toLocaleString()}</b>
+                  <b>${prod.pago_semanal?.toLocaleString()}</b>
                 </p>
 
                 <button
-                  onClick={() => handleDetalle(prod)}
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
+                    )
+                  }
                   className="register-submit"
                   style={{ marginTop: "10px" }}
                 >
-                  {loadingDetalle ? "CARGANDO..." : "DETALLES"}
+                  DETALLES
                 </button>
               </div>
             ))}
@@ -166,12 +155,17 @@ export default function CotizacionPage() {
       {/* DETALLE (ABAJO COMO PHP) */}
       {detalle && (
         <div className="hero-panel">
-
           <h3>{detalle.producto}</h3>
 
-          <p><b>Monto:</b> ${detalle.monto.toLocaleString()}</p>
-          <p><b>Plazo:</b> {detalle.plazo}</p>
-          <p><b>Tasa:</b> {detalle.tasa}%</p>
+          <p>
+            <b>Monto:</b> ${detalle.monto.toLocaleString()}
+          </p>
+          <p>
+            <b>Plazo:</b> {detalle.plazo}
+          </p>
+          <p>
+            <b>Tasa:</b> {detalle.tasa}%
+          </p>
 
           <div style={{ overflowX: "auto", marginTop: "20px" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -187,6 +181,7 @@ export default function CotizacionPage() {
               </thead>
 
               <tbody>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {detalle.tabla.map((row: any) => (
                   <tr key={row.periodo}>
                     <td>{row.periodo}</td>
@@ -200,10 +195,8 @@ export default function CotizacionPage() {
               </tbody>
             </table>
           </div>
-
         </div>
       )}
-
     </section>
   );
 }

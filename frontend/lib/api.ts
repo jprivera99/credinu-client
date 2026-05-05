@@ -60,18 +60,18 @@ async function apiFetch<T>(
     json = await response.json();
   } catch (e) {
     const text = await response.text();
+    console.error("Respuesta no JSON:", text);
+
     throw new Error(text || "Respuesta inválida del servidor");
   }
 
   if (!response.ok) {
     throw new Error(
-      typeof json?.message === "string"
-        ? json.message
-        : JSON.stringify(json?.message || "Error desconocido"),
+      typeof json?.message === "string" ? json.message : JSON.stringify(json),
     );
   }
 
-  return (json.data ?? json) as T;
+  return json.data ?? json;
 }
 
 export function loginRequest(payload: { usuario: string; password: string }) {
@@ -240,26 +240,15 @@ export function cotizarRequest(payload: {
   });
 }
 
-export function getDetalleCotizacion(payload: {
-  monto: number;
-  plazo: number;
-  producto_id: number;
-}) {
-  return apiFetch<DetalleCotizacion>("/quotation/detalle", {
-    method: "POST",
-    auth: true,
-    body: JSON.stringify(payload),
-  });
-}
 
 export function detalleRequest(data: {
   producto_id: number;
   monto: number;
   plazo: number;
 }) {
-  return apiFetch<any>("/quotation/detalle", {
+  return apiFetch<DetalleCotizacion>("/quotation/detalle", {
     method: "POST",
     auth: true,
-    body: data,
+    body: JSON.stringify(data),
   });
 }

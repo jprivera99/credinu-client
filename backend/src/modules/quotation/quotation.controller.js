@@ -38,17 +38,14 @@ export const cotizar = async (req, res) => {
 
 export const getDetalle = async (req, res) => {
   try {
-    const { monto, plazo, producto_id } = req.query;
-
+    const { monto, plazo, producto_id } = req.body;
     const institucion_id = req.user.institucion_id;
-    const cliente_id = req.user.id;
 
     const result = await detalleService({
-      monto: Number(monto),
-      plazo: Number(plazo),
-      producto_id: Number(producto_id),
+      monto,
+      plazo,
+      producto_id,
       institucion_id,
-      cliente_id,
     });
 
     return res.json({
@@ -61,7 +58,7 @@ export const getDetalle = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Error al obtener detalle",
+      message: error.message || "Error al obtener detalle",
     });
   }
 };

@@ -2,6 +2,7 @@
 
 import { getProductByInstitutionQuotation } from "../products/products.service.js";
 import { calcularAdelantoNomina } from "../../utils/cotizador.js";
+import { pool } from "../../config/db.js";
 
 export const cotizarService = async ({
   monto,
