@@ -1,111 +1,61 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getDetalleCotizacion } from "@/lib/api";
+import { detalleRequest } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 
-type Pago = {
-  periodo: number;
-  saldo_inicial: number;
-  interes: number;
-  capital: number;
-  pago: number;
-  saldo_final: number;
-};
+export default function DetallePage() {
+  const params = useSearchParams();
 
-type Detalle = {
-  producto: string;
-  monto: number;
-  plazo: number;
-  tasa: number;
-  pago: number;
-  tabla: Pago[];
-};
+  const producto_id = Number(params.get("producto_id"));
+  const monto = Number(params.get("monto"));
+  const plazo = Number(params.get("plazo"));
 
-export default function CotizacionDetallePage() {
-  const searchParams = useSearchParams();
-
-  const monto = Number(searchParams.get("monto") || 0);
-  const plazo = Number(searchParams.get("plazo") || 0);
-  const producto_id = Number(searchParams.get("producto_id") || 0);
-
-  const [info, setInfo] = useState<Detalle | null>(null);
-  const [tabla, setTabla] = useState<Pago[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const cargarDetalle = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await getDetalleCotizacion({
-        monto,
-        plazo,
-        producto_id,
-      });
-
-      console.log("DETALLE RESPONSE:", data);
-
-      setInfo(data);
-      setTabla(data?.tabla || []);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Error al obtener detalle");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (monto && plazo && producto_id) {
-      cargarDetalle();
+    const fetch = async () => {
+      try {
+        const res = await detalleRequest({
+          producto_id,
+          monto,
+          plazo,
+        });
+
+        setData(res);
+      } catch (error) {
+        console.error("DETALLE ERROR:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (producto_id && monto && plazo) {
+      fetch();
     }
-  }, [monto, plazo, producto_id]);
+  }, [producto_id, monto, plazo]);
+
+  if (loading) return <p>Cargando...</p>;
+  if (!data) return <p>No hay datos</p>;
 
   return (
     <section className="portal-stack">
-      {/* HEADER */}
       <div className="hero-panel">
-        <h2>Detalle de cotización</h2>
-        <p>Simulación real del crédito</p>
+        <h2>{data.producto}</h2>
+
+        <p><b>Monto:</b> ${data.monto.toLocaleString()}</p>
+        <p><b>Plazo:</b> {data.plazo}</p>
+        <p><b>Tasa:</b> {data.tasa}%</p>
+        <p><b>Pago:</b> ${data.pago.toFixed(2)}</p>
       </div>
 
-      {loading && <p style={{ textAlign: "center" }}>Cargando...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <div className="hero-panel">
+        <h3>Tabla de amortización</h3>
 
-      {/* INFO TIPO CARD */}
-      {info && (
-        <div
-          style={{
-            border: "1px solid #0ea5e9",
-            borderRadius: "8px",
-            padding: "15px",
-            textAlign: "center",
-            marginBottom: "20px",
-          }}
-        >
-          <h3 style={{ color: "red" }}>{info.producto}</h3>
-
-          <p>Monto: <b>${info.monto.toLocaleString()}</b></p>
-          <p>Plazo: <b>{info.plazo}</b></p>
-          <p>Tasa: <b>{info.tasa}%</b></p>
-          <p>Pago: <b>${info.pago.toLocaleString()}</b></p>
-        </div>
-      )}
-
-      {/* TABLA */}
-      {tabla.length > 0 && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "10px",
-            overflowX: "auto",
-          }}
-        >
-          <table style={{ width: "100%", fontSize: "12px" }}>
-            <thead style={{ background: "#f3f4f6" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table className="table">
+            <thead>
               <tr>
                 <th>#</th>
                 <th>Saldo Inicial</th>
@@ -115,22 +65,21 @@ export default function CotizacionDetallePage() {
                 <th>Saldo Final</th>
               </tr>
             </thead>
-
             <tbody>
-              {tabla.map((row) => (
+              {data.tabla.map((row: any) => (
                 <tr key={row.periodo}>
                   <td>{row.periodo}</td>
-                  <td>${row.saldo_inicial.toLocaleString()}</td>
-                  <td>${row.interes.toLocaleString()}</td>
-                  <td>${row.capital.toLocaleString()}</td>
-                  <td>${row.pago.toLocaleString()}</td>
-                  <td>${row.saldo_final.toLocaleString()}</td>
+                  <td>${row.saldo_inicial.toFixed(2)}</td>
+                  <td>${row.interes.toFixed(2)}</td>
+                  <td>${row.capital.toFixed(2)}</td>
+                  <td>${row.pago.toFixed(2)}</td>
+                  <td>${row.saldo_final.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
     </section>
   );
 }

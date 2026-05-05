@@ -38,15 +38,17 @@ export const cotizar = async (req, res) => {
 
 export const getDetalle = async (req, res) => {
   try {
-    const { monto, plazo, producto_id } = req.body;
+    const { monto, plazo, producto_id } = req.query;
+
     const institucion_id = req.user.institucion_id;
-    const cliente_id = req.user.cliente_id;
+    const cliente_id = req.user.id;
 
     const result = await detalleService({
-      monto,
-      plazo,
-      producto_id,
+      monto: Number(monto),
+      plazo: Number(plazo),
+      producto_id: Number(producto_id),
       institucion_id,
+      cliente_id,
     });
 
     return res.json({

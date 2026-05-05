@@ -54,10 +54,21 @@ async function apiFetch<T>(
     throw new Error("Sesión expirada");
   } */
 
-  const json = await response.json().catch(() => ({}));
+  let json;
+
+  try {
+    json = await response.json();
+  } catch (e) {
+    const text = await response.text();
+    throw new Error(text || "Respuesta inválida del servidor");
+  }
 
   if (!response.ok) {
-    throw new Error(json.message || "Ocurrió un error");
+    throw new Error(
+      typeof json?.message === "string"
+        ? json.message
+        : JSON.stringify(json?.message || "Error desconocido"),
+    );
   }
 
   return (json.data ?? json) as T;
@@ -209,7 +220,6 @@ export function getProductoById(producto_id: number) {
 
 // ------------------------------MODULO COTIZACION ------------------------------
 
-
 export function cotizarRequest(payload: {
   monto: number;
   ingreso: number;
@@ -239,5 +249,17 @@ export function getDetalleCotizacion(payload: {
     method: "POST",
     auth: true,
     body: JSON.stringify(payload),
+  });
+}
+
+export function detalleRequest(data: {
+  producto_id: number;
+  monto: number;
+  plazo: number;
+}) {
+  return apiFetch<any>("/quotation/detalle", {
+    method: "POST",
+    auth: true,
+    body: data,
   });
 }

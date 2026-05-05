@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { cotizarRequest } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { cotizarRequest, detalleRequest } from "@/lib/api";
 
 export default function CotizacionPage() {
-  const router = useRouter();
 
   const [monto, setMonto] = useState("");
   const [ingreso, setIngreso] = useState("");
   const [resultados, setResultados] = useState<any[]>([]);
+  const [detalle, setDetalle] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [error, setError] = useState("");
 
+  // ================== COTIZAR ==================
   const handleCotizar = async () => {
     setError("");
+    setDetalle(null);
 
     if (!monto || !ingreso) {
       setError("Ingresa monto e ingreso");
@@ -37,24 +40,40 @@ export default function CotizacionPage() {
     }
   };
 
+  // ================== DETALLE ==================
+  const handleDetalle = async (prod: any) => {
+    try {
+      setLoadingDetalle(true);
+
+      const res = await detalleRequest({
+        producto_id: prod.producto_id,
+        monto: prod.monto_aprobado,
+        plazo: prod.plazo,
+      });
+
+      setDetalle(res);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingDetalle(false);
+    }
+  };
+
   return (
     <section className="portal-stack">
 
       {/* HEADER */}
       <div className="hero-panel">
-        <div>
-          <p className="hero-kicker">Seguimiento</p>
-          <h2>Cotizador de crédito</h2>
-          <p>Captura la información y presiona Cotizar</p>
-        </div>
+        <p className="hero-kicker">Seguimiento</p>
+        <h2>Cotizador de crédito</h2>
+        <p>Captura la información y presiona Cotizar</p>
       </div>
 
-      {/* FORMULARIO */}
+      {/* FORM */}
       <div className="hero-panel">
 
         {error && <div className="register-error">{error}</div>}
 
-        {/* INPUTS CENTRADOS */}
         <div
           style={{
             display: "grid",
@@ -81,43 +100,34 @@ export default function CotizacionPage() {
           />
         </div>
 
-        {/* BOTON CENTRADO */}
         <div style={{ textAlign: "center", marginTop: "20px" }}>
           <button
             onClick={handleCotizar}
             disabled={loading}
             className="register-submit"
-            style={{
-              width: "300px",
-              maxWidth: "100%",
-            }}
+            style={{ width: "300px", maxWidth: "100%" }}
           >
             {loading ? "COTIZANDO..." : "COTIZAR"}
           </button>
         </div>
       </div>
 
-      {/* RESULTADOS (ABAJO, NO A LA DERECHA) */}
+      {/* RESULTADOS */}
       {resultados.length > 0 && (
         <div className="hero-panel">
+          <h3>Créditos disponibles para ti</h3>
 
-          <div>
-            <h3>Créditos disponibles para ti</h3>
-            <p>(Puedes modificar el monto y plazo en DETALLES)</p>
-          </div>
-
-          {/* GRID CORRECTO */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
               gap: "20px",
+              marginTop: "20px",
             }}
           >
             {resultados.map((prod) => (
               <div
                 key={prod.producto_id}
-                className="product-card"
                 style={{
                   padding: "20px",
                   borderRadius: "12px",
@@ -126,42 +136,74 @@ export default function CotizacionPage() {
                   textAlign: "center",
                 }}
               >
-                <h4 className="hero-kicker" style={{ color: "red" }}>
-                  {prod.nombre}
-                </h4>
+                <h4 style={{ color: "red" }}>{prod.nombre}</h4>
 
                 <p>
-                  Préstamo hasta por:
-                  <br />
                   <b>${prod.monto_aprobado.toLocaleString()}</b>
                 </p>
 
-                <p>
-                  en <b>{prod.plazo}</b> pagos
-                </p>
+                <p>{prod.plazo} pagos</p>
 
                 <p>
-                  Pago semanal:
+                  Pago:
                   <br />
-                  <b>${prod.pago_semanal?.toLocaleString()}</b>
+                  <b>${prod.pago_periodico?.toLocaleString()}</b>
                 </p>
 
                 <button
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`
-                    )
-                  }
+                  onClick={() => handleDetalle(prod)}
                   className="register-submit"
                   style={{ marginTop: "10px" }}
                 >
-                  DETALLES
+                  {loadingDetalle ? "CARGANDO..." : "DETALLES"}
                 </button>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* DETALLE (ABAJO COMO PHP) */}
+      {detalle && (
+        <div className="hero-panel">
+
+          <h3>{detalle.producto}</h3>
+
+          <p><b>Monto:</b> ${detalle.monto.toLocaleString()}</p>
+          <p><b>Plazo:</b> {detalle.plazo}</p>
+          <p><b>Tasa:</b> {detalle.tasa}%</p>
+
+          <div style={{ overflowX: "auto", marginTop: "20px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f5f5f5" }}>
+                  <th>#</th>
+                  <th>Saldo Inicial</th>
+                  <th>Interés</th>
+                  <th>Capital</th>
+                  <th>Pago</th>
+                  <th>Saldo Final</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {detalle.tabla.map((row: any) => (
+                  <tr key={row.periodo}>
+                    <td>{row.periodo}</td>
+                    <td>${row.saldo_inicial.toFixed(2)}</td>
+                    <td>${row.interes.toFixed(2)}</td>
+                    <td>${row.capital.toFixed(2)}</td>
+                    <td>${row.pago.toFixed(2)}</td>
+                    <td>${row.saldo_final.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      )}
+
     </section>
   );
 }

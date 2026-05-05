@@ -36,6 +36,7 @@ export const detalleService = async ({
   plazo,
   producto_id,
   institucion_id,
+  cliente_id,
 }) => {
   const [[producto]] = await pool.query(
     `
