@@ -2,7 +2,7 @@ import { cotizarService, detalleService } from "./quotation.service.js";
 
 export const cotizar = async (req, res) => {
   try {
-    const { monto, ingreso, producto_id } = req.body;
+    const { monto, ingreso } = req.body;
     const institucion_id = req.user.institucion_id;
     const cliente_id = req.user.id;
 
@@ -16,7 +16,6 @@ export const cotizar = async (req, res) => {
     const result = await cotizarService({
       monto: Number(monto),
       ingreso: Number(ingreso),
-      producto_id: producto_id ? Number(producto_id) : null,
       institucion_id,
       cliente_id,
     });

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { cotizarRequest, detalleRequest } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
-
 export default function CotizacionPage() {
   const [monto, setMonto] = useState("");
   const [ingreso, setIngreso] = useState("");
@@ -16,8 +15,6 @@ export default function CotizacionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-
-  
 
   // ================== COTIZAR ==================
   const handleCotizar = async () => {
@@ -99,7 +96,7 @@ export default function CotizacionPage() {
 
       {/* RESULTADOS */}
       {resultados.length > 0 && (
-        <div className="hero-panel">
+        <div className="hero-grid">
           <h3>Créditos disponibles para ti</h3>
 
           <div
@@ -111,20 +108,11 @@ export default function CotizacionPage() {
             }}
           >
             {resultados.map((prod) => (
-              <div
-                key={prod.producto_id}
-                style={{
-                  padding: "20px",
-                  borderRadius: "12px",
-                  background: "#fff",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-                  textAlign: "center",
-                }}
-              >
+              <div key={prod.producto_id} className="product-card">
                 <h4 style={{ color: "red" }}>{prod.nombre}</h4>
 
                 <p>
-                  <b>${prod.monto_aprobado.toLocaleString()}</b>
+                  <b>${Number(prod.monto).toLocaleString()}</b>
                 </p>
 
                 <p>{prod.plazo} pagos</p>
@@ -132,13 +120,13 @@ export default function CotizacionPage() {
                 <p>
                   Pago:
                   <br />
-                  <b>${prod.pago_semanal?.toLocaleString()}</b>
+                  <b>${Number(prod.pago).toLocaleString()}</b>
                 </p>
 
                 <button
                   onClick={() =>
                     router.push(
-                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
+                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto}&plazo=${prod.numPagos}`,
                     )
                   }
                   className="register-submit"

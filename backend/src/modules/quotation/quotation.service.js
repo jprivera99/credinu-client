@@ -13,19 +13,20 @@ export const cotizarService = async ({
 
   const resultados = [];
 
-  if (productos[1]) {
-    const adelanto = calcularAdelantoNomina(productos[1], {
+  for (const key in productos) {
+    const prod = productos[key];
+    
+    const adelanto = calcularAdelantoNomina(prod, {
       monto,
       ingreso,
     });
 
     resultados.push({
-      producto_id: 1,
-      nombre: productos[1].nombre,
+      producto_id: prod.producto_id,
+      nombre: prod.nombre,
       monto_aprobado: adelanto.monto,
       plazo: adelanto.numPagos,
-      pago_semanal: adelanto.pago,
-      detalle: adelanto.amortizacion,
+      pago_periodico: adelanto.pago,
     });
   }
 

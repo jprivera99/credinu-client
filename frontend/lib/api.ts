@@ -223,7 +223,6 @@ export function getProductoById(producto_id: number) {
 export function cotizarRequest(payload: {
   monto: number;
   ingreso: number;
-  producto_id?: number;
 }) {
   return apiFetch<
     {
