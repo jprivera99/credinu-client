@@ -112,7 +112,7 @@ export default function CotizacionPage() {
                 <h4 style={{ color: "red" }}>{prod.nombre}</h4>
 
                 <p>
-                  <b>${Number(prod.monto).toLocaleString()}</b>
+                  <b>${Number(prod.monto_aprobado).toLocaleString()}</b>
                 </p>
 
                 <p>{prod.plazo} pagos</p>
@@ -120,13 +120,13 @@ export default function CotizacionPage() {
                 <p>
                   Pago:
                   <br />
-                  <b>${Number(prod.pago).toLocaleString()}</b>
+                  <b>${Number(prod.pago_periodico).toLocaleString()}</b>
                 </p>
 
                 <button
                   onClick={() =>
                     router.push(
-                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto}&plazo=${prod.numPagos}`,
+                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
                     )
                   }
                   className="register-submit"

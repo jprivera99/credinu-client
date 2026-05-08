@@ -9,25 +9,28 @@ export const cotizarService = async ({
   ingreso,
   institucion_id,
 }) => {
-  const productos = await getProductByInstitutionQuotation(institucion_id);
+
+  const productos =
+    await getProductByInstitutionQuotation(
+      institucion_id,
+    );
 
   const resultados = [];
 
   for (const key in productos) {
-    const prod = productos[key];
-    
-    const adelanto = calcularAdelantoNomina(prod, {
-      monto,
-      ingreso,
-    });
 
-    resultados.push({
-      producto_id: prod.producto_id,
-      nombre: prod.nombre,
-      monto_aprobado: adelanto.monto,
-      plazo: adelanto.numPagos,
-      pago_periodico: adelanto.pago,
-    });
+    const prod = productos[key];
+
+    const adelanto =
+      calcularAdelantoNomina(
+        prod,
+        {
+          monto,
+          ingreso,
+        },
+      );
+
+    resultados.push(adelanto);
   }
 
   return resultados;
@@ -49,15 +52,14 @@ export const detalleService = async ({
     AND ip.institucion_id = ?
     LIMIT 1
   `,
-    [producto_id, institucion_id]
+    [producto_id, institucion_id],
   );
 
   if (!producto) return null;
 
   const tasa = 0.025;
 
-  const pago =
-    (monto * tasa) / (1 - Math.pow(1 + tasa, -plazo));
+  const pago = (monto * tasa) / (1 - Math.pow(1 + tasa, -plazo));
 
   let saldo = monto;
   const tabla = [];
