@@ -1,40 +1,69 @@
 // services/quotation.service.js
 
 import { getProductByInstitutionQuotation } from "../products/products.service.js";
-import { calcularAdelantoNomina } from "../../utils/cotizador.js";
+import {
+  calcularAdelantoNomina,
+  calcularAnticipoAguinaldo,
+  calcularPrestamoPersonal,
+  calcularAdelantoNominaPagosFijos,
+  calcularSalarioDemanda,
+} from "../../utils/amortizacion/amortizacionConGracia.js";
 import { pool } from "../../config/db.js";
 import { json } from "express";
 
-export const cotizarService = async ({
-  monto,
-  ingreso,
-  institucion_id,
-}) => {
-
-  const productos =
-    await getProductByInstitutionQuotation(
-      institucion_id,
-    );
+export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
+  const productos = await getProductByInstitutionQuotation(institucion_id);
 
   const resultados = [];
 
   for (const key in productos) {
-
     const prod = productos[key];
 
-    const adelanto =
-      calcularAdelantoNomina(
-        prod,
-        {
+    let resultado = null;
+
+    switch (Number(prod.producto_id)) {
+      case 1:
+        resultado = calcularAdelantoNomina(prod, {
           monto,
           ingreso,
-        },
-      );
+        });
+        break;
 
-    resultados.push(adelanto);
+      case 2:
+        resultado = calcularAnticipoAguinaldo(prod, {
+          monto,
+          ingreso,
+        });
+        break;
+
+      case 3:
+        resultado = calcularPrestamoPersonal(prod, {
+          monto,
+          ingreso,
+        });
+        break;
+
+      case 4:
+        resultado = calcularAdelantoNominaPagosFijos(prod, {
+          monto,
+          ingreso,
+        });
+        break;
+
+      case 5:
+        resultado = calcularSalarioDemanda(prod, {
+          monto,
+          ingreso,
+        });
+        break;
+    }
+
+    if (resultado) {
+      resultados.push(resultado);
+    }
   }
 
-  console.log(resultados)
+  console.log(resultados);
 
   return resultados;
 };

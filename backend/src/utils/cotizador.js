@@ -1,116 +1,172 @@
 // utils/cotizador.js
 
-import { amortizacionConGracia } from "./amortizacion.js";
+import { amortizacionConGracia }
+from "./amortizacion/amortizacionConGracia.js";
 
-export const calcularAdelantoNomina = (producto, data) => {
+import { calcularPrestamoPersonal }
+from "./productos/prestamoPersonal.js";
 
-  // VARIABLES BASE
+export const calcularAdelantoNomina = (
+  producto,
+  data,
+) => {
+
   const tasaIVA = 0.16;
 
-  const ultimoIngreso = Number(data.ingreso);
-  let montoSolicitado = Number(data.monto);
+  const ultimoIngreso =
+    Number(data.ingreso);
 
-  // CAPACIDAD DE PAGO
-  const capacidadDePago = ultimoIngreso * 0.3;
-  const capacidadMensual = capacidadDePago * 2;
+  let montoSolicitado =
+    Number(data.monto);
 
-  // MONTO ADELANTO
-  let montoAdelanto = montoSolicitado;
+  const capacidadDePago =
+    ultimoIngreso * 0.3;
 
-  if (montoSolicitado > ultimoIngreso * 2) {
-    montoAdelanto = ultimoIngreso * 2;
+  const capacidadMensual =
+    capacidadDePago * 2;
+
+  let montoAdelanto =
+    montoSolicitado;
+
+  if (
+    montoSolicitado >
+    ultimoIngreso * 2
+  ) {
+
+    montoAdelanto =
+      ultimoIngreso * 2;
   }
 
-  // TASAS
   const comisionApertura =
-    Number(producto.comision_apertura || 0) / 100;
+    Number(
+      producto.comision_apertura || 0,
+    ) / 100;
 
   const tasaRenovacion =
-    Number(producto.tasa_renovacion || 0) / 100;
+    Number(
+      producto.tasa_renovacion || 0,
+    ) / 100;
 
-  // PAGO POR RENOVACIÓN
   let pagoPorRenovacion =
-    montoAdelanto * tasaRenovacion;
+    montoAdelanto *
+    tasaRenovacion;
 
-  pagoPorRenovacion = Math.ceil(
-    pagoPorRenovacion * (1 + tasaIVA)
-  );
+  pagoPorRenovacion =
+    Math.ceil(
+      pagoPorRenovacion *
+      (1 + tasaIVA),
+    );
 
-  // REDONDEO EXACTO PHP
-
-  let decenas = Number(
-    String(pagoPorRenovacion).slice(-2)
-  );
+  let decenas =
+    Number(
+      String(
+        pagoPorRenovacion,
+      ).slice(-2),
+    );
 
   pagoPorRenovacion -= decenas;
 
-  decenas = decenas < 50 ? 50 : 100;
+  decenas =
+    decenas < 50
+      ? 50
+      : 100;
 
   pagoPorRenovacion += decenas;
 
-  // PAGO MÁXIMO
   const pagoMaximoAdelanto =
-    capacidadDePago - pagoPorRenovacion;
+    capacidadDePago -
+    pagoPorRenovacion;
 
+  const numPagosBullet =
+    Math.ceil(
+      montoAdelanto /
+      pagoMaximoAdelanto,
+    );
 
-  // NÚMERO DE PAGOS
-  const numPagosBullet = Math.ceil(
-    montoAdelanto / pagoMaximoAdelanto
-  );
-
-  // PAGO POR QUINCENA
   const pagoAnticipo =
-    montoAdelanto / numPagosBullet;
+    montoAdelanto /
+    numPagosBullet;
 
-  // INFO
   const info = {
-    ultimo_ingreso: ultimoIngreso,
-    monto: montoAdelanto,
-    tasa_iva: tasaIVA,
+
+    ultimo_ingreso:
+      ultimoIngreso,
+
+    monto:
+      montoAdelanto,
+
+    tasa_iva:
+      tasaIVA,
+
     duracion: 6,
-    periodicidad: String(
-      producto.periodicidad || ""
-    ).toLowerCase(),
-    tasa_renovacion: tasaRenovacion,
-    tipo_producto: "ADELANTO_NOMINA",
 
-    pago_gracia: pagoAnticipo,
-    num_pagos_gracia: numPagosBullet,
+    periodicidad:
+      String(
+        producto.periodicidad || "",
+      ).toLowerCase(),
+
+    tasa_renovacion:
+      tasaRenovacion,
+
+    tipo_producto:
+      "ADELANTO_NOMINA",
+
+    pago_gracia:
+      pagoAnticipo,
+
+    num_pagos_gracia:
+      numPagosBullet,
   };
 
-  // TABLA AMORTIZACIÓN
   const amortizacion =
-    amortizacionConGracia(info);
+    amortizacionConGracia(
+      info,
+    );
 
-  // RESPUESTA
   return {
-    producto_id: producto.producto_id,
-    nombre: producto.nombre,
 
-    monto_aprobado: Number(
-      montoAdelanto.toFixed(2)
-    ),
+    producto_id:
+      producto.producto_id,
 
-    plazo: numPagosBullet,
+    nombre:
+      producto.nombre,
 
-    pago_periodico: Number(
-      pagoAnticipo.toFixed(2)
-    ),
+    monto_aprobado:
+      Number(
+        montoAdelanto.toFixed(2),
+      ),
 
-    pago_por_renovacion: pagoPorRenovacion,
+    plazo:
+      numPagosBullet,
 
-    capacidad_pago: Number(
-      capacidadDePago.toFixed(2)
-    ),
+    pago_periodico:
+      Number(
+        pagoAnticipo.toFixed(2),
+      ),
 
-    capacidad_mensual: Number(
-      capacidadMensual.toFixed(2)
-    ),
+    pago_por_renovacion:
+      pagoPorRenovacion,
 
-    detalle: amortizacion,
+    capacidad_pago:
+      Number(
+        capacidadDePago.toFixed(2),
+      ),
 
-    periodicidad: String(
-      producto.periodicidad || ""
-    ).toLowerCase(),
+    capacidad_mensual:
+      Number(
+        capacidadMensual.toFixed(2),
+      ),
+
+    detalle:
+      amortizacion,
+
+    periodicidad:
+      String(
+        producto.periodicidad || "",
+      ).toLowerCase(),
   };
+};
+
+export {
+  calcularPrestamoPersonal,
 };
