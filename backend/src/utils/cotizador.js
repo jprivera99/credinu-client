@@ -108,5 +108,9 @@ export const calcularAdelantoNomina = (producto, data) => {
     ),
 
     detalle: amortizacion,
+
+    periodicidad: String(
+      producto.periodicidad || ""
+    ).toLowerCase(),
   };
 };

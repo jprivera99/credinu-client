@@ -3,6 +3,7 @@
 import { getProductByInstitutionQuotation } from "../products/products.service.js";
 import { calcularAdelantoNomina } from "../../utils/cotizador.js";
 import { pool } from "../../config/db.js";
+import { json } from "express";
 
 export const cotizarService = async ({
   monto,
@@ -32,6 +33,8 @@ export const cotizarService = async ({
 
     resultados.push(adelanto);
   }
+
+  console.log(resultados)
 
   return resultados;
 };

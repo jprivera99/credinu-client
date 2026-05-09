@@ -115,6 +115,7 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
     FROM institucion_producto ip
     INNER JOIN producto p ON ip.producto_id = p.id
     WHERE IFNULL(ip.borrado,0) = 0 
+    AND IFNULL(ip.ocultar_cliente,0) = 0
     AND ip.institucion_id = ?
     `,
     [institucion_id]
