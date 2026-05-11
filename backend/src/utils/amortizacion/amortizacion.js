@@ -1,4 +1,4 @@
-// utils/amortizacion.js
+// utils/amortizacion/amortizacion.js
 
 export const amortizacionConGracia = (info) => {
   const ivaRate = Number(info.tasa_iva) || 0;

@@ -1,4 +1,5 @@
-// FORMAT DATE
+// utils/amortizacion/payDay.js
+
 export const formatDate = (date) => {
   const year = date.getFullYear();
 

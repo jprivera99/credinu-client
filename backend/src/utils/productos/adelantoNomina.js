@@ -1,10 +1,8 @@
-// utils/cotizador.js
+// utils/productos/adelantoNomina.js
 
-import { amortizacionConGracia }
-from "./amortizacion/amortizacionConGracia.js";
-
-import { calcularPrestamoPersonal }
-from "./productos/prestamoPersonal.js";
+import {
+  amortizacionConGracia,
+} from "../amortizacion/amortizacion.js";
 
 export const calcularAdelantoNomina = (
   producto,
@@ -36,11 +34,6 @@ export const calcularAdelantoNomina = (
     montoAdelanto =
       ultimoIngreso * 2;
   }
-
-  const comisionApertura =
-    Number(
-      producto.comision_apertura || 0,
-    ) / 100;
 
   const tasaRenovacion =
     Number(
@@ -89,9 +82,6 @@ export const calcularAdelantoNomina = (
 
   const info = {
 
-    ultimo_ingreso:
-      ultimoIngreso,
-
     monto:
       montoAdelanto,
 
@@ -108,9 +98,6 @@ export const calcularAdelantoNomina = (
     tasa_renovacion:
       tasaRenovacion,
 
-    tipo_producto:
-      "ADELANTO_NOMINA",
-
     pago_gracia:
       pagoAnticipo,
 
@@ -118,7 +105,7 @@ export const calcularAdelantoNomina = (
       numPagosBullet,
   };
 
-  const amortizacion =
+  const detalle =
     amortizacionConGracia(
       info,
     );
@@ -157,16 +144,11 @@ export const calcularAdelantoNomina = (
         capacidadMensual.toFixed(2),
       ),
 
-    detalle:
-      amortizacion,
+    detalle,
 
     periodicidad:
       String(
         producto.periodicidad || "",
       ).toLowerCase(),
   };
-};
-
-export {
-  calcularPrestamoPersonal,
 };

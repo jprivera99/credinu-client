@@ -1,60 +1,114 @@
 // services/quotation.service.js
 
-import { getProductByInstitutionQuotation } from "../products/products.service.js";
-import {
-  calcularAdelantoNomina,
-  calcularAnticipoAguinaldo,
-  calcularPrestamoPersonal,
-  calcularAdelantoNominaPagosFijos,
-  calcularSalarioDemanda,
-} from "../../utils/amortizacion/amortizacionConGracia.js";
+import { getProductByInstitutionQuotation }
+from "../products/products.service.js";
 import { pool } from "../../config/db.js";
 import { json } from "express";
 
-export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
-  const productos = await getProductByInstitutionQuotation(institucion_id);
+import {
+  calcularAdelantoNomina,
+} from "../../utils/productos/adelantoNomina.js";
+
+import {
+  calcularPrestamoPersonal,
+} from "../../utils/productos/prestamoPersonal.js";
+
+import {
+  calcularAnticipoAguinaldo,
+} from "../../utils/productos/anticipoAguinaldo.js";
+
+import {
+  calcularAdelantoNominaPagosFijos,
+} from "../../utils/productos/adelantoNominaPagosFijos.js";
+
+import {
+  calcularSalarioDemanda,
+} from "../../utils/productos/salarioDemanda.js";
+
+export const cotizarService = async ({
+  monto,
+  ingreso,
+  institucion_id,
+}) => {
+
+  const productos =
+    await getProductByInstitutionQuotation(
+      institucion_id,
+    );
 
   const resultados = [];
 
   for (const key in productos) {
+
     const prod = productos[key];
 
     let resultado = null;
 
     switch (Number(prod.producto_id)) {
+
       case 1:
-        resultado = calcularAdelantoNomina(prod, {
-          monto,
-          ingreso,
-        });
+
+        resultado =
+          calcularAdelantoNomina(
+            prod,
+            {
+              monto,
+              ingreso,
+            },
+          );
+
         break;
 
       case 2:
-        resultado = calcularAnticipoAguinaldo(prod, {
-          monto,
-          ingreso,
-        });
+
+        resultado =
+          calcularAnticipoAguinaldo(
+            prod,
+            {
+              monto,
+              ingreso,
+            },
+          );
+
         break;
 
       case 3:
-        resultado = calcularPrestamoPersonal(prod, {
-          monto,
-          ingreso,
-        });
+
+        resultado =
+          calcularPrestamoPersonal(
+            prod,
+            {
+              monto,
+              ingreso,
+            },
+          );
+
         break;
 
       case 4:
-        resultado = calcularAdelantoNominaPagosFijos(prod, {
-          monto,
-          ingreso,
-        });
+
+        resultado =
+          calcularAdelantoNominaPagosFijos(
+            prod,
+            {
+              monto,
+              ingreso,
+            },
+          );
+
         break;
 
       case 5:
-        resultado = calcularSalarioDemanda(prod, {
-          monto,
-          ingreso,
-        });
+
+        resultado =
+          calcularSalarioDemanda(
+            prod,
+            {
+              monto,
+              ingreso,
+            },
+          );
+
         break;
     }
 
@@ -62,8 +116,6 @@ export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
       resultados.push(resultado);
     }
   }
-
-  console.log(resultados);
 
   return resultados;
 };

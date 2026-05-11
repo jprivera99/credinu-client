@@ -1,7 +1,8 @@
 // utils/productos/prestamoPersonal.js
 
-import { amortizacionNormal }
-from "../amortizacion/amortizacionNormal.js";
+import {
+  amortizacionNormal,
+} from "../amortizacion/amortizacionNormal.js";
 
 export const calcularPrestamoPersonal = (
   producto,
@@ -31,16 +32,19 @@ export const calcularPrestamoPersonal = (
 
     monto,
 
-    tasa_iva: tasaIVA,
+    tasa_iva:
+      tasaIVA,
 
-    tasa_ordinaria: tasa,
+    tasa_ordinaria:
+      tasa,
 
     periodicidad:
       String(
         producto.periodicidad,
       ).toLowerCase(),
 
-    duracion: plazo,
+    duracion:
+      plazo,
 
     plazo,
 
@@ -49,7 +53,8 @@ export const calcularPrestamoPersonal = (
         .toISOString()
         .slice(0, 10),
 
-    forma_pago: "normal",
+    forma_pago:
+      "normal",
   };
 
   const detalle =
