@@ -340,9 +340,29 @@ input {
 .form-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   margin-top: 20px;
+}
+
+.form-notice {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.form-notice.is-success {
+  color: #0f5f2c;
+  background: #e9f8ee;
+  border-color: #9fdfb2;
+}
+
+.form-notice.is-error {
+  color: #8f1d18;
+  background: #fdecec;
+  border-color: #f3b3b0;
 }
 
 .form-card-narrow {

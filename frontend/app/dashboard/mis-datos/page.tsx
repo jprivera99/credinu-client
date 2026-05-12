@@ -137,9 +137,19 @@ export default function MisDatosPage() {
 					</label>
 				</div>
 
+				{message ? (
+					<p className="form-notice is-success" role="status" aria-live="polite">
+						{message}
+					</p>
+				) : null}
+
+				{error ? (
+					<p className="form-notice is-error" role="alert">
+						{error}
+					</p>
+				) : null}
+
 				<div className="form-actions">
-					{message ? <p className="success-copy">{message}</p> : null}
-					{error ? <p className="error-copy">{error}</p> : null}
 					<button type="submit" disabled={saving}>
 						{saving ? "Guardando..." : "Guardar cambios"}
 					</button>
