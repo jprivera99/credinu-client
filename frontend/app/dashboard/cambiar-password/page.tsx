@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { changePassword } from "@/lib/api";
 
 export default function CambiarPasswordPage() {
@@ -11,6 +12,7 @@ export default function CambiarPasswordPage() {
     const [error, setError] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     const hasMinLength = newPassword.length >= 8;
     const hasNumber = /\d/.test(newPassword);
@@ -32,6 +34,10 @@ export default function CambiarPasswordPage() {
 
         return "";
     };
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (!message && !error) return;
@@ -149,7 +155,7 @@ export default function CambiarPasswordPage() {
                 </div>
             </form>
 
-            {showConfirmModal ? (
+            {mounted && showConfirmModal ? createPortal(
                 <div className="confirm-modal-backdrop" role="dialog" aria-modal="true">
                     <div className="confirm-modal">
                         <h3>Confirmar cambio</h3>
@@ -180,7 +186,8 @@ export default function CambiarPasswordPage() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             ) : null}
         </section>
     );
