@@ -14,6 +14,7 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
     `SELECT 
       s.id,
       s.estatus_id,
+      c.nombre AS estatus_nombre,
       s.registro_fecha AS fecha_registro,
       s.monto_credito,
       s.amortizacion
@@ -21,6 +22,9 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
    INNER JOIN solicitud s 
       ON s.cliente_id = su.cliente_id
       AND IFNULL(s.borrado, 0) = 0
+    LEFT JOIN catalogo c
+      ON c.id = s.estatus_id
+      AND c.catalogo_tipo_id = 5
    WHERE su.id = ?
    ORDER BY s.id DESC`,
     [userId],
@@ -32,6 +36,6 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
     fecha_registro: row.fecha_registro,
     monto_credito: row.monto_credito ?? 0,
     producto: getProductNameFromAmortizacion(row.amortizacion),
-    estatus: row.estatus_id ? `Estatus ${row.estatus_id}` : null,
+    estatus: row.estatus_nombre ?? null,
   }));
 };
