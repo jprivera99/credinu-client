@@ -4,7 +4,7 @@ import { ok } from "../../utils/responses.js";
 export const getMe = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
-            "SELECT  c.id, c.nombre, c.apellido_paterno, c.apellido_materno, c.rfc, c.curp, c.email, c.telefono_movil, c.domicilio_cp, c.domicilio_calle, c.domicilio_calle_numext AS domicilio_numero    FROM sis_usuario su    INNER JOIN cliente c ON c.id = su.cliente_id    WHERE su.id = ? LIMIT 1",
+            "SELECT  c.id, c.nombre, c.apellido_paterno, c.apellido_materno, c.rfc, c.curp, c.email AS correo, c.telefono_movil, c.domicilio_cp, c.domicilio_calle, c.domicilio_calle_numext AS domicilio_numero    FROM sis_usuario su    INNER JOIN cliente c ON c.id = su.cliente_id    WHERE su.id = ? LIMIT 1",
             [req.user.id]
         );
 
@@ -17,6 +17,7 @@ export const getMe = async (req, res, next) => {
 export const updateMe = async (req, res, next) => {
     try {
         const {
+            correo,
             email,
             telefono_movil,
             domicilio_cp,
@@ -27,7 +28,7 @@ export const updateMe = async (req, res, next) => {
         await pool.query(
             "UPDATE cliente c    INNER JOIN sis_usuario su ON su.cliente_id = c.id    SET      c.email = ?, c.telefono_movil = ?, c.domicilio_cp = ?, c.domicilio_calle = ?, c.domicilio_calle_numext = ? WHERE su.id = ?",
             [
-                email ?? null,
+                correo ?? email ?? null,
                 telefono_movil ?? null,
                 domicilio_cp ?? null,
                 domicilio_calle ?? null,
