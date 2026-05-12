@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { changePassword } from "@/lib/api";
 
 export default function CambiarPasswordPage() {
@@ -9,6 +9,8 @@ export default function CambiarPasswordPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const hasMinLength = newPassword.length >= 8;
     const hasNumber = /\d/.test(newPassword);
@@ -31,6 +33,38 @@ export default function CambiarPasswordPage() {
         return "";
     };
 
+    useEffect(() => {
+        if (!message && !error) return;
+
+        const timeoutId = window.setTimeout(() => {
+            setMessage("");
+            setError("");
+        }, 10000);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [message, error]);
+
+    const submitPasswordChange = async () => {
+        try {
+            setSaving(true);
+            setShowConfirmModal(false);
+
+            await changePassword({ currentPassword, newPassword });
+            setMessage("Contrasena actualizada correctamente");
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (submitError) {
+            const msg =
+                submitError instanceof Error
+                    ? submitError.message
+                    : "No fue posible actualizar la contrasena";
+            setError(msg);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError("");
@@ -43,25 +77,7 @@ export default function CambiarPasswordPage() {
             return;
         }
 
-        const confirmed = window.confirm("Estas seguro de cambiar tu contraseña?");
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            await changePassword({ currentPassword, newPassword });
-            setMessage("Contraseña actualizada correctamente");
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-        } catch (submitError) {
-            const msg =
-                submitError instanceof Error
-                    ? submitError.message
-                    : "No fue posible actualizar la contraseña";
-            setError(msg);
-        }
+        setShowConfirmModal(true);
     };
 
     return (
@@ -75,52 +91,90 @@ export default function CambiarPasswordPage() {
 
             <form className="form-card form-card-narrow" onSubmit={handleSubmit}>
                 <label>
-                    <span>Contraseña actual</span>
+                    <span>Contrasena actual</span>
                     <input
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
+                        disabled={saving}
                     />
                 </label>
 
                 <label>
-                    <span>Nueva contraseña</span>
+                    <span>Nueva contrasena</span>
                     <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={saving}
                     />
                 </label>
 
                 <label>
-                    <span>Confirmar nueva contraseña</span>
+                    <span>Confirmar nueva contrasena</span>
                     <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={saving}
                     />
                 </label>
 
-                <div style={{ marginTop: 4, fontSize: 13 }}>
-                    <div style={{ color: hasMinLength ? "#0f5f2c" : "#6b7280" }}>
-                        {hasMinLength ? "✔" : "○"} Minimo 8 caracteres
+                <div className="password-rules">
+                    <div className={hasMinLength ? "is-valid" : ""}>
+                        {hasMinLength ? "OK" : "-"} Minimo 8 caracteres
                     </div>
-                    <div style={{ color: hasNumber ? "#0f5f2c" : "#6b7280" }}>
-                        {hasNumber ? "✔" : "○"} Al menos un numero
+                    <div className={hasNumber ? "is-valid" : ""}>
+                        {hasNumber ? "OK" : "-"} Al menos un numero
                     </div>
-                    <div style={{ color: hasSign ? "#0f5f2c" : "#6b7280" }}>
-                        {hasSign ? "✔" : "○"} Al menos un signo
+                    <div className={hasSign ? "is-valid" : ""}>
+                        {hasSign ? "OK" : "-"} Al menos un signo
                     </div>
-                    <div style={{ color: matches ? "#0f5f2c" : "#6b7280" }}>
-                        {matches ? "✔" : "○"} Las contraseñas coinciden
+                    <div className={matches ? "is-valid" : ""}>
+                        {matches ? "OK" : "-"} Las contrasenas coinciden
                     </div>
                 </div>
 
-                {error ? <p className="error-copy">{error}</p> : null}
-                {message ? <p className="success-copy">{message}</p> : null}
+                {error ? <p className="form-notice is-error">{error}</p> : null}
+                {message ? <p className="form-notice is-success">{message}</p> : null}
 
-                <button type="submit">Actualizar contraseña</button>
+                <div className="form-actions">
+                    <button type="submit" disabled={saving}>
+                        {saving ? "Actualizando..." : "Actualizar contrasena"}
+                    </button>
+                </div>
             </form>
+
+            {showConfirmModal ? (
+                <div className="confirm-modal-backdrop" role="dialog" aria-modal="true">
+                    <div className="confirm-modal">
+                        <h3>Confirmar cambio</h3>
+                        <p>
+                            Estas por actualizar tu contrasena. Asegurate de recordarla para tu
+                            siguiente inicio de sesion.
+                        </p>
+
+                        <div className="confirm-modal-actions">
+                            <button
+                                type="button"
+                                className="confirm-cancel"
+                                onClick={() => setShowConfirmModal(false)}
+                                disabled={saving}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="confirm-accept"
+                                onClick={submitPasswordChange}
+                                disabled={saving}
+                            >
+                                Si, actualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </section>
     );
 }

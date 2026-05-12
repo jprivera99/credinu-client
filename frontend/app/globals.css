@@ -365,6 +365,80 @@ input {
   border-color: #f3b3b0;
 }
 
+.password-rules {
+  margin-top: 6px;
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+  color: #6b7280;
+}
+
+.password-rules .is-valid {
+  color: #0f5f2c;
+  font-weight: 600;
+}
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.46);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 120;
+}
+
+.confirm-modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  padding: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.confirm-modal h3 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.confirm-modal-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-cancel,
+.confirm-accept {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirm-cancel {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.confirm-accept {
+  background: linear-gradient(135deg, var(--brand), #ef4d42);
+  color: #fff;
+}
+
+.confirm-cancel:disabled,
+.confirm-accept:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .form-card-narrow {
   max-width: 560px;
 }
