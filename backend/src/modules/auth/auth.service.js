@@ -116,6 +116,40 @@ export const getMeService = async (userId) => {
   return rows[0];
 };
 
+export const changePasswordByUserService = async ({ userId, currentPassword, newPassword }) => {
+  const [rows] = await pool.query(
+    "SELECT id, password FROM sis_usuario WHERE id = ? LIMIT 1",
+    [userId],
+  );
+
+  if (rows.length === 0) {
+    throw new AppError("Usuario no encontrado", 404);
+  }
+
+  const user = rows[0];
+
+  const passwordCheck = await verifyPassword(currentPassword, user.password);
+
+  if (!passwordCheck.valid) {
+    throw new AppError("La contraseña actual no es correcta", 400);
+  }
+
+  const samePasswordCheck = await verifyPassword(newPassword, user.password);
+
+  if (samePasswordCheck.valid) {
+    throw new AppError("La nueva contraseña no puede ser igual a la actual", 400);
+  }
+
+  const newHash = await bcrypt.hash(String(newPassword).trim(), 10);
+
+  await pool.query("UPDATE sis_usuario SET password = ? WHERE id = ?", [
+    newHash,
+    userId,
+  ]);
+
+  return { updated: true };
+};
+
 //Cambio de contraseña con token de recuperación
 export const changePasswordService = async ({ token, newPassword }) => {
   // 1. Buscar preregistro

@@ -2,6 +2,7 @@ import type {
   ApplicationItemNew,
   AuthUser,
   ChangePasswordPayload,
+  ChangePasswordRecoveryPayload,
   ClientProfile,
   LoginResponse,
   ProductItem,
@@ -186,8 +187,8 @@ export function validateCodeRequest(payload: validateCodePayload) {
 
 // ---------------Api para actualizar contraseña
 
-export function changePasswordRequest(payload: ChangePasswordPayload) {
-  return apiFetch<{ updated: boolean }>("/auth/change-password", {
+export function changePasswordRequest(payload: ChangePasswordRecoveryPayload) {
+  return apiFetch<{ updated: boolean }>("/auth/change-password/recovery", {
     method: "POST",
     body: JSON.stringify(payload),
   });

@@ -1,6 +1,7 @@
 import {
     loginService,
     getMeService,
+  changePasswordByUserService,
     changePasswordService,
     SendEmailRecoveryPassword
 } from "./auth.service.js";
@@ -26,6 +27,22 @@ export const me = async (req, res, next) => {
 };
 
 export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const data = await changePasswordByUserService({
+      userId: req.user.id,
+      currentPassword,
+      newPassword,
+    });
+
+    return ok(res, data, "Contraseña actualizada");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePasswordRecovery = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
 

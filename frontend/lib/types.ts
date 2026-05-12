@@ -50,6 +50,11 @@ export interface UpdateClientProfilePayload {
 }
 
 export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordRecoveryPayload {
   token: string;
   newPassword: string;
 }
