@@ -373,9 +373,27 @@ input {
   color: #6b7280;
 }
 
+.password-rules > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-icon {
+  width: 16px;
+  display: inline-flex;
+  justify-content: center;
+  color: #6b7280;
+  font-weight: 700;
+}
+
 .password-rules .is-valid {
   color: #0f5f2c;
   font-weight: 600;
+}
+
+.password-rules .is-valid .rule-icon {
+  color: #0f5f2c;
 }
 
 .confirm-modal-backdrop {
@@ -405,6 +423,30 @@ input {
 .confirm-modal p {
   margin: 0;
   color: #4b5563;
+}
+
+.confirm-alert {
+  margin-top: 6px;
+  border: 1px solid #f5c26b;
+  background: #fff6e8;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.confirm-alert-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #fff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .confirm-modal-actions {

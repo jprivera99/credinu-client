@@ -50,7 +50,7 @@ export default function CambiarPasswordPage() {
             setShowConfirmModal(false);
 
             await changePassword({ currentPassword, newPassword });
-            setMessage("Contrasena actualizada correctamente");
+            setMessage("Contraseña actualizada correctamente");
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
@@ -58,7 +58,7 @@ export default function CambiarPasswordPage() {
             const msg =
                 submitError instanceof Error
                     ? submitError.message
-                    : "No fue posible actualizar la contrasena";
+                    : "No fue posible actualizar la contraseña";
             setError(msg);
         } finally {
             setSaving(false);
@@ -91,7 +91,7 @@ export default function CambiarPasswordPage() {
 
             <form className="form-card form-card-narrow" onSubmit={handleSubmit}>
                 <label>
-                    <span>Contrasena actual</span>
+                    <span>Contraseña actual</span>
                     <input
                         type="password"
                         value={currentPassword}
@@ -101,7 +101,7 @@ export default function CambiarPasswordPage() {
                 </label>
 
                 <label>
-                    <span>Nueva contrasena</span>
+                    <span>Nueva contraseña</span>
                     <input
                         type="password"
                         value={newPassword}
@@ -111,7 +111,7 @@ export default function CambiarPasswordPage() {
                 </label>
 
                 <label>
-                    <span>Confirmar nueva contrasena</span>
+                    <span>Confirmar nueva contraseña</span>
                     <input
                         type="password"
                         value={confirmPassword}
@@ -122,16 +122,20 @@ export default function CambiarPasswordPage() {
 
                 <div className="password-rules">
                     <div className={hasMinLength ? "is-valid" : ""}>
-                        {hasMinLength ? "OK" : "-"} Minimo 8 caracteres
+                        <span className="rule-icon">{hasMinLength ? "✔" : "○"}</span>
+                        Mínimo 8 caracteres
                     </div>
                     <div className={hasNumber ? "is-valid" : ""}>
-                        {hasNumber ? "OK" : "-"} Al menos un numero
+                        <span className="rule-icon">{hasNumber ? "✔" : "○"}</span>
+                        Al menos un número
                     </div>
                     <div className={hasSign ? "is-valid" : ""}>
-                        {hasSign ? "OK" : "-"} Al menos un signo
+                        <span className="rule-icon">{hasSign ? "✔" : "○"}</span>
+                        Al menos un signo
                     </div>
                     <div className={matches ? "is-valid" : ""}>
-                        {matches ? "OK" : "-"} Las contrasenas coinciden
+                        <span className="rule-icon">{matches ? "✔" : "○"}</span>
+                        Las contraseñas coinciden
                     </div>
                 </div>
 
@@ -140,7 +144,7 @@ export default function CambiarPasswordPage() {
 
                 <div className="form-actions">
                     <button type="submit" disabled={saving}>
-                        {saving ? "Actualizando..." : "Actualizar contrasena"}
+                        {saving ? "Actualizando..." : "Actualizar"}
                     </button>
                 </div>
             </form>
@@ -149,10 +153,13 @@ export default function CambiarPasswordPage() {
                 <div className="confirm-modal-backdrop" role="dialog" aria-modal="true">
                     <div className="confirm-modal">
                         <h3>Confirmar cambio</h3>
-                        <p>
-                            Estas por actualizar tu contrasena. Asegurate de recordarla para tu
-                            siguiente inicio de sesion.
-                        </p>
+                        <div className="confirm-alert">
+                            <span className="confirm-alert-icon">!</span>
+                            <p>
+                                Estás por actualizar tu contraseña. Asegúrate de recordarla para tu
+                                siguiente inicio de sesión.
+                            </p>
+                        </div>
 
                         <div className="confirm-modal-actions">
                             <button
@@ -169,7 +176,7 @@ export default function CambiarPasswordPage() {
                                 onClick={submitPasswordChange}
                                 disabled={saving}
                             >
-                                Si, actualizar
+                                Actualizar
                             </button>
                         </div>
                     </div>
