@@ -79,7 +79,7 @@ export const calcularAdelantoNomina = (producto, data) => {
 
     plazo: pagoBullet.num_pagos_gracia,
 
-    pago_periodico: Number(pagoAnticipo.toFixed(2)),
+    pago_periodico: Number(pagoBullet.pago_gracia.toFixed(2)),
 
     pago_por_renovacion: pagoPorRenovacion,
 

@@ -42,7 +42,7 @@ async function apiFetch<T>(
     headers,
   });
 
-  /* if (response.status === 401) {
+  if (response.status === 401) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
 
@@ -52,7 +52,7 @@ async function apiFetch<T>(
     }
 
     throw new Error("Sesión expirada");
-  } */
+  } 
 
   let json;
 
@@ -69,6 +69,7 @@ async function apiFetch<T>(
     throw new Error(
       typeof json?.message === "string" ? json.message : JSON.stringify(json),
     );
+
   }
 
   return json.data ?? json;
