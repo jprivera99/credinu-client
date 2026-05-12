@@ -22,6 +22,17 @@ export default function MisDatosPage() {
 			});
 	}, []);
 
+	useEffect(() => {
+		if (!message && !error) return;
+
+		const timeoutId = window.setTimeout(() => {
+			setMessage("");
+			setError("");
+		}, 10000);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [message, error]);
+
 	if (!form) {
 		return <div className="empty-state">{error || "Cargando perfil..."}</div>;
 	}
