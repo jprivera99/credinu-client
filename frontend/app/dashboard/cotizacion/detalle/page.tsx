@@ -1,3 +1,4 @@
+// app/dashboard/cotizacion/detalle/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 export default function DetallePage() {
   const params = useSearchParams();
 
-  const producto_id = Number(params.get("producto_id"));
+  const id = Number(params.get("id"));
 
   const [monto, setMonto] = useState(Number(params.get("monto")));
   const [plazo, setPlazo] = useState(Number(params.get("plazo")));
@@ -22,7 +23,7 @@ export default function DetallePage() {
       setLoading(true);
 
       const res = await detalleRequest({
-        producto_id,
+        id,
         monto: Number(monto),
         plazo: Number(plazo),
       });
@@ -36,7 +37,7 @@ export default function DetallePage() {
   };
 
   useEffect(() => {
-    if (producto_id && monto && plazo) {
+    if (id && monto && plazo) {
       fetchDetalle();
     }
   }, []);

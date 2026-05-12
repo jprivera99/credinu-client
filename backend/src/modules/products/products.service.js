@@ -93,39 +93,130 @@ export const getProductByInstitution = async (institucion_id) => {
 };
 
 export const getProductByInstitutionQuotation = async (institucion_id) => {
-  const [rows] = await pool.query(
-    `
-    SELECT
-        ip.id, 
-        ip.institucion_id, 
-        ip.producto_id, 
-        ip.tasa, 
-        ip.comision_apertura, 
-        ip.tasa_renovacion, 
-        ip.periodicidad, 
-        ip.plazo_max, 
-        ip.plazo_min, 
-        ip.monto_max, 
-        ip.monto_min, 
-        ip.antiguedad,
-        ip.pago_gracia, 
-        ip.borrado, 
-        p.nombre, 
-        p.descripcion
-    FROM institucion_producto ip
-    INNER JOIN producto p ON ip.producto_id = p.id
-    WHERE IFNULL(ip.borrado,0) = 0 
-    AND ip.institucion_id = ? 
-    ORDER BY p.nombre desc
-    `,
-    [institucion_id]
-  );
-  
-  const productos = {};
+  /*
+  PRODUCTOS DE LA INSTITUCION
+  */
 
-  rows.forEach((row) => {
-    productos[row.producto_id] = row;
+  const [institucionRows] = await pool.query(
+    `
+      SELECT *
+      FROM institucion_producto
+      WHERE institucion_id = ?
+      AND IFNULL(borrado,0)=0
+      `,
+    [institucion_id],
+  );
+
+  /*
+  OBTENER INSTITUCION
+  */
+
+  const [[institucion]] = await pool.query(
+    `
+      SELECT *
+      FROM institucion
+      WHERE id = ?
+      `,
+    [institucion_id],
+  );
+
+  let productosPadre = [];
+
+  /*
+  SI TIENE PADRE
+  */
+
+  if (institucion && Number(institucion.id_padre) > 0) {
+    productosPadre = await getProductByInstitutionQuotation(
+      institucion.id_padre,
+    );
+
+    productosPadre = productosPadre.map((item) => ({
+      ...item,
+      is_padre: true,
+    }));
+  }
+
+  /*
+  UNIR
+  */
+
+  const productosUnidos = [...productosPadre, ...institucionRows];
+
+  /*
+  PRODUCTOS BASE
+  */
+
+  const [productosBase] = await pool.query(`
+      SELECT *
+      FROM producto
+      WHERE IFNULL(borrado,0)=0
+    `);
+
+  const mapProductos = {};
+
+  productosBase.forEach((p) => {
+    mapProductos[p.id] = p;
   });
 
-  return productos;
+  /*
+  AGREGAR INFO PRODUCTO
+  */
+
+  const productosFinales = productosUnidos.map((item) => {
+    const producto = mapProductos[item.producto_id];
+
+    return {
+      ...item,
+
+      nombre: producto?.nombre || "",
+
+      descripcion: producto?.descripcion || "",
+
+      tipo_pago_capital: producto?.tipo_pago_capital || "",
+
+      tasa: item.tasa || producto?.tasa || 0,
+
+      tasa_renovacion: item.tasa_renovacion || producto?.tasa_renovacion || 0,
+
+      periodicidad: item.periodicidad || producto?.periodicidad || "",
+
+      plazo_max: item.plazo_max || producto?.plazo_max || 0,
+
+      plazo_min: item.plazo_min || producto?.plazo_min || 0,
+    };
+  });
+
+  /*
+  ELIMINAR DUPLICADOS
+  PRIORIDAD:
+  HIJO > PADRE
+  */
+
+  const productosMap = {};
+
+  for (const item of productosFinales) {
+    const key = item.producto_id;
+
+    /*
+    SI NO EXISTE
+    */
+
+    if (!productosMap[key]) {
+      productosMap[key] = item;
+      continue;
+    }
+
+    /*
+    SI EXISTE UNO PADRE
+    Y EL NUEVO NO ES PADRE
+    REEMPLAZAR
+    */
+
+    if (productosMap[key].is_padre && !item.is_padre) {
+      productosMap[key] = item;
+    }
+  }
+
+  return Object.values(productosMap);
 };

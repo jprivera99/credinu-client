@@ -1,22 +1,22 @@
-// services/quotation.service.js
+// src/modules/quotation/quotation.service.js
 
-import { getProductByInstitutionQuotation }
-from "../products/products.service.js";
+import { pool } from "../../config/db.js";
 
-import { pool }
-from "../../config/db.js";
+import {
+  getProductByInstitutionQuotation,
+} from "../products/products.service.js";
 
 import {
   calcularAdelantoNomina,
 } from "../../utils/productos/adelantoNomina.js";
 
 import {
-  calcularPrestamoPersonal,
-} from "../../utils/productos/prestamoPersonal.js";
-
-import {
   calcularAnticipoAguinaldo,
 } from "../../utils/productos/anticipoAguinaldo.js";
+
+import {
+  calcularPrestamoPersonal,
+} from "../../utils/productos/prestamoPersonal.js";
 
 import {
   calcularAdelantoNominaPagosFijos,
@@ -26,142 +26,192 @@ import {
   calcularSalarioDemanda,
 } from "../../utils/productos/salarioDemanda.js";
 
+/**
+ * OBTENER CALCULADORA SEGUN PRODUCTO
+ */
+const calculadoras = {
+  1: calcularAdelantoNomina,
+  2: calcularAnticipoAguinaldo,
+  3: calcularPrestamoPersonal,
+  4: calcularAdelantoNominaPagosFijos,
+  5: calcularSalarioDemanda,
+};
+
+/**
+ * COTIZAR
+ */
 export const cotizarService = async ({
   monto,
   ingreso,
   institucion_id,
 }) => {
 
+  /*
+  VALIDACIONES
+  */
+
+  if (!monto || Number(monto) <= 0) {
+    throw new Error(
+      "El monto es requerido",
+    );
+  }
+
+  if (!ingreso || Number(ingreso) <= 0) {
+    throw new Error(
+      "El ingreso es requerido",
+    );
+  }
+
+  /*
+  OBTENER PRODUCTOS
+  */
+
   const productos =
     await getProductByInstitutionQuotation(
       institucion_id,
     );
 
+  if (
+    !productos ||
+    productos.length === 0
+  ) {
+    return [];
+  }
+
+  /*
+  RECORRER PRODUCTOS
+  */
+
   const resultados = [];
 
-  for (const key in productos) {
+  for (const producto of productos) {
 
-    const prod =
-      productos[key];
+    /*
+    BUSCAR FUNCION
+    */
 
-    let resultado = null;
+    const calcular =
+      calculadoras[
+        Number(producto.producto_id)
+      ];
 
-    switch (
-      Number(prod.producto_id)
-    ) {
+    /*
+    SI NO EXISTE FUNCION
+    */
 
-      // ADELANTO NOMINA
-      case 1:
-
-        resultado =
-          calcularAdelantoNomina(
-            prod,
-            {
-              monto,
-              ingreso,
-            },
-          );
-
-        break;
-
-      // ANTICIPO AGUINALDO
-      case 2:
-
-        resultado =
-          calcularAnticipoAguinaldo(
-            prod,
-            {
-              monto,
-              ingreso,
-            },
-          );
-
-        break;
-
-      // PRESTAMO PERSONAL
-      case 3:
-
-        resultado =
-          calcularPrestamoPersonal(
-            prod,
-            {
-              monto,
-              ingreso,
-            },
-          );
-
-        break;
-
-      // ADELANTO NOMINA PAGOS FIJOS
-      case 4:
-
-        resultado =
-          calcularAdelantoNominaPagosFijos(
-            prod,
-            {
-              monto,
-              ingreso,
-            },
-          );
-
-        break;
-
-      // SALARIO DEMANDA
-      case 5:
-
-        resultado =
-          calcularSalarioDemanda(
-            prod,
-            {
-              monto,
-              ingreso,
-            },
-          );
-
-        break;
-
-      default:
-        break;
+    if (!calcular) {
+      continue;
     }
 
-    if (resultado) {
-      resultados.push(
-        resultado,
+    try {
+
+      /*
+      CALCULAR
+      */
+
+      const resultado =
+        calcular(
+          producto,
+          {
+            monto:
+              Number(monto),
+
+            ingreso:
+              Number(ingreso),
+          },
+        );
+
+      /*
+      AGREGAR RESULTADO
+      */
+
+      if (resultado) {
+
+        resultados.push({
+          ...resultado,
+
+          /*
+          NORMALIZAR CAMPOS
+          */
+
+          producto_id:
+            Number(
+              resultado.producto_id,
+            ),
+
+          nombre:
+            resultado.nombre ||
+            producto.nombre ||
+            "",
+
+          nombre_comercial:
+            resultado.nombre_comercial ||
+            producto.nombre_comercial ||
+            producto.nombre ||
+            "",
+
+          periodicidad:
+            String(
+              resultado.periodicidad ||
+              producto.periodicidad ||
+              "",
+            ).toLowerCase(),
+        });
+      }
+
+    } catch (error) {
+
+      console.error(
+        `ERROR PRODUCTO ${producto.producto_id}:`,
+        error.message,
       );
     }
   }
 
+  /*
+  ORDENAR POR MONTO
+  */
+
+  resultados.sort(
+    (a, b) =>
+      Number(b.monto_aprobado) -
+      Number(a.monto_aprobado),
+  );
+
   return resultados;
 };
 
+/**
+ * DETALLE
+ */
+
 export const detalleService = async ({
+  id,
   monto,
   plazo,
-  producto_id,
-  institucion_id,
 }) => {
 
-  const [[producto]] =
-    await pool.query(
-      `
-      SELECT
-        ip.*,
-        p.nombre
-      FROM institucion_producto ip
-      INNER JOIN producto p
-        ON p.id = ip.producto_id
-      WHERE ip.producto_id = ?
-      AND ip.institucion_id = ?
-      LIMIT 1
-      `,
-      [
-        producto_id,
-        institucion_id,
-      ],
-    );
+  const [rows] = await pool.query(
+    `
+    SELECT
+      ip.*,
+      p.nombre
+    FROM institucion_producto ip
+    INNER JOIN producto p
+      ON p.id = ip.producto_id
+    WHERE ip.id = ?
+    LIMIT 1
+    `,
+    [id],
+  );
+
+  const producto =
+    rows?.[0];
 
   if (!producto) {
-    return null;
+    throw new Error(
+      "Producto no encontrado",
+    );
   }
 
   const tasa =
@@ -236,6 +286,7 @@ export const detalleService = async ({
   return {
 
     producto:
+      producto.nombre_comercial ||
       producto.nombre,
 
     monto:

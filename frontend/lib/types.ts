@@ -155,6 +155,14 @@ export type DetalleCotizacion = {
   tabla: Pago[];
 };
 
+export interface ProductoCotizacion {
+  producto_id: number;
+  nombre_comercial: string;
+  monto_aprobado: number;
+  plazo: number;
+  periodicidad: string;
+}
+
 //-------------------------------MODULO SOLICITUDES ------------------------------
 
 export type ApplicationItemNew = {

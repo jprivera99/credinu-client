@@ -243,7 +243,7 @@ export function cotizarRequest(payload: {
 
 
 export function detalleRequest(data: {
-  producto_id: number;
+  id: number;
   monto: number;
   plazo: number;
 }) {

@@ -5,31 +5,40 @@ export const amortizacionConGracia = (
 ) => {
 
   const ivaRate =
-    Number(info.tasa_iva) || 0;
+    Number(info.tasa_iva || 0);
 
-  const capitalInicial =
+  const capital =
     Number(info.monto);
 
   const tasaRenovacion =
-    Number(
-      info.tasa_renovacion,
-    );
+    Number(info.tasa_renovacion);
 
   const meses =
     Number(info.duracion);
 
-  const periodicidad =
-    info.periodicidad;
+  let periodo =
+    String(
+      info.periodicidad || "",
+    ).toLowerCase();
 
   let paymentNumber = 0;
 
-  switch (periodicidad) {
+  switch (periodo) {
 
     case "semanal":
 
       paymentNumber =
         Math.round(
           meses * (52 / 12),
+        );
+
+      break;
+
+    case "decenal":
+
+      paymentNumber =
+        Math.round(
+          meses * (36 / 12),
         );
 
       break;
@@ -64,8 +73,8 @@ export const amortizacionConGracia = (
       info.num_pagos_gracia,
     );
 
-  let capital =
-    capitalInicial;
+  let capitalRestante =
+    capital;
 
   const payments = [];
 
@@ -76,46 +85,69 @@ export const amortizacionConGracia = (
   ) {
 
     const saldoInicial =
-      capital;
+      capitalRestante;
 
-    const interes =
-      saldoInicial *
-      tasaRenovacion;
+    let interes = 0;
 
-    const iva =
-      interes * ivaRate;
+    let iva = 0;
 
-    let amortizacion = 0;
+    let amortizado = 0;
 
-    if (
-      pagosRenovacion <= 0
-    ) {
+    /*
+    SOLO RENOVACION
+    */
 
-      amortizacion =
+    if (pagosRenovacion > 0) {
+
+      interes =
+        saldoInicial *
+        tasaRenovacion;
+
+      iva =
+        interes * ivaRate;
+
+      amortizado = 0;
+    }
+
+    /*
+    PAGO NORMAL
+    */
+
+    else {
+
+      interes =
+        saldoInicial *
+        tasaRenovacion;
+
+      iva =
+        interes * ivaRate;
+
+      amortizado =
         Number(
           info.pago_gracia,
         );
 
-      capital -=
-        amortizacion;
+      capitalRestante -=
+        amortizado;
     }
+
+    const pagoTotal =
+      interes +
+      iva +
+      amortizado;
 
     payments.push({
 
-      periodo: i,
+      place: i,
 
-      saldo_inicial:
+      capital:
         Number(
-          saldoInicial.toFixed(
-            2,
-          ),
+          saldoInicial.toFixed(2),
         ),
 
       interest:
         Number(
-          interes.toFixed(
-            2,
-          ),
+          interes.toFixed(2),
         ),
 
       iva:
@@ -125,30 +157,21 @@ export const amortizacionConGracia = (
 
       amortized:
         Number(
-          amortizacion.toFixed(
-            2,
-          ),
+          amortizado.toFixed(2),
         ),
 
-      saldo_final:
+      final:
         Number(
-          capital.toFixed(2),
+          capitalRestante.toFixed(2),
         ),
 
       paid:
         Number(
-          (
-            amortizacion +
-            interes +
-            iva
-          ).toFixed(2),
+          pagoTotal.toFixed(2),
         ),
     });
 
-    if (
-      pagosRenovacion > 0
-    ) {
-
+    if (pagosRenovacion > 0) {
       pagosRenovacion--;
     }
   }

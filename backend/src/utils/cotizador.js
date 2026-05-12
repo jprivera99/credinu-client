@@ -1,7 +1,7 @@
 // utils/cotizador.js
 
 import { amortizacionConGracia }
-from "./amortizacion/amortizacionConGracia.js";
+from "./amortizacion/amortizacion.js";
 
 import { calcularPrestamoPersonal }
 from "./productos/prestamoPersonal.js";

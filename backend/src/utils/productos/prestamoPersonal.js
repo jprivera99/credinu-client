@@ -1,87 +1,52 @@
 // utils/productos/prestamoPersonal.js
 
-import {
-  amortizacionNormal,
-} from "../amortizacion/amortizacionNormal.js";
+import { amortizacionNormal } from "../amortizacion/amortizacionNormal.js";
 
-export const calcularPrestamoPersonal = (
-  producto,
-  data,
-) => {
-
+export const calcularPrestamoPersonal = (producto, data) => {
   const tasaIVA = 0.16;
 
-  const monto =
-    Number(data.monto);
+  const monto = Number(data.monto);
 
-  const ingreso =
-    Number(data.ingreso);
+  const ingreso = Number(data.ingreso);
 
-  const capacidadPago =
-    ingreso * 0.3;
+  const capacidadPago = ingreso * 0.3;
 
-  const tasa =
-    Number(producto.tasa || 0) / 100;
+  const tasa = Number(producto.tasa || 0) / 100;
 
-  const plazo =
-    Number(
-      producto.plazo_max || 12,
-    );
+  const plazo = Number(producto.plazo_max || 12);
 
   const info = {
-
     monto,
 
-    tasa_iva:
-      tasaIVA,
+    tasa_iva: tasaIVA,
 
-    tasa_ordinaria:
-      tasa,
+    tasa_ordinaria: tasa,
 
-    periodicidad:
-      String(
-        producto.periodicidad,
-      ).toLowerCase(),
+    periodicidad: String(producto.periodicidad).toLowerCase(),
 
-    duracion:
-      plazo,
+    duracion: plazo,
 
     plazo,
 
-    fecha_inicio:
-      new Date()
-        .toISOString()
-        .slice(0, 10),
+    fecha_inicio: new Date().toISOString().slice(0, 10),
 
-    forma_pago:
-      "normal",
+    forma_pago: "normal",
   };
 
-  const detalle =
-    amortizacionNormal(info);
+  const detalle = amortizacionNormal(info);
 
   return {
+    id: producto.id,
 
-    producto_id:
-      producto.producto_id,
+    nombre: producto.nombre,
 
-    nombre:
-      producto.nombre,
+    monto_aprobado: Number(monto.toFixed(2)),
 
-    monto_aprobado:
-      Number(
-        monto.toFixed(2),
-      ),
-
-    capacidad_pago:
-      Number(
-        capacidadPago.toFixed(2),
-      ),
+    capacidad_pago: Number(capacidadPago.toFixed(2)),
 
     plazo,
 
-    periodicidad:
-      producto.periodicidad,
+    periodicidad: producto.periodicidad,
 
     detalle,
   };

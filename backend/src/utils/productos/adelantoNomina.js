@@ -71,7 +71,7 @@ export const calcularAdelantoNomina = (producto, data) => {
   const detalle = amortizacionConGracia(info);
 
   return {
-    producto_id: producto.producto_id,
+    id: producto.id,
 
     nombre: producto.nombre,
 

@@ -1,3 +1,4 @@
+// app/dashboard/cotizacion/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -108,8 +109,8 @@ export default function CotizacionPage() {
             }}
           >
             {resultados.map((prod) => (
-              <div key={prod.producto_id} className="product-card">
-                <h4 style={{ color: "red" }}>{prod.nombre}</h4>
+              <div key={prod.id} className="product-card">
+                <h4 style={{ color: "red" }}>{prod.nombre_comercial}</h4>
 
                 <p>Préstamo hasta por: 
                   <b> ${Number(prod.monto_aprobado).toLocaleString()}</b>
@@ -124,7 +125,7 @@ export default function CotizacionPage() {
                 <button
                   onClick={() =>
                     router.push(
-                      `/dashboard/cotizacion/detalle?producto_id=${prod.producto_id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
+                      `/dashboard/cotizacion/detalle?id=${prod.id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
                     )
                   }
                   className="register-submit"
