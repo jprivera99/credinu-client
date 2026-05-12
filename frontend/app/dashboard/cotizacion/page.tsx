@@ -112,15 +112,14 @@ export default function CotizacionPage() {
               <div key={prod.id} className="product-card">
                 <h4 style={{ color: "red" }}>{prod.nombre_comercial}</h4>
 
-                <p>Préstamo hasta por: 
+                <p>
+                  Préstamo hasta por:
                   <b> ${Number(prod.monto_aprobado).toLocaleString()}</b>
                 </p>
 
                 <p>en {prod.plazo} pago(s)</p>
 
-                <p>
-                  {prod.periodicidad}(es)
-                </p>
+                <p>{prod.periodicidad}(es)</p>
 
                 <button
                   onClick={() =>

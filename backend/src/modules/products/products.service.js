@@ -92,10 +92,7 @@ export const getProductByInstitution = async (institucion_id) => {
   console.log("Productos por institución:", json(productosInstitucion));
 };
 
-export const getProductByInstitutionQuotation = async (institucion_id) => {
-  /*
-  PRODUCTOS DE LA INSTITUCION
-  */
+/* export const getProductByInstitutionQuotation = async (institucion_id) => {
 
   const [institucionRows] = await pool.query(
     `
@@ -106,10 +103,6 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
       `,
     [institucion_id],
   );
-
-  /*
-  OBTENER INSTITUCION
-  */
 
   const [[institucion]] = await pool.query(
     `
@@ -122,10 +115,6 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
 
   let productosPadre = [];
 
-  /*
-  SI TIENE PADRE
-  */
-
   if (institucion && Number(institucion.id_padre) > 0) {
     productosPadre = await getProductByInstitutionQuotation(
       institucion.id_padre,
@@ -137,15 +126,7 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
     }));
   }
 
-  /*
-  UNIR
-  */
-
   const productosUnidos = [...productosPadre, ...institucionRows];
-
-  /*
-  PRODUCTOS BASE
-  */
 
   const [productosBase] = await pool.query(`
       SELECT *
@@ -158,10 +139,6 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
   productosBase.forEach((p) => {
     mapProductos[p.id] = p;
   });
-
-  /*
-  AGREGAR INFO PRODUCTO
-  */
 
   const productosFinales = productosUnidos.map((item) => {
     const producto = mapProductos[item.producto_id];
@@ -187,31 +164,15 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
     };
   });
 
-  /*
-  ELIMINAR DUPLICADOS
-  PRIORIDAD:
-  HIJO > PADRE
-  */
-
   const productosMap = {};
 
   for (const item of productosFinales) {
     const key = item.producto_id;
 
-    /*
-    SI NO EXISTE
-    */
-
     if (!productosMap[key]) {
       productosMap[key] = item;
       continue;
     }
-
-    /*
-    SI EXISTE UNO PADRE
-    Y EL NUEVO NO ES PADRE
-    REEMPLAZAR
-    */
 
     if (productosMap[key].is_padre && !item.is_padre) {
       productosMap[key] = item;
@@ -219,4 +180,49 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
   }
 
   return Object.values(productosMap);
+};
+ */
+
+//VERION 2
+
+export const getProductByInstitutionQuotation = async (institucion_id) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+        ip.id,
+        ip.institucion_id,
+        ip.producto_id,
+        ip.nombre_comercial,
+        ip.descripcion,
+        ip.tasa,
+        ip.comision_apertura,
+        ip.tasa_renovacion,
+        ip.periodicidad,
+        ip.plazo_max,
+        ip.plazo_min,
+        ip.monto_max,
+        ip.monto_min,
+        ip.antiguedad,
+        ip.pago_gracia,
+        ip.borrado,
+
+        p.nombre,
+        p.tipo_pago_capital,
+        p.descripcion AS producto_descripcion
+
+    FROM institucion_producto ip
+
+    INNER JOIN producto p
+      ON ip.producto_id = p.id
+
+    WHERE IFNULL(ip.borrado,0)=0
+      AND IFNULL(ip.ocultar_cliente,0)=0
+      AND ip.institucion_id = ?
+
+    ORDER BY ip.id DESC
+    `,
+    [institucion_id],
+  );
+
+  return rows;
 };

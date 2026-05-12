@@ -2,29 +2,17 @@
 
 import { pool } from "../../config/db.js";
 
-import {
-  getProductByInstitutionQuotation,
-} from "../products/products.service.js";
+import { getProductByInstitutionQuotation } from "../products/products.service.js";
 
-import {
-  calcularAdelantoNomina,
-} from "../../utils/productos/adelantoNomina.js";
+import { calcularAdelantoNomina } from "../../utils/productos/adelantoNomina.js";
 
-import {
-  calcularAnticipoAguinaldo,
-} from "../../utils/productos/anticipoAguinaldo.js";
+import { calcularAnticipoAguinaldo } from "../../utils/productos/anticipoAguinaldo.js";
 
-import {
-  calcularPrestamoPersonal,
-} from "../../utils/productos/prestamoPersonal.js";
+import { calcularPrestamoPersonal } from "../../utils/productos/prestamoPersonal.js";
 
-import {
-  calcularAdelantoNominaPagosFijos,
-} from "../../utils/productos/adelantoNominaPagosFijos.js";
+import { calcularAdelantoNominaPagosFijos } from "../../utils/productos/adelantoNominaPagosFijos.js";
 
-import {
-  calcularSalarioDemanda,
-} from "../../utils/productos/salarioDemanda.js";
+import { calcularSalarioDemanda } from "../../utils/productos/salarioDemanda.js";
 
 /**
  * OBTENER CALCULADORA SEGUN PRODUCTO
@@ -40,41 +28,26 @@ const calculadoras = {
 /**
  * COTIZAR
  */
-export const cotizarService = async ({
-  monto,
-  ingreso,
-  institucion_id,
-}) => {
-
+export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
   /*
   VALIDACIONES
   */
 
   if (!monto || Number(monto) <= 0) {
-    throw new Error(
-      "El monto es requerido",
-    );
+    throw new Error("El monto es requerido");
   }
 
   if (!ingreso || Number(ingreso) <= 0) {
-    throw new Error(
-      "El ingreso es requerido",
-    );
+    throw new Error("El ingreso es requerido");
   }
 
   /*
   OBTENER PRODUCTOS
   */
 
-  const productos =
-    await getProductByInstitutionQuotation(
-      institucion_id,
-    );
+  const productos = await getProductByInstitutionQuotation(institucion_id);
 
-  if (
-    !productos ||
-    productos.length === 0
-  ) {
+  if (!productos || productos.length === 0) {
     return [];
   }
 
@@ -85,15 +58,11 @@ export const cotizarService = async ({
   const resultados = [];
 
   for (const producto of productos) {
-
     /*
     BUSCAR FUNCION
     */
 
-    const calcular =
-      calculadoras[
-        Number(producto.producto_id)
-      ];
+    const calcular = calculadoras[Number(producto.producto_id)];
 
     /*
     SI NO EXISTE FUNCION
@@ -104,29 +73,21 @@ export const cotizarService = async ({
     }
 
     try {
-
       /*
       CALCULAR
       */
 
-      const resultado =
-        calcular(
-          producto,
-          {
-            monto:
-              Number(monto),
+      const resultado = calcular(producto, {
+        monto: Number(monto),
 
-            ingreso:
-              Number(ingreso),
-          },
-        );
+        ingreso: Number(ingreso),
+      });
 
       /*
       AGREGAR RESULTADO
       */
 
       if (resultado) {
-
         resultados.push({
           ...resultado,
 
@@ -134,15 +95,9 @@ export const cotizarService = async ({
           NORMALIZAR CAMPOS
           */
 
-          producto_id:
-            Number(
-              resultado.producto_id,
-            ),
+          producto_id: Number(resultado.producto_id),
 
-          nombre:
-            resultado.nombre ||
-            producto.nombre ||
-            "",
+          nombre: resultado.nombre || producto.nombre || "",
 
           nombre_comercial:
             resultado.nombre_comercial ||
@@ -150,21 +105,13 @@ export const cotizarService = async ({
             producto.nombre ||
             "",
 
-          periodicidad:
-            String(
-              resultado.periodicidad ||
-              producto.periodicidad ||
-              "",
-            ).toLowerCase(),
+          periodicidad: String(
+            resultado.periodicidad || producto.periodicidad || "",
+          ).toLowerCase(),
         });
       }
-
     } catch (error) {
-
-      console.error(
-        `ERROR PRODUCTO ${producto.producto_id}:`,
-        error.message,
-      );
+      console.error(`ERROR PRODUCTO ${producto.producto_id}:`, error.message);
     }
   }
 
@@ -173,9 +120,7 @@ export const cotizarService = async ({
   */
 
   resultados.sort(
-    (a, b) =>
-      Number(b.monto_aprobado) -
-      Number(a.monto_aprobado),
+    (a, b) => Number(b.monto_aprobado) - Number(a.monto_aprobado),
   );
 
   return resultados;
@@ -185,12 +130,7 @@ export const cotizarService = async ({
  * DETALLE
  */
 
-export const detalleService = async ({
-  id,
-  monto,
-  plazo,
-}) => {
-
+export const detalleService = async ({ id, monto, plazo }) => {
   const [rows] = await pool.query(
     `
     SELECT
@@ -205,107 +145,60 @@ export const detalleService = async ({
     [id],
   );
 
-  const producto =
-    rows?.[0];
+  const producto = rows?.[0];
 
   if (!producto) {
-    throw new Error(
-      "Producto no encontrado",
-    );
+    throw new Error("Producto no encontrado");
   }
 
-  const tasa =
-    Number(producto.tasa || 0) / 100;
+  const tasa = Number(producto.tasa || 0) / 100;
 
-  const pago =
-    (
-      monto * tasa
-    ) /
-    (
-      1 -
-      Math.pow(
-        1 + tasa,
-        -plazo,
-      )
-    );
+  const pago = (monto * tasa) / (1 - Math.pow(1 + tasa, -plazo));
 
-  let saldo =
-    Number(monto);
+  let saldo = Number(monto);
 
   const tabla = [];
 
-  for (
-    let i = 1;
-    i <= plazo;
-    i++
-  ) {
+  for (let i = 1; i <= plazo; i++) {
+    const interes = saldo * tasa;
 
-    const interes =
-      saldo * tasa;
+    let capital = pago - interes;
 
-    const capital =
-      pago - interes;
+    let saldoFinal = saldo - capital;
 
-    const saldoFinal =
-      saldo - capital;
+    if (i === plazo) {
+      capital = saldo;
+
+      saldoFinal = 0;
+    }
 
     tabla.push({
-
       periodo: i,
 
-      saldo_inicial:
-        Number(
-          saldo.toFixed(2),
-        ),
+      saldo_inicial: Number(saldo.toFixed(2)),
 
-      interes:
-        Number(
-          interes.toFixed(2),
-        ),
+      interes: Number(interes.toFixed(2)),
 
-      capital:
-        Number(
-          capital.toFixed(2),
-        ),
+      capital: Number(capital.toFixed(2)),
 
-      pago:
-        Number(
-          pago.toFixed(2),
-        ),
+      pago: Number((capital + interes).toFixed(2)),
 
-      saldo_final:
-        Number(
-          saldoFinal.toFixed(2),
-        ),
+      saldo_final: Number(saldoFinal.toFixed(2)),
     });
 
-    saldo =
-      saldoFinal;
+    saldo = saldoFinal;
   }
 
   return {
+    producto: producto.nombre_comercial || producto.nombre,
 
-    producto:
-      producto.nombre_comercial ||
-      producto.nombre,
+    monto: Number(monto),
 
-    monto:
-      Number(monto),
+    plazo: Number(plazo),
 
-    plazo:
-      Number(plazo),
+    tasa: Number((tasa * 100).toFixed(2)),
 
-    tasa:
-      Number(
-        (
-          tasa * 100
-        ).toFixed(2),
-      ),
-
-    pago:
-      Number(
-        pago.toFixed(2),
-      ),
+    pago: Number(pago.toFixed(2)),
 
     tabla,
   };
