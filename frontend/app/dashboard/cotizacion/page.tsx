@@ -124,7 +124,7 @@ export default function CotizacionPage() {
                 <button
                   onClick={() =>
                     router.push(
-                      `/dashboard/cotizacion/detalle?id=${prod.id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}`,
+                      `/dashboard/cotizacion/detalle?id=${prod.id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}&ingreso=${ingreso}`,
                     )
                   }
                   className="register-submit"

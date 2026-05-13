@@ -92,10 +92,10 @@ export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
           ...resultado,
 
           /*
-          NORMALIZAR CAMPOS
-          */
+    NORMALIZAR CAMPOS
+    */
 
-          producto_id: Number(resultado.producto_id),
+          producto_id: Number(producto.producto_id),
 
           nombre: resultado.nombre || producto.nombre || "",
 

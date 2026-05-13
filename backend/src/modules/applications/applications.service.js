@@ -41,15 +41,32 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
   }));
 };
 
-export const createApplicationService = async ({ userId, body, institucion_id }) => {
-  const { institucion_producto_id, monto, plazo, ingreso } = body;
-
+export const createApplicationService = async ({
+  cliente_id,
+  monto,
+  ingreso,
+  plazo,
+  institucion_producto_id,
+  institucion_id,
+}) => {
   /*
     VALIDAR
     */
 
-  if (!institucion_producto_id) {
+  if (!institucion_producto_id || Number(institucion_producto_id) <= 0) {
     throw new Error("Producto requerido");
+  }
+
+  if (!monto || Number(monto) <= 0) {
+    throw new Error("Monto inválido");
+  }
+
+  if (!ingreso || Number(ingreso) <= 0) {
+    throw new Error("Ingreso inválido");
+  }
+
+  if (!plazo || Number(plazo) <= 0) {
+    throw new Error("Plazo inválido");
   }
 
   /*
@@ -57,20 +74,35 @@ export const createApplicationService = async ({ userId, body, institucion_id })
     */
 
   const productos = await cotizarService({
-    monto,
-    ingreso,
+    monto: Number(monto),
+    ingreso: Number(ingreso),
     institucion_id,
+    cliente_id,
   });
 
   /*
     BUSCAR PRODUCTO
     */
 
-  const producto = productos.find((p) => Number(p.id) === Number(institucion_producto_id));
+  const producto = productos.find(
+    (p) => Number(p.id) === Number(institucion_producto_id),
+  );
 
   if (!producto) {
     throw new Error("Producto inválido");
   }
+
+  console.log("PRODUCTO ENCONTRADO:", producto);
+
+  console.log({
+  cliente_id,
+  institucion_producto_id,
+  tipo_credito: producto.producto_id,
+  monto_credito: producto.monto_aprobado,
+  plazo,
+  monto_pago: producto.pago_periodico,
+  monto_total: producto.pago_periodico * plazo,
+});
 
   /*
     CREAR SOLICITUD
@@ -85,36 +117,36 @@ export const createApplicationService = async ({ userId, body, institucion_id })
 
   const [result] = await pool.query(
     `
-        INSERT INTO solicitud (
-          cliente_id,
-          estatus_id,
-          estatus,
-          institucion_producto_id,
-          tipo_credito,
-          monto_credito,
-          plazo_meses,
-          monto_pago,
-          monto_total,
-          amortizacion,
-          registro_fecha
-        ) VALUES (
-          ?,
-          680,
-          680,
-          ?,
-          ?,
-          ?,
-          ?,
-          ?,
-          ?,
-          ?,
-          NOW()
-        )
-        `,
+    INSERT INTO solicitud (
+      cliente_id,
+      estatus_id,
+      estatus,
+      institucion_producto_id,
+      tipo_credito,
+      monto_credito,
+      plazo_meses,
+      monto_pago,
+      monto_total,
+      amortizacion,
+      registro_fecha
+    ) VALUES (
+      ?,
+      680,
+      680,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      ?,
+      NOW()
+    )
+    `,
     [
-      user.cliente_id,
-      producto.id,
-      producto.institucion_producto_id,
+      cliente_id,
+      institucion_producto_id,
+      producto.producto_id,
       producto.monto_aprobado,
       plazo,
       producto.pago_periodico,

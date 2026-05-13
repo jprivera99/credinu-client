@@ -261,9 +261,7 @@ export function createApplicationRequest(data: {
     solicitud_id: number;
   }>("/applications/create", {
     method: "POST",
-
     auth: true,
-
     body: JSON.stringify(data),
   });
 }
