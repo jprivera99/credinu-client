@@ -2,16 +2,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { detalleRequest } from "@/lib/api";
-import { useSearchParams } from "next/navigation";
+import { detalleRequest, createApplicationRequest } from "@/lib/api";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function DetallePage() {
   const params = useSearchParams();
-
+  const router = useRouter();
   const id = Number(params.get("id"));
-
   const [monto, setMonto] = useState(Number(params.get("monto")));
   const [plazo, setPlazo] = useState(Number(params.get("plazo")));
+  const ingreso = Number(params.get("ingreso"));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
@@ -31,6 +31,38 @@ export default function DetallePage() {
       setData(res);
     } catch (error) {
       console.error("DETALLE ERROR:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSolicitar = async () => {
+    try {
+      setLoading(true);
+
+      console.log({
+        institucion_producto_id: Number(data.id),
+
+        monto: Number(monto),
+
+        plazo: Number(plazo),
+
+        ingreso: Number(ingreso),
+      });
+
+      const response = await createApplicationRequest({
+        institucion_producto_id: Number(data.id),
+
+        monto: Number(monto),
+
+        plazo: Number(plazo),
+
+        ingreso: Number(ingreso),
+      });
+
+      router.push(`/dashboard/solicitudes/${response.solicitud_id}`);
+    } catch (error) {
+      console.error("SOLICITUD ERROR:", error);
     } finally {
       setLoading(false);
     }
@@ -81,13 +113,28 @@ export default function DetallePage() {
             />
           </div>
 
-          <button
-            onClick={fetchDetalle}
-            className="register-submit"
-            disabled={loading}
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+            }}
           >
-            {loading ? "CALCULANDO..." : "RECALCULAR"}
-          </button>
+            <button
+              onClick={fetchDetalle}
+              className="register-submit"
+              disabled={loading}
+            >
+              {loading ? "CALCULANDO..." : "RECALCULAR"}
+            </button>
+
+            <button
+              onClick={handleSolicitar}
+              className="register-submit"
+              disabled={loading}
+            >
+              QUIERO MI PRÉSTAMO
+            </button>
+          </div>
         </div>
 
         {/* RESUMEN */}

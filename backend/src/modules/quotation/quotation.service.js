@@ -190,6 +190,10 @@ export const detalleService = async ({ id, monto, plazo }) => {
   }
 
   return {
+    id: producto.id,
+
+    producto_id: producto.producto_id,
+
     producto: producto.nombre_comercial || producto.nombre,
 
     monto: Number(monto),

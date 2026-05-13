@@ -1,4 +1,5 @@
 import { pool } from "../../config/db.js";
+import { cotizarService } from "../quotation/quotation.service.js";
 
 function getProductNameFromAmortizacion(amortizacion) {
   try {
@@ -38,4 +39,91 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
     producto: getProductNameFromAmortizacion(row.amortizacion),
     estatus: row.estatus_nombre ?? null,
   }));
+};
+
+export const createApplicationService = async ({ userId, body, institucion_id }) => {
+  const { institucion_producto_id, monto, plazo, ingreso } = body;
+
+  /*
+    VALIDAR
+    */
+
+  if (!institucion_producto_id) {
+    throw new Error("Producto requerido");
+  }
+
+  /*
+    COTIZAR PRODUCTOS
+    */
+
+  const productos = await cotizarService({
+    monto,
+    ingreso,
+    institucion_id,
+  });
+
+  /*
+    BUSCAR PRODUCTO
+    */
+
+  const producto = productos.find((p) => Number(p.id) === Number(institucion_producto_id));
+
+  if (!producto) {
+    throw new Error("Producto inválido");
+  }
+
+  /*
+    CREAR SOLICITUD
+    */
+
+  const amortizacion = JSON.stringify({
+    info: producto,
+    amortizacion: {
+      tabla: producto.tabla || [],
+    },
+  });
+
+  const [result] = await pool.query(
+    `
+        INSERT INTO solicitud (
+          cliente_id,
+          estatus_id,
+          estatus,
+          institucion_producto_id,
+          tipo_credito,
+          monto_credito,
+          plazo_meses,
+          monto_pago,
+          monto_total,
+          amortizacion,
+          registro_fecha
+        ) VALUES (
+          ?,
+          680,
+          680,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          ?,
+          NOW()
+        )
+        `,
+    [
+      user.cliente_id,
+      producto.id,
+      producto.institucion_producto_id,
+      producto.monto_aprobado,
+      plazo,
+      producto.pago_periodico,
+      producto.pago_periodico * plazo,
+      amortizacion,
+    ],
+  );
+
+  return {
+    solicitud_id: result.insertId,
+  };
 };

@@ -53,7 +53,7 @@ async function apiFetch<T>(
     }
 
     throw new Error("Sesión expirada");
-  } 
+  }
 
   let json;
 
@@ -70,7 +70,6 @@ async function apiFetch<T>(
     throw new Error(
       typeof json?.message === "string" ? json.message : JSON.stringify(json),
     );
-
   }
 
   return json.data ?? json;
@@ -222,10 +221,7 @@ export function getProductoById(producto_id: number) {
 
 // ------------------------------MODULO COTIZACION ------------------------------
 
-export function cotizarRequest(payload: {
-  monto: number;
-  ingreso: number;
-}) {
+export function cotizarRequest(payload: { monto: number; ingreso: number }) {
   return apiFetch<
     {
       producto_id: number;
@@ -241,7 +237,6 @@ export function cotizarRequest(payload: {
   });
 }
 
-
 export function detalleRequest(data: {
   id: number;
   monto: number;
@@ -250,6 +245,25 @@ export function detalleRequest(data: {
   return apiFetch<DetalleCotizacion>("/quotation/detalle", {
     method: "POST",
     auth: true,
+    body: JSON.stringify(data),
+  });
+}
+
+// ------------------------------MODULO SOLICITUD ------------------------------
+
+export function createApplicationRequest(data: {
+  institucion_producto_id: number;
+  monto: number;
+  plazo: number;
+  ingreso: number;
+}) {
+  return apiFetch<{
+    solicitud_id: number;
+  }>("/applications/create", {
+    method: "POST",
+
+    auth: true,
+
     body: JSON.stringify(data),
   });
 }
