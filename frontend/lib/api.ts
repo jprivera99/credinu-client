@@ -55,15 +55,39 @@ async function apiFetch<T>(
     throw new Error("Sesión expirada");
   }
 
-  let json;
+  // Read body only once to avoid: Failed to execute 'text' on 'Response': body stream already read
+  const rawBody = await response.text();
+  let json: any = null;
 
-  try {
-    json = await response.json();
-  } catch (e) {
-    const text = await response.text();
-    console.error("Respuesta no JSON:", text);
+  if (rawBody) {
+    try {
+      json = JSON.parse(rawBody);
+    } catch {
+      json = null;
+    }
+  }
 
-    throw new Error(text || "Respuesta inválida del servidor");
+  if (!response.ok) {
+    const messageFromJson =
+      typeof json?.message === "string"
+        ? json.message
+        : typeof json?.error === "string"
+          ? json.error
+          : null;
+
+    const message =
+      messageFromJson ||
+      rawBody ||
+      (response.status === 429
+        ? "Demasiadas solicitudes. Intenta nuevamente en unos minutos"
+        : `Error ${response.status}`);
+
+    throw new Error(message,
+    );
+  }
+
+  if (!json) {
+    throw new Error("Respuesta inválida del servidor");
   }
 
   if (!response.ok) {
