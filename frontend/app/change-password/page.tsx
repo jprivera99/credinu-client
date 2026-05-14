@@ -13,6 +13,8 @@ export default function CambiarPasswordPage() {
 
   const [password, setPassword] = useState<string>("");
   const [confirm, setConfirm] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
@@ -33,6 +35,10 @@ export default function CambiarPasswordPage() {
     {
       label: "Al menos un número",
       valid: /\d/.test(password),
+    },
+    {
+      label: "Al menos un signo (ej. !@#$%)",
+      valid: /[^A-Za-z0-9]/.test(password),
     },
     {
       label: "Las contraseñas coinciden",
@@ -63,6 +69,10 @@ export default function CambiarPasswordPage() {
 
     if (!/\d/.test(password)) {
       newErrors.push("Debe incluir al menos un número");
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      newErrors.push("Debe incluir al menos un signo (ej. !@#$%)");
     }
 
     if (password !== confirm) {
@@ -154,22 +164,66 @@ export default function CambiarPasswordPage() {
 
           <label>
             <span>Nueva contraseña</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" fill="#000" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" fill="#000" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </label>
 
           <label>
             <span>Confirmar contraseña</span>
-            <input
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              disabled={loading}
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowConfirm(!showConfirm)}
+                aria-label={showConfirm ? "Ocultar confirmación" : "Mostrar confirmación"}
+                disabled={loading}
+              >
+                {showConfirm ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" fill="#000" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" fill="#000" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </label>
 
           <div style={{ marginTop: 10, fontSize: 13 }}>
