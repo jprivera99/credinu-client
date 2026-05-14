@@ -20,7 +20,7 @@ export const getApplications = async (req, res, next) => {
 export const createApplication = async (req, res, next) => {
   try {
     const institucion_id = req.user.institucion_id;
-    const cliente_id = req.user.id;
+    const cliente_id = req.user.cliente_id;
 
     const {
       monto,

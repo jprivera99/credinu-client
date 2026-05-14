@@ -6,7 +6,7 @@ export const cotizar = async (req, res) => {
   try {
     const { monto, ingreso } = req.body;
     const institucion_id = req.user.institucion_id;
-    const cliente_id = req.user.id;
+    const cliente_id = req.user.cliente_id;
 
     if (!monto || !ingreso) {
       return res.status(400).json({
