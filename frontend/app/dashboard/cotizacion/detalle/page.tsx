@@ -254,6 +254,10 @@ export default function DetallePage() {
           </table>
         </div>
       </div>
+
+      <p className="form-notice is-warning onboarding-warning" role="note">
+        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y las políticas del producto.
+      </p>
     </section>
   );
 }
