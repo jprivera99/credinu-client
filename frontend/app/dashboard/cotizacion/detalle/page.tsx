@@ -89,7 +89,7 @@ export default function DetallePage() {
       });
 
       router.push(
-        `/dashboard/solicitudes/${response.solicitud_id}`,
+        `/dashboard/solicitud/${response.solicitud_id}`,
       );
     } catch (error) {
       console.error("SOLICITUD ERROR:", error);

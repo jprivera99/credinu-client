@@ -265,3 +265,9 @@ export function createApplicationRequest(data: {
     body: JSON.stringify(data),
   });
 }
+
+export function getApplicationRequest(id: number) {
+  return apiFetch(`/applications/consulta/${id}`, {
+    auth: true,
+  });
+}

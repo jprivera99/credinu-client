@@ -4,6 +4,7 @@ import { ok } from "../../utils/responses.js";
 import {
   getApplicationsByAuthenticatedUser,
   createApplicationService,
+  getApplicationByIdService,
 } from "./applications.service.js";
 
 export const getApplications = async (req, res, next) => {
@@ -38,6 +39,19 @@ export const createApplication = async (req, res, next) => {
     });
 
     return ok(res, data, "Solicitud creada");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getApplicationById = async (req, res, next) => {
+  try {
+    const data = await getApplicationByIdService({
+      solicitud_id: req.params.id,
+      user_id: req.user.id,
+    });
+
+    return ok(res, data, "Solicitud obtenida");
   } catch (error) {
     return next(error);
   }
