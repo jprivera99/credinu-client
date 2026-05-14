@@ -17,6 +17,22 @@ export default function CotizacionPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
+  const getPeriodoLabel = (periodicidad?: string) => {
+    const p = String(periodicidad || "").toLowerCase();
+
+    switch (p) {
+      case "semanal":
+        return "semanal(es)";
+      case "catorcenal":
+        return "catorcenal(es)";
+      case "quincenal":
+        return "quincenal(es)";
+      case "mensual":
+      default:
+        return "mensual(es)";
+    }
+  };
+
   // ================== COTIZAR ==================
   const handleCotizar = async () => {
     setError("");
@@ -117,9 +133,9 @@ export default function CotizacionPage() {
                   <b> ${Number(prod.monto_aprobado).toLocaleString()}</b>
                 </p>
 
-                <p>en {prod.plazo} pago(s)</p>
-
-                <p>{prod.periodicidad}(es)</p>
+                <p>
+                  en {prod.plazo} pago(s) {getPeriodoLabel(prod.periodicidad)}
+                </p>
 
                 <button
                   onClick={() =>

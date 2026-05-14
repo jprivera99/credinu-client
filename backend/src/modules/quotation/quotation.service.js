@@ -50,6 +50,22 @@ const getPaymentNumber = (duracion, periodicidad) => {
   }
 };
 
+const getPagosMes = (periodicidad) => {
+  const periodo = String(periodicidad || "").toLowerCase();
+
+  switch (periodo) {
+    case "semanal":
+      return 52 / 12;
+    case "catorcenal":
+      return 26 / 12;
+    case "quincenal":
+      return 2;
+    case "mensual":
+    default:
+      return 1;
+  }
+};
+
 /**
  * COTIZAR
  */
@@ -113,8 +129,24 @@ export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
       */
 
       if (resultado) {
+        const periodicidadResultado = String(
+          resultado.periodicidad || producto.periodicidad || "",
+        ).toLowerCase();
+
+        const pagosMes = getPagosMes(periodicidadResultado);
+
+        const plazoResultado = Number(resultado.plazo || 0);
+
+        const plazoComoPagos =
+          Number(producto.num_pagos || 0) > 0
+            ? Number(producto.num_pagos)
+            : periodicidadResultado === "mensual"
+              ? Math.round(plazoResultado)
+              : Math.max(1, Math.round(plazoResultado * pagosMes));
+
         resultados.push({
           ...resultado,
+          plazo: plazoComoPagos,
 
           /*
     NORMALIZAR CAMPOS
@@ -130,9 +162,7 @@ export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
             producto.nombre ||
             "",
 
-          periodicidad: String(
-            resultado.periodicidad || producto.periodicidad || "",
-          ).toLowerCase(),
+          periodicidad: periodicidadResultado,
         });
       }
     } catch (error) {
@@ -178,20 +208,34 @@ export const detalleService = async ({ id, monto, plazo, ingreso, institucion_id
   }
 
   const periodicidad = String(producto.periodicidad || "").toLowerCase();
+  const pagosMes = getPagosMes(periodicidad);
+  const numPagosFijo = Number(producto.num_pagos || 0);
 
   const tasa = Number(producto.tasa || 0) / 100;
   const tasaIVA = Number(producto.iva) === 1 ? 0.16 : 0;
 
-  const plazoMin = Number(producto.plazo_min || 1);
-  const plazoMaxRaw = Number(producto.plazo_max || plazoMin);
-  const plazoMax = plazoMaxRaw >= plazoMin ? plazoMaxRaw : plazoMin;
+  const plazoMinMeses = Number(producto.plazo_min || 1);
+  const plazoMaxRaw = Number(producto.plazo_max || plazoMinMeses);
+  const plazoMaxMeses = plazoMaxRaw >= plazoMinMeses ? plazoMaxRaw : plazoMinMeses;
 
-  const plazoSolicitado = Number(plazo);
-  const plazoAjustado = clamp(
-    Number.isFinite(plazoSolicitado) && plazoSolicitado > 0 ? plazoSolicitado : plazoMax,
-    plazoMin,
-    plazoMax,
+  const plazoMinPagos = numPagosFijo > 0
+    ? numPagosFijo
+    : getPaymentNumber(plazoMinMeses, periodicidad);
+
+  const plazoMaxPagos = numPagosFijo > 0
+    ? numPagosFijo
+    : getPaymentNumber(plazoMaxMeses, periodicidad);
+
+  const plazoSolicitadoPagos = Number(plazo);
+  const plazoPagosAjustado = clamp(
+    Number.isFinite(plazoSolicitadoPagos) && plazoSolicitadoPagos > 0
+      ? plazoSolicitadoPagos
+      : plazoMaxPagos,
+    plazoMinPagos,
+    plazoMaxPagos,
   );
+
+  const plazoAjustadoMeses = plazoPagosAjustado / pagosMes;
 
   const montoSolicitado = Number(monto);
 
@@ -211,7 +255,7 @@ export const detalleService = async ({ id, monto, plazo, ingreso, institucion_id
   }
 
   const ingresoNum = Number(ingreso || 0);
-  const paymentNumber = getPaymentNumber(plazoAjustado, periodicidad);
+  const paymentNumber = Math.max(1, Math.round(plazoPagosAjustado));
 
   if (ingresoNum > 0 && tasa > 0 && paymentNumber > 0) {
     const montoMaximoCapacidad = PV(
@@ -234,7 +278,7 @@ export const detalleService = async ({ id, monto, plazo, ingreso, institucion_id
     tasa_iva: tasaIVA,
     tasa_ordinaria: tasa,
     periodicidad,
-    duracion: plazoAjustado,
+    duracion: plazoAjustadoMeses,
   });
 
   const tabla = (detalle.payments || []).map((row) => ({
@@ -260,11 +304,11 @@ export const detalleService = async ({ id, monto, plazo, ingreso, institucion_id
 
     monto: Number(montoAjustado.toFixed(2)),
 
-    plazo: Number(plazoAjustado),
+    plazo: Number(plazoPagosAjustado),
 
-    plazo_min: Number(plazoMin),
+    plazo_min: Number(plazoMinPagos),
 
-    plazo_max: Number(plazoMax),
+    plazo_max: Number(plazoMaxPagos),
 
     monto_min: Number(montoMin || 0),
 

@@ -29,6 +29,22 @@ export default function DetallePage() {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const getPlazoLabel = (periodicidad?: string) => {
+    const p = String(periodicidad || "").toLowerCase();
+
+    switch (p) {
+      case "semanal":
+        return "Plazo (semanas)";
+      case "catorcenal":
+        return "Plazo (catorcenas)";
+      case "quincenal":
+        return "Plazo (quincenas)";
+      case "mensual":
+      default:
+        return "Plazo (meses)";
+    }
+  };
+
   /*
   OBTENER INGRESO DESDE QUERY PARAMS
   */
@@ -172,7 +188,7 @@ export default function DetallePage() {
           </div>
 
           <div>
-            <label>Plazo</label>
+            <label>{getPlazoLabel(data?.periodicidad)}</label>
 
             <input
               type="number"

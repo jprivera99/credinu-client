@@ -1,28 +1,61 @@
 // utils/productos/calcularSalarioDemanda.js
 
 import { amortizacionNormal } from "../amortizacion/amortizacionNormal.js";
+import { PV } from "../amortizacion/formulas.js";
 
 export const calcularSalarioDemanda = (producto, data) => {
-  const tasaIVA = 0.16;
+  const tasaIVA = Number(producto.iva) === 1 ? 0.16 : 0;
 
   const ingreso = Number(data.ingreso);
 
   let monto = Number(data.monto);
 
-  // MAXIMO 3 INGRESOS
-  const montoMaximo = ingreso * 3;
+  const montoMin = Number(producto.monto_min || 0);
+  const montoMax = Number(producto.monto_max || 0);
 
-  if (monto > montoMaximo) {
-    monto = montoMaximo;
+  if (montoMin > 0 && monto < montoMin) {
+    monto = montoMin;
   }
 
-  const capacidadPago = ingreso * 0.35;
+  if (montoMax > 0 && monto > montoMax) {
+    monto = montoMax;
+  }
+
+  const capacidadPago = ingreso * 0.3;
 
   const capacidadMensual = capacidadPago * 2;
 
   const tasa = Number(producto.tasa || 0) / 100;
 
-  const plazo = Number(producto.plazo_max || 18);
+  const periodicidad = String(producto.periodicidad || "").toLowerCase();
+  const numPagos = Math.max(1, Number(producto.num_pagos || 0));
+
+  const pagosMes =
+    periodicidad === "semanal"
+      ? 52 / 12
+      : periodicidad === "catorcenal"
+        ? 26 / 12
+        : periodicidad === "quincenal"
+          ? 2
+          : 1;
+
+  const duracion = numPagos / pagosMes;
+
+  if (ingreso > 0 && tasa > 0 && numPagos > 0) {
+    const montoMaximoCapacidad = PV(
+      tasa * (1 + tasaIVA),
+      numPagos,
+      -(ingreso * 0.3),
+    );
+
+    if (Number.isFinite(montoMaximoCapacidad) && montoMaximoCapacidad > 0) {
+      monto = Math.min(monto, montoMaximoCapacidad);
+    }
+  }
+
+  if (montoMin > 0 && monto < montoMin) {
+    monto = montoMin;
+  }
 
   const info = {
     monto,
@@ -31,11 +64,9 @@ export const calcularSalarioDemanda = (producto, data) => {
 
     tasa_ordinaria: tasa,
 
-    periodicidad: String(producto.periodicidad || "").toLowerCase(),
+    periodicidad,
 
-    duracion: plazo,
-
-    plazo,
+    duracion,
 
     fecha_inicio: new Date().toISOString().slice(0, 10),
 
@@ -57,7 +88,11 @@ export const calcularSalarioDemanda = (producto, data) => {
 
     monto_aprobado: Number(monto.toFixed(2)),
 
-    plazo,
+    plazo: numPagos,
+
+    plazo_min: numPagos,
+
+    plazo_max: numPagos,
 
     pago_periodico: Number(pagoPeriodico.toFixed(2)),
 
@@ -67,6 +102,6 @@ export const calcularSalarioDemanda = (producto, data) => {
 
     detalle,
 
-    periodicidad: String(producto.periodicidad || "").toLowerCase(),
+    periodicidad,
   };
 };

@@ -189,22 +189,7 @@ export const getProductByInstitutionQuotation = async (institucion_id) => {
   const [rows] = await pool.query(
     `
     SELECT
-        ip.id,
-        ip.institucion_id,
-        ip.producto_id,
-        ip.nombre_comercial,
-        ip.descripcion,
-        ip.tasa,
-        ip.comision_apertura,
-        ip.tasa_renovacion,
-        ip.periodicidad,
-        ip.plazo_max,
-        ip.plazo_min,
-        ip.monto_max,
-        ip.monto_min,
-        ip.antiguedad,
-        ip.pago_gracia,
-        ip.borrado,
+        ip.*,
 
         p.nombre,
         p.tipo_pago_capital,
