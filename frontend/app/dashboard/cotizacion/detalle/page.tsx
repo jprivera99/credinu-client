@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { detalleRequest, createApplicationRequest } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -25,6 +26,8 @@ export default function DetallePage() {
   const [data, setData] = useState<any>(null);
 
   const [loading, setLoading] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   /*
   OBTENER INGRESO DESDE QUERY PARAMS
@@ -66,7 +69,7 @@ export default function DetallePage() {
   CREAR SOLICITUD
   */
 
-  const handleSolicitar = async () => {
+  const submitSolicitud = async () => {
     try {
       setLoading(true);
 
@@ -98,6 +101,16 @@ export default function DetallePage() {
     }
   };
 
+  const handleSolicitarClick = () => {
+    if (loading) return;
+    setShowReminderModal(true);
+  };
+
+  const handleConfirmReminder = async () => {
+    setShowReminderModal(false);
+    await submitSolicitud();
+  };
+
   /*
   INIT
   */
@@ -106,6 +119,10 @@ export default function DetallePage() {
     if (id && monto && plazo) {
       fetchDetalle();
     }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   /*
@@ -177,7 +194,7 @@ export default function DetallePage() {
             </button>
 
             <button
-              onClick={handleSolicitar}
+              onClick={handleSolicitarClick}
               className="register-submit"
               disabled={loading}
             >
@@ -258,6 +275,44 @@ export default function DetallePage() {
       <p className="form-notice is-warning onboarding-warning" role="note">
         NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y las políticas del producto.
       </p>
+
+      {mounted && showReminderModal
+        ? createPortal(
+            <div className="confirm-modal-backdrop" role="dialog" aria-modal="true">
+              <div className="confirm-modal">
+                <h3>Recordatorio</h3>
+                <div className="confirm-alert">
+                  <span className="confirm-alert-icon">!</span>
+                  <p>
+                    Por favor, asegúrate de tener a la mano lo siguiente: Cuenta CLABE interbancaria,
+                    Credencial INE, Últimos 3 recibos de Nómina, Comprobante de domicilio (predial,
+                    luz, agua), Último estado de cuenta bancario.
+                  </p>
+                </div>
+
+                <div className="confirm-modal-actions">
+                  <button
+                    type="button"
+                    className="confirm-cancel"
+                    onClick={() => setShowReminderModal(false)}
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="confirm-accept"
+                    onClick={handleConfirmReminder}
+                    disabled={loading}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   );
 }
