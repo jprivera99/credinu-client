@@ -12,13 +12,9 @@ export default function DetallePage() {
 
   const id = Number(params.get("id"));
 
-  const [monto, setMonto] = useState(
-    Number(params.get("monto")) || 0,
-  );
+  const [monto, setMonto] = useState(Number(params.get("monto")) || 0);
 
-  const [plazo, setPlazo] = useState(
-    Number(params.get("plazo")) || 0,
-  );
+  const [plazo, setPlazo] = useState(Number(params.get("plazo")) || 0);
 
   const [ingreso, setIngreso] = useState(0);
 
@@ -28,6 +24,9 @@ export default function DetallePage() {
   const [loading, setLoading] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getPlazoLabel = (periodicidad?: string) => {
     const p = String(periodicidad || "").toLowerCase();
@@ -110,11 +109,13 @@ export default function DetallePage() {
         ingreso: Number(ingreso),
       });
 
-      router.push(
-        `/dashboard/solicitud/${response.solicitud_id}`,
+      router.push(`/dashboard/solicitud/${response.solicitud_id}`);
+    } catch (error: any) {
+      setErrorMessage(
+        error?.message || "Ocurrió un error al procesar la solicitud.",
       );
-    } catch (error) {
-      console.error("SOLICITUD ERROR:", error);
+
+      setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
@@ -178,9 +179,7 @@ export default function DetallePage() {
             <input
               type="number"
               value={monto}
-              onChange={(e) =>
-                setMonto(Number(e.target.value))
-              }
+              onChange={(e) => setMonto(Number(e.target.value))}
               min={data?.monto_min || 0}
               max={data?.monto_max || undefined}
               className="register-input"
@@ -193,9 +192,7 @@ export default function DetallePage() {
             <input
               type="number"
               value={plazo}
-              onChange={(e) =>
-                setPlazo(Number(e.target.value))
-              }
+              onChange={(e) => setPlazo(Number(e.target.value))}
               min={data?.plazo_min || 1}
               max={data?.plazo_max || undefined}
               className="register-input"
@@ -230,8 +227,7 @@ export default function DetallePage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(200px,1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px,1fr))",
             gap: "15px",
             marginTop: "20px",
           }}
@@ -248,9 +244,7 @@ export default function DetallePage() {
 
           <div className="product-card">
             <p>Total a pagar</p>
-            <h4>
-              ${Number(data.total_pagar || 0).toFixed(2)}
-            </h4>
+            <h4>${Number(data.total_pagar || 0).toFixed(2)}</h4>
           </div>
         </div>
       </div>
@@ -279,15 +273,11 @@ export default function DetallePage() {
               {data.tabla.map((row: any) => (
                 <tr key={row.periodo}>
                   <td>{row.periodo}</td>
-                  <td>
-                    ${row.saldo_inicial.toFixed(2)}
-                  </td>
+                  <td>${row.saldo_inicial.toFixed(2)}</td>
                   <td>${row.interes.toFixed(2)}</td>
                   <td>${row.capital.toFixed(2)}</td>
                   <td>${row.pago.toFixed(2)}</td>
-                  <td>
-                    ${row.saldo_final.toFixed(2)}
-                  </td>
+                  <td>${row.saldo_final.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -296,20 +286,26 @@ export default function DetallePage() {
       </div>
 
       <p className="form-notice is-warning onboarding-warning" role="note">
-        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y las políticas del producto.
+        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y
+        las políticas del producto.
       </p>
 
       {mounted && showReminderModal
         ? createPortal(
-            <div className="confirm-modal-backdrop" role="dialog" aria-modal="true">
+            <div
+              className="confirm-modal-backdrop"
+              role="dialog"
+              aria-modal="true"
+            >
               <div className="confirm-modal">
                 <h3>Recordatorio</h3>
                 <div className="confirm-alert">
                   <span className="confirm-alert-icon">!</span>
                   <p>
-                    Por favor, asegúrate de tener a la mano lo siguiente: Cuenta CLABE interbancaria,
-                    Credencial INE, Últimos 3 recibos de Nómina, Comprobante de domicilio (predial,
-                    luz, agua), Último estado de cuenta bancario.
+                    Por favor, asegúrate de tener a la mano lo siguiente: Cuenta
+                    CLABE interbancaria, Credencial INE, Últimos 3 recibos de
+                    Nómina, Comprobante de domicilio (predial, luz, agua),
+                    Último estado de cuenta bancario.
                   </p>
                 </div>
 
@@ -329,6 +325,37 @@ export default function DetallePage() {
                     disabled={loading}
                   >
                     OK
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {mounted && showErrorModal
+        ? createPortal(
+            <div
+              className="confirm-modal-backdrop"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="confirm-modal">
+                <h3>Solicitud no disponible</h3>
+
+                <div className="confirm-alert">
+                  <span className="confirm-alert-icon">!</span>
+
+                  <p>{errorMessage}</p>
+                </div>
+
+                <div className="confirm-modal-actions">
+                  <button
+                    type="button"
+                    className="confirm-accept"
+                    onClick={() => setShowErrorModal(false)}
+                  >
+                    Entendido
                   </button>
                 </div>
               </div>

@@ -52,8 +52,9 @@ export const createApplicationService = async ({
   institucion_producto_id,
   institucion_id,
 }) => {
+
   /*
-    VALIDAR
+    VALIDACIONES BASICAS
   */
 
   if (!institucion_producto_id || Number(institucion_producto_id) <= 0) {
@@ -70,117 +71,6 @@ export const createApplicationService = async ({
 
   if (!plazo || Number(plazo) <= 0) {
     throw new Error("Plazo inválido");
-  }
-
-  /*
-    SOLICITUDES EN PROCESO
-  */
-
-  const [solicitudesProceso] = await pool.query(
-    `
-    SELECT COUNT(*) AS total
-    FROM solicitud
-    WHERE cliente_id = ?
-      AND IFNULL(borrado,0)=0
-      AND estatus_id IN (680,681,682)
-    `,
-    [cliente_id],
-  );
-
-  const sol_proceso = Number(solicitudesProceso[0]?.total || 0);
-
-  /*
-    SOLICITUD VIGENTE
-  */
-
-  const [solicitudVigente] = await pool.query(
-    `
-    SELECT id
-    FROM solicitud
-    WHERE cliente_id = ?
-      AND IFNULL(borrado,0)=0
-      AND estatus_id = 679
-    ORDER BY id DESC
-    LIMIT 1
-    `,
-    [cliente_id],
-  );
-
-  const sol_vigente = solicitudVigente[0]?.id || 0;
-
-  /*
-    VALIDACION RH
-  */
-
-  const [clientes] = await pool.query(
-    `
-    SELECT
-      IFNULL(validado,0) AS validado
-    FROM cliente
-    WHERE id = ?
-    LIMIT 1
-    `,
-    [cliente_id],
-  );
-
-  const cliente = clientes[0];
-
-  const alerta = Number(cliente?.validado || 0);
-
-  /*
-    PRODUCTO
-  */
-
-  const [productosDb] = await pool.query(
-    `
-    SELECT
-      IFNULL(requiere_autorizacion_rh,0) AS requiere_autorizacion_rh,
-      IFNULL(express,0) AS express
-    FROM institucion_producto
-    WHERE id = ?
-    LIMIT 1
-    `,
-    [institucion_producto_id],
-  );
-
-  const productoDb = productosDb[0];
-
-  const alerta_2 = Number(productoDb?.requiere_autorizacion_rh || 0);
-
-  const is_express = Number(productoDb?.express || 0);
-
-  /*
-    VALIDACIONES RH
-  */
-
-  if (alerta !== 2 && alerta_2 === 0) {
-    if (alerta === 3) {
-      throw new Error(
-        "Estimado Cliente: Su solicitud ha sido rechazada, favor de contactar al área de Recursos Humanos de su empresa para cualquier aclaración.",
-      );
-    }
-
-    throw new Error(
-      "Estimado Cliente podrás solicitar tu préstamo una vez que Recursos Humanos haya validado tu información.",
-    );
-  }
-
-  /*
-    SOLICITUD EN PROCESO
-  */
-
-  if (sol_proceso > 0) {
-    throw new Error(
-      "Tiene actualmente solicitudes en proceso de revisión. No puede enviar más solicitudes hasta que finalice las actuales.",
-    );
-  }
-
-  /*
-    SOLICITUD VIGENTE
-  */
-
-  if (sol_vigente > 0) {
-    throw new Error("Tiene usted una solicitud pendiente sin enviar.");
   }
 
   /*
@@ -282,7 +172,6 @@ export const createApplicationService = async ({
 
   return {
     solicitud_id: result.insertId,
-    express: is_express,
   };
 };
 
@@ -397,8 +286,8 @@ export const validateApplicationService = async ({
     `
     SELECT
       IFNULL(validado,0) AS validado
-    FROM cliente
-    WHERE id = ?
+    FROM sis_usuario
+    WHERE cliente_id = ?
     LIMIT 1
     `,
     [cliente_id],
