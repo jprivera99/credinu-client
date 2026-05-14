@@ -285,7 +285,7 @@ input {
 
 .product-action,
 .form-actions button,
-.login-form button {
+.login-form button[type="submit"] {
   border: 0;
   border-radius: 16px;
   background: linear-gradient(135deg, var(--brand), #ef4d42);
@@ -335,6 +335,45 @@ input {
   border-radius: 16px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.92);
+}
+
+/* Estilos para el input de contraseña ocultar / mostrar */
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
 }
 
 .form-actions {
@@ -756,7 +795,7 @@ input {
   box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.16);
 }
 
-.login-form button {
+.login-form button[type="submit"] {
   margin-top: 6px;
   border: 0;
   border-radius: 14px;
@@ -769,13 +808,13 @@ input {
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
-.login-form button:hover {
+.login-form button[type="submit"]:hover {
   transform: translateY(-1px);
   filter: brightness(1.04);
   box-shadow: 0 14px 28px rgba(47, 114, 182, 0.3);
 }
 
-.login-form button:disabled {
+.login-form button[type="submit"]:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
