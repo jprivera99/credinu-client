@@ -52,10 +52,9 @@ export const createApplicationService = async ({
   institucion_producto_id,
   institucion_id,
 }) => {
-
   /*
     VALIDAR
-    */
+  */
 
   if (!institucion_producto_id || Number(institucion_producto_id) <= 0) {
     throw new Error("Producto requerido");
@@ -73,9 +72,8 @@ export const createApplicationService = async ({
     throw new Error("Plazo inválido");
   }
 
-
-    /*
-  VALIDACIONES CLIENTE
+  /*
+    SOLICITUDES EN PROCESO
   */
 
   const [solicitudesProceso] = await pool.query(
@@ -92,7 +90,7 @@ export const createApplicationService = async ({
   const sol_proceso = Number(solicitudesProceso[0]?.total || 0);
 
   /*
-  SOLICITUD VIGENTE
+    SOLICITUD VIGENTE
   */
 
   const [solicitudVigente] = await pool.query(
@@ -111,32 +109,48 @@ export const createApplicationService = async ({
   const sol_vigente = solicitudVigente[0]?.id || 0;
 
   /*
-  VALIDACION RH
+    VALIDACION RH
   */
 
-  const [usuarios] = await pool.query(
+  const [clientes] = await pool.query(
     `
     SELECT
-      IFNULL(validado,0) AS validado,
-      IFNULL(desactivar_autorizacion_rh,0) AS desactivar_autorizacion_rh,
-      IFNULL(es_express,0) AS es_express
-    FROM sis_usuario
+      IFNULL(validado,0) AS validado
+    FROM cliente
     WHERE id = ?
     LIMIT 1
     `,
     [cliente_id],
   );
 
-  const usuario = usuarios[0];
+  const cliente = clientes[0];
 
-  const alerta = Number(usuario?.validado || 0);
-
-  const alerta_2 = Number(usuario?.desactivar_autorizacion_rh || 0);
-
-  const is_express = Number(usuario?.es_express || 0);
+  const alerta = Number(cliente?.validado || 0);
 
   /*
-  VALIDACIONES
+    PRODUCTO
+  */
+
+  const [productosDb] = await pool.query(
+    `
+    SELECT
+      IFNULL(requiere_autorizacion_rh,0) AS requiere_autorizacion_rh,
+      IFNULL(express,0) AS express
+    FROM institucion_producto
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [institucion_producto_id],
+  );
+
+  const productoDb = productosDb[0];
+
+  const alerta_2 = Number(productoDb?.requiere_autorizacion_rh || 0);
+
+  const is_express = Number(productoDb?.express || 0);
+
+  /*
+    VALIDACIONES RH
   */
 
   if (alerta !== 2 && alerta_2 === 0) {
@@ -152,7 +166,7 @@ export const createApplicationService = async ({
   }
 
   /*
-  SOLICITUD EN PROCESO
+    SOLICITUD EN PROCESO
   */
 
   if (sol_proceso > 0) {
@@ -162,16 +176,16 @@ export const createApplicationService = async ({
   }
 
   /*
-  SOLICITUD VIGENTE
+    SOLICITUD VIGENTE
   */
 
   if (sol_vigente > 0) {
     throw new Error("Tiene usted una solicitud pendiente sin enviar.");
   }
-  
+
   /*
     COTIZAR PRODUCTOS
-    */
+  */
 
   const productos = await cotizarService({
     monto: Number(monto),
@@ -182,7 +196,7 @@ export const createApplicationService = async ({
 
   /*
     BUSCAR PRODUCTO
-    */
+  */
 
   const producto = productos.find(
     (p) => Number(p.id) === Number(institucion_producto_id),
@@ -192,6 +206,10 @@ export const createApplicationService = async ({
     throw new Error("Producto inválido");
   }
 
+  /*
+    RECALCULAR DETALLE
+  */
+
   const detalle = await detalleService({
     id: Number(institucion_producto_id),
     monto: Number(monto),
@@ -200,21 +218,9 @@ export const createApplicationService = async ({
     institucion_id,
   });
 
-  console.log("PRODUCTO ENCONTRADO:", producto);
-
-  console.log({
-    cliente_id,
-    institucion_producto_id,
-    tipo_credito: producto.producto_id,
-    monto_credito: detalle.monto,
-    plazo: detalle.plazo,
-    monto_pago: detalle.pago,
-    monto_total: detalle.total_pagar,
-  });
-
   /*
-    CREAR SOLICITUD
-    */
+    CREAR AMORTIZACION
+  */
 
   const amortizacion = JSON.stringify({
     info: {
@@ -224,10 +230,15 @@ export const createApplicationService = async ({
       pago_periodico: detalle.pago,
       periodicidad: detalle.periodicidad,
     },
+
     amortizacion: {
       tabla: detalle.tabla || [],
     },
   });
+
+  /*
+    CREAR SOLICITUD
+  */
 
   const [result] = await pool.query(
     `
@@ -271,6 +282,7 @@ export const createApplicationService = async ({
 
   return {
     solicitud_id: result.insertId,
+    express: is_express,
   };
 };
 
@@ -347,5 +359,129 @@ export const getApplicationByIdService = async ({ solicitud_id, user_id }) => {
       amortizacion?.info?.detalle?.payments ||
       amortizacion?.amortizacion?.tabla ||
       [],
+  };
+};
+
+export const validateApplicationService = async ({
+  cliente_id,
+  institucion_producto_id,
+}) => {
+  /*
+    OBTENER PRODUCTO
+  */
+
+  const [productoRows] = await pool.query(
+    `
+    SELECT
+      id,
+      express,
+      requiere_autorizacion_rh
+    FROM institucion_producto
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [institucion_producto_id],
+  );
+
+  const producto = productoRows[0];
+
+  if (!producto) {
+    throw new Error("Producto no encontrado");
+  }
+
+  /*
+    VALIDACION CLIENTE
+  */
+
+  const [clienteRows] = await pool.query(
+    `
+    SELECT
+      IFNULL(validado,0) AS validado
+    FROM cliente
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [cliente_id],
+  );
+
+  const cliente = clienteRows[0];
+
+  const alerta = Number(cliente?.validado || 0);
+
+  /*
+    VALIDAR RH
+  */
+
+  if (alerta !== 2 && Number(producto.requiere_autorizacion_rh) === 0) {
+    return {
+      success: false,
+      type: "RH_VALIDATION",
+      message:
+        alerta === 3
+          ? "Su solicitud ha sido rechazada por Recursos Humanos."
+          : "Debe esperar validación de Recursos Humanos.",
+    };
+  }
+
+  /*
+    SOLICITUDES EN PROCESO
+  */
+
+  const [procesoRows] = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM solicitud
+    WHERE cliente_id = ?
+    AND IFNULL(borrado,0)=0
+    AND estatus IN (680,690,700,710)
+    `,
+    [cliente_id],
+  );
+
+  const solicitudesProceso = Number(procesoRows[0]?.total || 0);
+
+  if (solicitudesProceso > 0) {
+    return {
+      success: false,
+      type: "PROCESS",
+      message: "Actualmente tiene solicitudes en proceso de revisión.",
+    };
+  }
+
+  /*
+    SOLICITUD VIGENTE
+  */
+
+  const [vigenteRows] = await pool.query(
+    `
+    SELECT id
+    FROM solicitud
+    WHERE cliente_id = ?
+    AND IFNULL(borrado,0)=0
+    AND estatus = 100
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    [cliente_id],
+  );
+
+  const solicitudVigente = vigenteRows[0];
+
+  if (solicitudVigente) {
+    return {
+      success: false,
+      type: "PENDING",
+      solicitud_id: solicitudVigente.id,
+      message: "Tiene una solicitud pendiente.",
+    };
+  }
+
+  /*
+    TODO OK
+  */
+
+  return {
+    success: true,
+    express: Number(producto.express || 0),
   };
 };

@@ -5,6 +5,7 @@ import {
   getApplicationsByAuthenticatedUser,
   createApplicationService,
   getApplicationByIdService,
+  validateApplicationService,
 } from "./applications.service.js";
 
 export const getApplications = async (req, res, next) => {
@@ -22,12 +23,16 @@ export const createApplication = async (req, res, next) => {
     const institucion_id = req.user.institucion_id;
     const cliente_id = req.user.cliente_id;
 
-    const {
-      monto,
-      ingreso,
-      plazo,
+    const { monto, ingreso, plazo, institucion_producto_id } = req.body;
+
+    const validation = await validateApplicationService({
+      cliente_id,
       institucion_producto_id,
-    } = req.body;
+    });
+
+    if (!validation.success) {
+      return res.status(400).json(validation);
+    }
 
     const data = await createApplicationService({
       cliente_id,
