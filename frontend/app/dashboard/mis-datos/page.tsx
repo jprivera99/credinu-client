@@ -80,6 +80,10 @@ export default function MisDatosPage() {
 				</div>
 			</div>
 
+			<p className="form-notice is-warning onboarding-warning" role="note">
+				Si tus datos son incorrectos Comunícate con tu Ejecutivo Onboarding
+			</p>
+
 			<form className="form-card" onSubmit={handleSubmit}>
 				<div className="form-grid">
 					<label>

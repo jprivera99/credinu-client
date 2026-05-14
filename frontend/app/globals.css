@@ -404,6 +404,21 @@ input {
   border-color: #f3b3b0;
 }
 
+.form-notice.is-warning {
+  color: #7a4b00;
+  background: #fff6df;
+  border-color: #f4d08b;
+}
+
+/* Estilos para el aviso de onboarding en mis datos, igual al form-notice pero con colores personalizados */
+.onboarding-warning {
+  margin-top: 12px;
+  background: #fff3cd !important;
+  color: #664d03 !important;
+  border: 1px solid #ffda6a !important;
+  border-left: 4px solid #ffb100 !important;
+}
+
 .password-rules {
   margin-top: 6px;
   font-size: 13px;
