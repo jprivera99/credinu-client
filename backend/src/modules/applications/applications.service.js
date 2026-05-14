@@ -1,5 +1,8 @@
 import { pool } from "../../config/db.js";
-import { cotizarService, detalleService } from "../quotation/quotation.service.js";
+import {
+  cotizarService,
+  detalleService,
+} from "../quotation/quotation.service.js";
 
 function getProductNameFromAmortizacion(amortizacion) {
   try {
@@ -49,6 +52,7 @@ export const createApplicationService = async ({
   institucion_producto_id,
   institucion_id,
 }) => {
+
   /*
     VALIDAR
     */
@@ -69,6 +73,102 @@ export const createApplicationService = async ({
     throw new Error("Plazo inválido");
   }
 
+
+    /*
+  VALIDACIONES CLIENTE
+  */
+
+  const [solicitudesProceso] = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM solicitud
+    WHERE cliente_id = ?
+      AND IFNULL(borrado,0)=0
+      AND estatus_id IN (680,681,682)
+    `,
+    [cliente_id],
+  );
+
+  const sol_proceso = Number(solicitudesProceso[0]?.total || 0);
+
+  /*
+  SOLICITUD VIGENTE
+  */
+
+  const [solicitudVigente] = await pool.query(
+    `
+    SELECT id
+    FROM solicitud
+    WHERE cliente_id = ?
+      AND IFNULL(borrado,0)=0
+      AND estatus_id = 679
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    [cliente_id],
+  );
+
+  const sol_vigente = solicitudVigente[0]?.id || 0;
+
+  /*
+  VALIDACION RH
+  */
+
+  const [usuarios] = await pool.query(
+    `
+    SELECT
+      IFNULL(validado,0) AS validado,
+      IFNULL(desactivar_autorizacion_rh,0) AS desactivar_autorizacion_rh,
+      IFNULL(es_express,0) AS es_express
+    FROM sis_usuario
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [cliente_id],
+  );
+
+  const usuario = usuarios[0];
+
+  const alerta = Number(usuario?.validado || 0);
+
+  const alerta_2 = Number(usuario?.desactivar_autorizacion_rh || 0);
+
+  const is_express = Number(usuario?.es_express || 0);
+
+  /*
+  VALIDACIONES
+  */
+
+  if (alerta !== 2 && alerta_2 === 0) {
+    if (alerta === 3) {
+      throw new Error(
+        "Estimado Cliente: Su solicitud ha sido rechazada, favor de contactar al área de Recursos Humanos de su empresa para cualquier aclaración.",
+      );
+    }
+
+    throw new Error(
+      "Estimado Cliente podrás solicitar tu préstamo una vez que Recursos Humanos haya validado tu información.",
+    );
+  }
+
+  /*
+  SOLICITUD EN PROCESO
+  */
+
+  if (sol_proceso > 0) {
+    throw new Error(
+      "Tiene actualmente solicitudes en proceso de revisión. No puede enviar más solicitudes hasta que finalice las actuales.",
+    );
+  }
+
+  /*
+  SOLICITUD VIGENTE
+  */
+
+  if (sol_vigente > 0) {
+    throw new Error("Tiene usted una solicitud pendiente sin enviar.");
+  }
+  
   /*
     COTIZAR PRODUCTOS
     */
