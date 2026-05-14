@@ -1,6 +1,8 @@
 // src/modules/quotation/quotation.service.js
 
 import { pool } from "../../config/db.js";
+import { amortizacionNormal } from "../../utils/amortizacion/amortizacionNormal.js";
+import { PV } from "../../utils/amortizacion/formulas.js";
 
 import { getProductByInstitutionQuotation } from "../products/products.service.js";
 
@@ -23,6 +25,29 @@ const calculadoras = {
   3: calcularPrestamoPersonal,
   4: calcularAdelantoNominaPagosFijos,
   5: calcularSalarioDemanda,
+};
+
+const clamp = (value, min, max) => {
+  if (Number.isFinite(min) && value < min) return min;
+  if (Number.isFinite(max) && value > max) return max;
+  return value;
+};
+
+const getPaymentNumber = (duracion, periodicidad) => {
+  const meses = Number(duracion);
+  const periodo = String(periodicidad || "").toLowerCase();
+
+  switch (periodo) {
+    case "semanal":
+      return Math.round(meses * (52 / 12));
+    case "catorcenal":
+      return Math.round(meses * (26 / 12));
+    case "quincenal":
+      return Math.round(meses * 2);
+    case "mensual":
+    default:
+      return Math.round(meses);
+  }
 };
 
 /**
@@ -130,7 +155,7 @@ export const cotizarService = async ({ monto, ingreso, institucion_id }) => {
  * DETALLE
  */
 
-export const detalleService = async ({ id, monto, plazo }) => {
+export const detalleService = async ({ id, monto, plazo, ingreso, institucion_id }) => {
   const [rows] = await pool.query(
     `
     SELECT
@@ -140,9 +165,10 @@ export const detalleService = async ({ id, monto, plazo }) => {
     INNER JOIN producto p
       ON p.id = ip.producto_id
     WHERE ip.id = ?
+      AND ip.institucion_id = ?
     LIMIT 1
     `,
-    [id],
+    [id, institucion_id],
   );
 
   const producto = rows?.[0];
@@ -151,43 +177,79 @@ export const detalleService = async ({ id, monto, plazo }) => {
     throw new Error("Producto no encontrado");
   }
 
+  const periodicidad = String(producto.periodicidad || "").toLowerCase();
+
   const tasa = Number(producto.tasa || 0) / 100;
+  const tasaIVA = Number(producto.iva) === 1 ? 0.16 : 0;
 
-  const pago = (monto * tasa) / (1 - Math.pow(1 + tasa, -plazo));
+  const plazoMin = Number(producto.plazo_min || 1);
+  const plazoMaxRaw = Number(producto.plazo_max || plazoMin);
+  const plazoMax = plazoMaxRaw >= plazoMin ? plazoMaxRaw : plazoMin;
 
-  let saldo = Number(monto);
+  const plazoSolicitado = Number(plazo);
+  const plazoAjustado = clamp(
+    Number.isFinite(plazoSolicitado) && plazoSolicitado > 0 ? plazoSolicitado : plazoMax,
+    plazoMin,
+    plazoMax,
+  );
 
-  const tabla = [];
+  const montoSolicitado = Number(monto);
 
-  for (let i = 1; i <= plazo; i++) {
-    const interes = saldo * tasa;
+  let montoAjustado = Number.isFinite(montoSolicitado) && montoSolicitado > 0
+    ? montoSolicitado
+    : Number(producto.monto_min || 0);
 
-    let capital = pago - interes;
+  const montoMin = Number(producto.monto_min || 0);
+  const montoMax = Number(producto.monto_max || 0);
 
-    let saldoFinal = saldo - capital;
-
-    if (i === plazo) {
-      capital = saldo;
-
-      saldoFinal = 0;
-    }
-
-    tabla.push({
-      periodo: i,
-
-      saldo_inicial: Number(saldo.toFixed(2)),
-
-      interes: Number(interes.toFixed(2)),
-
-      capital: Number(capital.toFixed(2)),
-
-      pago: Number((capital + interes).toFixed(2)),
-
-      saldo_final: Number(saldoFinal.toFixed(2)),
-    });
-
-    saldo = saldoFinal;
+  if (montoMin > 0) {
+    montoAjustado = Math.max(montoAjustado, montoMin);
   }
+
+  if (montoMax > 0) {
+    montoAjustado = Math.min(montoAjustado, montoMax);
+  }
+
+  const ingresoNum = Number(ingreso || 0);
+  const paymentNumber = getPaymentNumber(plazoAjustado, periodicidad);
+
+  if (ingresoNum > 0 && tasa > 0 && paymentNumber > 0) {
+    const montoMaximoCapacidad = PV(
+      tasa * (1 + tasaIVA),
+      paymentNumber,
+      -(ingresoNum * 0.3),
+    );
+
+    if (Number.isFinite(montoMaximoCapacidad) && montoMaximoCapacidad > 0) {
+      montoAjustado = Math.min(montoAjustado, montoMaximoCapacidad);
+    }
+  }
+
+  if (montoMin > 0) {
+    montoAjustado = Math.max(montoAjustado, montoMin);
+  }
+
+  const detalle = amortizacionNormal({
+    monto: montoAjustado,
+    tasa_iva: tasaIVA,
+    tasa_ordinaria: tasa,
+    periodicidad,
+    duracion: plazoAjustado,
+  });
+
+  const tabla = (detalle.payments || []).map((row) => ({
+    periodo: row.place,
+    saldo_inicial: Number(row.capital.toFixed(2)),
+    interes: Number(row.interest.toFixed(2)),
+    capital: Number(row.amortized.toFixed(2)),
+    pago: Number(row.paid.toFixed(2)),
+    saldo_final: Number(row.final.toFixed(2)),
+  }));
+
+  const pago = tabla.length > 0 ? Number(tabla[0].pago.toFixed(2)) : 0;
+  const totalPagar = Number(
+    tabla.reduce((acc, row) => acc + Number(row.pago || 0), 0).toFixed(2),
+  );
 
   return {
     id: producto.id,
@@ -196,13 +258,27 @@ export const detalleService = async ({ id, monto, plazo }) => {
 
     producto: producto.nombre_comercial || producto.nombre,
 
-    monto: Number(monto),
+    monto: Number(montoAjustado.toFixed(2)),
 
-    plazo: Number(plazo),
+    plazo: Number(plazoAjustado),
+
+    plazo_min: Number(plazoMin),
+
+    plazo_max: Number(plazoMax),
+
+    monto_min: Number(montoMin || 0),
+
+    monto_max: Number(montoMax || 0),
+
+    periodicidad,
+
+    num_pagos: tabla.length,
 
     tasa: Number((tasa * 100).toFixed(2)),
 
     pago: Number(pago.toFixed(2)),
+
+    total_pagar: totalPagar,
 
     tabla,
   };

@@ -55,9 +55,12 @@ export default function DetallePage() {
         id,
         monto: Number(monto),
         plazo: Number(plazo),
+        ingreso: Number(ingreso),
       });
 
       setData(res);
+      setMonto(Number(res.monto));
+      setPlazo(Number(res.plazo));
     } catch (error) {
       console.error("DETALLE ERROR:", error);
     } finally {
@@ -162,6 +165,8 @@ export default function DetallePage() {
               onChange={(e) =>
                 setMonto(Number(e.target.value))
               }
+              min={data?.monto_min || 0}
+              max={data?.monto_max || undefined}
               className="register-input"
             />
           </div>
@@ -175,6 +180,8 @@ export default function DetallePage() {
               onChange={(e) =>
                 setPlazo(Number(e.target.value))
               }
+              min={data?.plazo_min || 1}
+              max={data?.plazo_max || undefined}
               className="register-input"
             />
           </div>
@@ -226,7 +233,7 @@ export default function DetallePage() {
           <div className="product-card">
             <p>Total a pagar</p>
             <h4>
-              ${(data.pago * data.plazo).toFixed(2)}
+              ${Number(data.total_pagar || 0).toFixed(2)}
             </h4>
           </div>
         </div>

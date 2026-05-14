@@ -1,5 +1,5 @@
 import { pool } from "../../config/db.js";
-import { cotizarService } from "../quotation/quotation.service.js";
+import { cotizarService, detalleService } from "../quotation/quotation.service.js";
 
 function getProductNameFromAmortizacion(amortizacion) {
   try {
@@ -92,16 +92,24 @@ export const createApplicationService = async ({
     throw new Error("Producto inválido");
   }
 
+  const detalle = await detalleService({
+    id: Number(institucion_producto_id),
+    monto: Number(monto),
+    plazo: Number(plazo),
+    ingreso: Number(ingreso),
+    institucion_id,
+  });
+
   console.log("PRODUCTO ENCONTRADO:", producto);
 
   console.log({
     cliente_id,
     institucion_producto_id,
     tipo_credito: producto.producto_id,
-    monto_credito: producto.monto_aprobado,
-    plazo,
-    monto_pago: producto.pago_periodico,
-    monto_total: producto.pago_periodico * plazo,
+    monto_credito: detalle.monto,
+    plazo: detalle.plazo,
+    monto_pago: detalle.pago,
+    monto_total: detalle.total_pagar,
   });
 
   /*
@@ -109,9 +117,15 @@ export const createApplicationService = async ({
     */
 
   const amortizacion = JSON.stringify({
-    info: producto,
+    info: {
+      ...producto,
+      monto_aprobado: detalle.monto,
+      plazo: detalle.plazo,
+      pago_periodico: detalle.pago,
+      periodicidad: detalle.periodicidad,
+    },
     amortizacion: {
-      tabla: producto.tabla || [],
+      tabla: detalle.tabla || [],
     },
   });
 
@@ -147,10 +161,10 @@ export const createApplicationService = async ({
       cliente_id,
       institucion_producto_id,
       producto.producto_id,
-      producto.monto_aprobado,
-      plazo,
-      producto.pago_periodico,
-      producto.pago_periodico * plazo,
+      detalle.monto,
+      detalle.plazo,
+      detalle.pago,
+      detalle.total_pagar,
       amortizacion,
     ],
   );

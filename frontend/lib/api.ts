@@ -265,6 +265,7 @@ export function detalleRequest(data: {
   id: number;
   monto: number;
   plazo: number;
+  ingreso: number;
 }) {
   return apiFetch<DetalleCotizacion>("/quotation/detalle", {
     method: "POST",

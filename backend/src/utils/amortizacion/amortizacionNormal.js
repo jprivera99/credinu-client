@@ -30,7 +30,7 @@ export const amortizacionNormal = (
 
   ret.duration = plazo
     ? info.duracion
-    : parseInt(info.duracion);
+    : Number(info.duracion);
 
   let periodo =
     String(

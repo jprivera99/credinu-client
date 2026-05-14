@@ -150,8 +150,15 @@ export type DetalleCotizacion = {
   producto: string;
   monto: number;
   plazo: number;
+  plazo_min: number;
+  plazo_max: number;
+  monto_min: number;
+  monto_max: number;
+  periodicidad: string;
+  num_pagos: number;
   tasa: number;
   pago: number;
+  total_pagar: number;
   tabla: Pago[];
 };
 
