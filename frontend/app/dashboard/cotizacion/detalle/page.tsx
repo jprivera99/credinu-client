@@ -22,11 +22,28 @@ export default function DetallePage() {
   const [data, setData] = useState<any>(null);
 
   const [loading, setLoading] = useState(false);
-  const [showReminderModal, setShowReminderModal] = useState(false);
+
   const [mounted, setMounted] = useState(false);
 
+  /*
+    MODAL RECORDATORIO
+  */
+
+  const [showReminderModal, setShowReminderModal] = useState(false);
+
+  /*
+    MODAL ERROR
+  */
+
   const [errorMessage, setErrorMessage] = useState("");
+
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  /*
+    EXPRESS
+  */
+
+  const [isExpress, setIsExpress] = useState(0);
 
   const getPlazoLabel = (periodicidad?: string) => {
     const p = String(periodicidad || "").toLowerCase();
@@ -45,13 +62,11 @@ export default function DetallePage() {
   };
 
   /*
-  OBTENER INGRESO DESDE QUERY PARAMS
+    OBTENER INGRESO DESDE QUERY PARAMS
   */
 
   useEffect(() => {
     const ingresoParam = params.get("ingreso");
-
-    console.log("INGRESO PARAM:", ingresoParam);
 
     if (ingresoParam) {
       setIngreso(Number(ingresoParam));
@@ -59,7 +74,7 @@ export default function DetallePage() {
   }, [params]);
 
   /*
-  FETCH DETALLE
+    FETCH DETALLE
   */
 
   const fetchDetalle = async () => {
@@ -74,7 +89,9 @@ export default function DetallePage() {
       });
 
       setData(res);
+
       setMonto(Number(res.monto));
+
       setPlazo(Number(res.plazo));
     } catch (error) {
       console.error("DETALLE ERROR:", error);
@@ -84,19 +101,12 @@ export default function DetallePage() {
   };
 
   /*
-  CREAR SOLICITUD
+    CREAR SOLICITUD
   */
 
   const submitSolicitud = async () => {
     try {
       setLoading(true);
-
-      console.log({
-        id,
-        monto,
-        plazo,
-        ingreso,
-      });
 
       if (!ingreso || ingreso <= 0) {
         throw new Error("El ingreso es inválido");
@@ -108,6 +118,10 @@ export default function DetallePage() {
         plazo: Number(plazo),
         ingreso: Number(ingreso),
       });
+
+      /*
+        REDIRECCIONAR
+      */
 
       router.push(`/dashboard/solicitud/${response.solicitud_id}`);
     } catch (error: any) {
@@ -121,18 +135,110 @@ export default function DetallePage() {
     }
   };
 
-  const handleSolicitarClick = () => {
-    if (loading) return;
-    setShowReminderModal(true);
+  /*
+    VALIDAR ANTES DE MOSTRAR RECORDATORIO
+  */
+
+  const validateSolicitud = async () => {
+    try {
+      setLoading(true);
+
+      const response = await createApplicationRequest({
+        institucion_producto_id: Number(id),
+        monto: Number(monto),
+        plazo: Number(plazo),
+        ingreso: Number(ingreso),
+        validar: true,
+      });
+
+      /*
+        GUARDAR EXPRESS
+      */
+
+      setIsExpress(Number(response?.express || 0));
+
+      /*
+        MOSTRAR RECORDATORIO
+      */
+
+      setShowReminderModal(true);
+    } catch (error: any) {
+      /*
+        MOSTRAR ERROR PRIMERO
+      */
+
+      setErrorMessage(
+        error?.message || "No fue posible validar la solicitud.",
+      );
+
+      setShowErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConfirmReminder = async () => {//confirmar recordatorio antes de enviar solicitud
+  /*
+    CLICK BOTON SOLICITAR
+  */
+
+  const handleSolicitarClick = async () => {
+    if (loading) return;
+
+    await validateSolicitud();
+  };
+
+  /*
+    CONFIRMAR RECORDATORIO
+  */
+
+  const handleConfirmReminder = async () => {
     setShowReminderModal(false);
+
     await submitSolicitud();
   };
 
   /*
-  INIT
+    TEXTO RECORDATORIO
+  */
+
+  const getReminderContent = () => {
+    switch (Number(isExpress)) {
+      case 1:
+        return (
+          <ul
+            style={{
+              textAlign: "left",
+              paddingLeft: "20px",
+              marginTop: "10px",
+            }}
+          >
+            <li>Cuenta CLABE interbancaria</li>
+            <li>Credencial INE</li>
+          </ul>
+        );
+
+      case 0:
+      default:
+        return (
+          <ul
+            style={{
+              textAlign: "left",
+              paddingLeft: "20px",
+              marginTop: "10px",
+            }}
+          >
+            <li>Cuenta CLABE interbancaria</li>
+            <li>Credencial INE</li>
+            <li>Últimos 3 recibos de Nómina</li>
+            <li>Comprobante de domicilio</li>
+            <li>Último estado de cuenta bancario</li>
+          </ul>
+        );
+    }
+  };
+
+  /*
+    INIT
   */
 
   useEffect(() => {
@@ -146,16 +252,12 @@ export default function DetallePage() {
   }, []);
 
   /*
-  LOADING
+    LOADING
   */
 
   if (!data) {
     return <p style={{ padding: 20 }}>Cargando...</p>;
   }
-
-  /*
-  UI
-  */
 
   return (
     <section className="portal-stack">
@@ -234,16 +336,19 @@ export default function DetallePage() {
         >
           <div className="product-card centered-card">
             <span className="card-label">Tasa</span>
+
             <h4>{data.tasa}%</h4>
           </div>
 
           <div className="product-card">
             <p>Pago periódico</p>
+
             <h4>${data.pago.toFixed(2)}</h4>
           </div>
 
           <div className="product-card">
             <p>Total a pagar</p>
+
             <h4>${Number(data.total_pagar || 0).toFixed(2)}</h4>
           </div>
         </div>
@@ -273,10 +378,15 @@ export default function DetallePage() {
               {data.tabla.map((row: any) => (
                 <tr key={row.periodo}>
                   <td>{row.periodo}</td>
+
                   <td>${row.saldo_inicial.toFixed(2)}</td>
+
                   <td>${row.interes.toFixed(2)}</td>
+
                   <td>${row.capital.toFixed(2)}</td>
+
                   <td>${row.pago.toFixed(2)}</td>
+
                   <td>${row.saldo_final.toFixed(2)}</td>
                 </tr>
               ))}
@@ -290,6 +400,7 @@ export default function DetallePage() {
         las políticas del producto.
       </p>
 
+      {/* MODAL RECORDATORIO */}
       {mounted && showReminderModal
         ? createPortal(
             <div
@@ -299,14 +410,17 @@ export default function DetallePage() {
             >
               <div className="confirm-modal">
                 <h3>Recordatorio</h3>
+
                 <div className="confirm-alert">
                   <span className="confirm-alert-icon">!</span>
-                  <p>
-                    Por favor, asegúrate de tener a la mano lo siguiente: Cuenta
-                    CLABE interbancaria, Credencial INE, Últimos 3 recibos de
-                    Nómina, Comprobante de domicilio (predial, luz, agua),
-                    Último estado de cuenta bancario.
-                  </p>
+
+                  <div>
+                    <p>
+                      Por favor, asegúrate de tener a la mano lo siguiente:
+                    </p>
+
+                    {getReminderContent()}
+                  </div>
                 </div>
 
                 <div className="confirm-modal-actions">
@@ -318,6 +432,7 @@ export default function DetallePage() {
                   >
                     Cancelar
                   </button>
+
                   <button
                     type="button"
                     className="confirm-accept"
@@ -333,6 +448,7 @@ export default function DetallePage() {
           )
         : null}
 
+      {/* MODAL ERROR */}
       {mounted && showErrorModal
         ? createPortal(
             <div
