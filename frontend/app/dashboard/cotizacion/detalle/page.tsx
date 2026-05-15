@@ -126,7 +126,7 @@ export default function DetallePage() {
     setShowReminderModal(true);
   };
 
-  const handleConfirmReminder = async () => {
+  const handleConfirmReminder = async () => {//confirmar recordatorio antes de enviar solicitud
     setShowReminderModal(false);
     await submitSolicitud();
   };

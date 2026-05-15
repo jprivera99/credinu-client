@@ -307,8 +307,8 @@ export const validateApplicationService = async ({
       type: "RH_VALIDATION",
       message:
         alerta === 3
-          ? "Su solicitud ha sido rechazada por Recursos Humanos."
-          : "Debe esperar validación de Recursos Humanos.",
+          ? "Estimado Cliente: Su solicitud ha sido rechazada, favor de contactar al área de Recursos Humanos de su empresa para cualquier aclaración."
+          : "Estimado Cliente podrás solicitar tu préstamo una vez que Recursos Humanos haya validado tu información. Por favor consulta tu correo electrónico.",
     };
   }
 
@@ -333,7 +333,7 @@ export const validateApplicationService = async ({
     return {
       success: false,
       type: "PROCESS",
-      message: "Actualmente tiene solicitudes en proceso de revisión.",
+      message: "Tiene actualmente solicitudes en proceso de revisión. No puede enviar más solicitudes hasta que finalice las actuales. Para verificar el estado de sus solicitudes, vaya al menú 'Solicitudes de Crédito'.",
     };
   }
 
@@ -361,7 +361,7 @@ export const validateApplicationService = async ({
       success: false,
       type: "PENDING",
       solicitud_id: solicitudVigente.id,
-      message: "Tiene una solicitud pendiente.",
+      message: "Tiene usted una Solicitud sin enviar. Para continuar puede editar la solicitud pendiente o cancelarla y crear una nueva.",
     };
   }
 
