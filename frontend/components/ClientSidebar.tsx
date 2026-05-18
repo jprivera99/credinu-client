@@ -13,6 +13,7 @@ interface NavItem {
 const items: NavItem[] = [
   { href: "/dashboard/productos", label: "Productos", icon: "grid" },
   { href: "/dashboard/mis-solicitudes", label: "Solicitudes de Crédito", icon: "file" },
+  { href: "/dashboard/expediente", label: "Expediente / Demo", icon: "file" },
   { href: "/dashboard/prestamos", label: "Mis Préstamos", icon: "wallet", disabled: true },
 ];
 
