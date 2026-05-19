@@ -281,9 +281,11 @@ export function createApplicationRequest(data: {
   monto: number;
   plazo: number;
   ingreso: number;
+  validar?: boolean; // Si validar es true, la API solo validará los datos sin crear la solicitud. Esto se usa para mostrar errores antes de crear la solicitud.
 }) {
   return apiFetch<{
     solicitud_id: number;
+    express?: number;
   }>("/applications/create", {
     method: "POST",
     auth: true,
