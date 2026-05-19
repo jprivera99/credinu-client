@@ -275,7 +275,7 @@ export default function ExpedientePage() {
                 </td>
                 <td>
                   <select className="exp-select">
-                    <option value="0" selected>--Seleccione--</option>
+                    <option defaultValue="0" selected>--Seleccione--</option>
                     <option value="693">Autorización expresa de uso de firma digital</option>
                     <option value="655">Autorización para Domiciliación de Recursos</option>
                     <option value="654">Autorización para solicitar Reportes de Crédito</option>

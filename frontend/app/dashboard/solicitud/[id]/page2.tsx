@@ -54,7 +54,7 @@ export default function SolicitudDetallePage() {
   const id = Number(params.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<any>(nhref={"/dashboard/solicitud/" + row.id}ull);
   const [loading, setLoading] = useState(true);
   const [showTabla, setShowTabla] = useState(false);
   const [solicitud, setSolicitud] = useState<SolicitudDetalle | null>(null);
