@@ -26,7 +26,13 @@ export const createApplication = async (req, res, next) => {
     const institucion_id = req.user.institucion_id;
     const cliente_id = req.user.cliente_id;
 
-    const { monto, ingreso, plazo, institucion_producto_id } = req.body;
+    const {
+      monto,
+      ingreso,
+      plazo,
+      institucion_producto_id,
+      validar,
+    } = req.body;
 
     const validation = await validateApplicationService({
       cliente_id,
@@ -35,6 +41,18 @@ export const createApplication = async (req, res, next) => {
 
     if (!validation.success) {
       return res.status(400).json(validation);
+    }
+
+    // Si solo se está validando, no se crea solicitud.
+    if (Boolean(validar)) {
+      return ok(
+        res,
+        {
+          valid: true,
+          express: Number(validation?.express || 0),
+        },
+        "Validación correcta",
+      );
     }
 
     const data = await createApplicationService({
