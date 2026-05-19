@@ -2,212 +2,822 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getApplicationRequest } from "@/lib/api";
+
 import { useParams } from "next/navigation";
 
-export default function SolicitudDetallePage() {
+import {
+  getApplicationRequest,
+  updateApplicationRequest,
+  finalizeApplicationRequest,
+} from "@/lib/api";
+
+/*
+| TYPES
+*/
+
+interface Cliente {
+  nombre?: string;
+
+  apellido_paterno?: string;
+
+  apellido_materno?: string;
+
+  telefono_movil?: string;
+
+  email?: string;
+
+  curp?: string;
+
+  rfc?: string;
+
+  fecha_nacimiento?: string;
+}
+
+interface Domicilio {
+  calle?: string;
+
+  numero_exterior?: string;
+
+  numero_interior?: string;
+
+  colonia?: string;
+
+  municipio?: string;
+
+  estado?: string;
+
+  codigo_postal?: string;
+}
+
+interface Solicitud {
+  monto_credito?: number;
+
+  plazo_meses?: number;
+
+  monto_pago?: number;
+
+  monto_total?: number;
+
+  producto?: string;
+}
+
+interface PrestamoExpressResponse {
+  current_step?: number;
+
+  cliente?: Cliente;
+
+  domicilio?: Domicilio;
+
+  solicitud?: Solicitud;
+}
+
+/*
+| COMPONENT
+*/
+
+export default function PrestamoExpressPage() {
   const params = useParams();
 
   const id = Number(params.id);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
-
   const [loading, setLoading] = useState(true);
 
+  const [saving, setSaving] = useState(false);
+
+  const [data, setData] = useState<PrestamoExpressResponse | null>(null);
+
+  const [step, setStep] = useState(1);
+
+  /*
+  | FORM STATES
+  */
+
+  const [cliente, setCliente] = useState<Cliente>({});
+
+  const [domicilio, setDomicilio] = useState<Domicilio>({});
+
+  /*
+  | FETCH
+  */
+
   useEffect(() => {
-    const fetchSolicitud = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
 
         const response = await getApplicationRequest(id);
 
         setData(response);
+
+        /*
+        | STEP
+        */
+
+        if (response?.current_step) {
+          setStep(response.current_step);
+        }
+
+        /*
+        | SET FORMS
+        */
+
+        setCliente(response?.cliente || {});
+
+        setDomicilio(response?.domicilio || {});
       } catch (error) {
-        console.error("ERROR SOLICITUD:", error);
+        console.error("ERROR:", error);
       } finally {
         setLoading(false);
       }
     };
 
     if (id) {
-      fetchSolicitud();
+      fetchData();
     }
   }, [id]);
 
+  /*
+  | SAVE
+  */
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      await updateApplicationRequest(id, {
+        current_step: step,
+
+        cliente,
+
+        domicilio,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("ERROR GUARDAR:", error);
+
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /*
+  | NEXT STEP
+  */
+
+  const handleNext = async () => {
+    const saved = await handleSave();
+
+    if (!saved) {
+      return;
+    }
+
+    setStep((prev) => (prev < 6 ? prev + 1 : prev));
+  };
+
+  const handleFinalize = async () => {
+    try {
+      setSaving(true);
+
+      /*
+    | GUARDAR ULTIMA INFO
+    */
+
+      await updateApplicationRequest(id, {
+        current_step: step,
+
+        cliente,
+
+        domicilio,
+      });
+
+      /*
+    | FINALIZAR
+    */
+
+      const response = await finalizeApplicationRequest(id);
+
+      console.log("FINALIZADO:", response);
+
+      alert("Solicitud finalizada correctamente");
+
+      /*
+    | OPCIONAL
+    */
+
+      setStep(6);
+    } catch (error) {
+      console.error("ERROR FINALIZAR:", error);
+
+      alert("Error al finalizar solicitud");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /*
+  | PREVIOUS STEP
+  */
+
+  const handleBack = () => {
+    setStep((prev) => (prev > 1 ? prev - 1 : prev));
+  };
+
+  /*
+  | LOADING
+  */
+
   if (loading) {
-    return <p style={{ padding: 20 }}>Cargando solicitud...</p>;
+    return (
+      <section className="auth-wrapper">
+        <div className="auth-card">
+          <p>Cargando información...</p>
+        </div>
+      </section>
+    );
   }
+
+  /*
+  | EMPTY
+  */
 
   if (!data) {
-    return <p style={{ padding: 20 }}>Solicitud no encontrada</p>;
+    return (
+      <section className="auth-wrapper">
+        <div className="auth-card">
+          <p>Solicitud no encontrada</p>
+        </div>
+      </section>
+    );
   }
 
+  /*
+  | PROGRESS %
+  */
+
+  const progress = (step / 6) * 100;
+
   return (
-    <section className="portal-stack">
-      {/* HEADER */}
-      <div className="hero-panel">
+    <section className="auth-wrapper">
+      <div
+        className="auth-card"
+        style={{
+          maxWidth: "850px",
+        }}
+      >
+        {/* HEADER */}
+
+        <div
+          style={{
+            marginBottom: "30px",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "30px",
+              fontWeight: 700,
+            }}
+          >
+            Solicitud de crédito
+          </h1>
+
+          <p
+            style={{
+              marginTop: "10px",
+              opacity: 0.7,
+            }}
+          >
+            Verifica y completa tu información para continuar con tu solicitud.
+          </p>
+        </div>
+
+        {/* PROGRESS */}
+
+        <div
+          style={{
+            marginBottom: "35px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+            }}
+          >
+            <span
+              style={{
+                fontWeight: 600,
+              }}
+            >
+              Paso {step} de 6
+            </span>
+
+            <span>{Math.round(progress)}%</span>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              height: "10px",
+              background: "#E5E7EB",
+              borderRadius: "20px",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${progress}%`,
+                height: "100%",
+                background: "#2563EB",
+                transition: "0.3s",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* STEP 1 */}
+
+        {step === 1 && (
+          <>
+            <div
+              style={{
+                marginBottom: "30px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Verifica tu información personal
+              </h2>
+
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Antes de continuar valida que tus datos sean correctos.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))",
+                gap: "20px",
+              }}
+            >
+              <div>
+                <label className="form-label">Nombre</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.nombre || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      nombre: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Apellido paterno</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.apellido_paterno || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      apellido_paterno: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Apellido materno</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.apellido_materno || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      apellido_materno: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">CURP</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.curp || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      curp: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">RFC</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.rfc || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      rfc: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Teléfono</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.telefono_movil || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      telefono_movil: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div
+                style={{
+                  gridColumn: "1 / -1",
+                }}
+              >
+                <label className="form-label">Correo electrónico</label>
+
+                <input
+                  className="form-input"
+                  value={cliente.email || ""}
+                  onChange={(e) =>
+                    setCliente({
+                      ...cliente,
+                      email: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* STEP 2 */}
+
+        {step === 2 && (
+          <>
+            <div
+              style={{
+                marginBottom: "30px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Domicilio
+              </h2>
+
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Verifica la información de tu domicilio.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))",
+                gap: "20px",
+              }}
+            >
+              <div>
+                <label className="form-label">Calle</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.calle || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      calle: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Número exterior</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.numero_exterior || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      numero_exterior: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Número interior</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.numero_interior || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      numero_interior: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Colonia</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.colonia || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      colonia: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Municipio</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.municipio || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      municipio: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Estado</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.estado || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      estado: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Código postal</label>
+
+                <input
+                  className="form-input"
+                  value={domicilio.codigo_postal || ""}
+                  onChange={(e) =>
+                    setDomicilio({
+                      ...domicilio,
+                      codigo_postal: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* STEP 3 */}
+
+        {step === 3 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 0",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+              }}
+            >
+              Información laboral
+            </h2>
+
+            <p
+              style={{
+                marginTop: "15px",
+                opacity: 0.7,
+              }}
+            >
+              Próximamente...
+            </p>
+          </div>
+        )}
+
+        {/* STEP 4 */}
+
+        {step === 4 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 0",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+              }}
+            >
+              Referencias
+            </h2>
+
+            <p
+              style={{
+                marginTop: "15px",
+                opacity: 0.7,
+              }}
+            >
+              Próximamente...
+            </p>
+          </div>
+        )}
+
+        {/* STEP 5 */}
+
+        {step === 5 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 0",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+              }}
+            >
+              Documentos
+            </h2>
+
+            <p
+              style={{
+                marginTop: "15px",
+                opacity: 0.7,
+              }}
+            >
+              Próximamente...
+            </p>
+          </div>
+        )}
+
+        {/* STEP 6 */}
+
+        {step === 6 && (
+          <>
+            <div
+              style={{
+                marginBottom: "30px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Confirmación
+              </h2>
+
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Revisa la información de tu solicitud.
+              </p>
+            </div>
+
+            <div className="summary-grid">
+              <div className="summary-card">
+                <p>Producto</p>
+
+                <h3>{data.solicitud?.producto}</h3>
+              </div>
+
+              <div className="summary-card">
+                <p>Monto solicitado</p>
+
+                <h3>
+                  $
+                  {Number(data.solicitud?.monto_credito || 0).toLocaleString(
+                    "es-MX",
+                  )}
+                </h3>
+              </div>
+
+              <div className="summary-card">
+                <p>Pago mensual</p>
+
+                <h3>
+                  $
+                  {Number(data.solicitud?.monto_pago || 0).toLocaleString(
+                    "es-MX",
+                  )}
+                </h3>
+              </div>
+
+              <div className="summary-card">
+                <p>Total a pagar</p>
+
+                <h3>
+                  $
+                  {Number(data.solicitud?.monto_total || 0).toLocaleString(
+                    "es-MX",
+                  )}
+                </h3>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* FOOTER */}
+
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            gap: "20px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <h2>{data.producto}</h2>
-
-            <p
-              style={{
-                marginTop: "5px",
-                opacity: 0.7,
-              }}
-            >
-              Solicitud #{data.id}
-            </p>
-          </div>
-
-          <div>
-            <span
-              style={{
-                padding: "10px 15px",
-                borderRadius: "10px",
-                background: "#e8f0fe",
-                fontWeight: 600,
-              }}
-            >
-              {data.estatus}
-            </span>
-          </div>
-        </div>
-
-        {/* RESUMEN */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))",
+            marginTop: "40px",
             gap: "15px",
-            marginTop: "25px",
           }}
         >
-          <div className="product-card">
-            <p>Monto solicitado</p>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={step === 1}
+            onClick={handleBack}
+          >
+            Regresar
+          </button>
 
-            <h4>
-              $
-              {Number(data.monto_credito).toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-              })}
-            </h4>
-          </div>
-
-          <div className="product-card">
-            <p>Pago periódico</p>
-
-            <h4>
-              $
-              {Number(data.monto_pago).toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-              })}
-            </h4>
-          </div>
-
-          <div className="product-card">
-            <p>Plazo</p>
-
-            <h4>{data.plazo_meses}</h4>
-          </div>
-
-          <div className="product-card">
-            <p>Total a pagar</p>
-
-            <h4>
-              $
-              {Number(data.monto_total).toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-              })}
-            </h4>
-          </div>
-        </div>
-      </div>
-
-      {/* TABLA */}
-      <div className="hero-panel">
-        <div className="table-header">
-          <h3>Tabla de amortización</h3>
-        </div>
-
-        <div className="table-container">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Saldo Inicial</th>
-                <th>Interés</th>
-                <th>Capital</th>
-                <th>Pago</th>
-                <th>Saldo Final</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {data.tabla?.map((row: any, index: number) => (
-                <tr key={index}>
-                  <td>{row.periodo || row.place}</td>
-
-                  <td>
-                    $
-                    {Number(
-                      row.saldo_inicial || row.capital || 0,
-                    ).toLocaleString("es-MX", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-
-                  <td>
-                    $
-                    {Number(row.interes || row.interest || 0).toLocaleString(
-                      "es-MX",
-                      {
-                        minimumFractionDigits: 2,
-                      },
-                    )}
-                  </td>
-
-                  <td>
-                    $
-                    {Number(
-                      row.capital_pagado || row.amortized || 0,
-                    ).toLocaleString("es-MX", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-
-                  <td>
-                    $
-                    {Number(row.pago || row.paid || 0).toLocaleString(
-                      "es-MX",
-                      {
-                        minimumFractionDigits: 2,
-                      },
-                    )}
-                  </td>
-
-                  <td>
-                    $
-                    {Number(
-                      row.saldo_final || row.final || 0,
-                    ).toLocaleString("es-MX", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={saving}
+            onClick={step === 6 ? handleFinalize : handleNext}
+          >
+            {saving
+              ? step === 6
+                ? "Finalizando..."
+                : "Guardando..."
+              : step === 6
+                ? "Finalizar solicitud"
+                : "Guardar y continuar"}
+          </button>
         </div>
       </div>
     </section>

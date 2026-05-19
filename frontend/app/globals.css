@@ -1523,3 +1523,26 @@ input {
 .custom-table td {
   text-align: right;
 }
+
+/* VISTA ID SOLICITUD */
+
+.upload-box {
+  border: 2px dashed #d1d5db;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  background: #fafafa;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 15px;
+  padding: 20px;
+  background: white;
+}

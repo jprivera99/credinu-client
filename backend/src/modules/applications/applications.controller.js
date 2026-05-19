@@ -6,6 +6,9 @@ import {
   createApplicationService,
   getApplicationByIdService,
   validateApplicationService,
+  getPrestamoExpressService,
+  updateApplicationService,
+  finalizeApplicationService,
 } from "./applications.service.js";
 
 export const getApplications = async (req, res, next) => {
@@ -57,6 +60,66 @@ export const getApplicationById = async (req, res, next) => {
     });
 
     return ok(res, data, "Solicitud obtenida");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getPrestamoExpress = async (req, res, next) => {
+  try {
+    const data = await getPrestamoExpressService({
+      solicitud_id: req.params.id,
+      user_id: req.user.id,
+    });
+
+    return ok(res, data, "Prestamo express obtenido");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateApplication = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const data =
+      await updateApplicationService({
+        solicitud_id: req.params.id,
+
+        user_id: req.user.id,
+
+        body: req.body,
+      });
+
+    return ok(
+      res,
+      data,
+      "Solicitud actualizada",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const finalizeApplication = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const data =
+      await finalizeApplicationService({
+        solicitud_id: req.params.id,
+        user_id: req.user.id,
+      });
+
+    return ok(
+      res,
+      data,
+      "Solicitud finalizada",
+    );
   } catch (error) {
     return next(error);
   }

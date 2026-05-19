@@ -52,7 +52,6 @@ export const createApplicationService = async ({
   institucion_producto_id,
   institucion_id,
 }) => {
-
   /*
     VALIDACIONES BASICAS
   */
@@ -175,82 +174,6 @@ export const createApplicationService = async ({
   };
 };
 
-export const getApplicationByIdService = async ({ solicitud_id, user_id }) => {
-  const [rows] = await pool.query(
-    `
-    SELECT
-      s.id,
-      s.estatus_id,
-      s.monto_credito,
-      s.plazo_meses,
-      s.monto_pago,
-      s.monto_total,
-      s.registro_fecha,
-      s.amortizacion,
-
-      c.nombre AS estatus
-
-    FROM solicitud s
-
-    INNER JOIN sis_usuario su
-      ON su.cliente_id = s.cliente_id
-
-    LEFT JOIN catalogo c
-      ON c.id = s.estatus_id
-      AND c.catalogo_tipo_id = 5
-
-    WHERE s.id = ?
-      AND su.id = ?
-
-    LIMIT 1
-    `,
-    [solicitud_id, user_id],
-  );
-
-  if (!rows.length) {
-    throw new Error("Solicitud no encontrada");
-  }
-
-  const solicitud = rows[0];
-
-  /*
-    PARSEAR AMORTIZACION
-  */
-
-  let amortizacion = {};
-
-  try {
-    amortizacion = JSON.parse(solicitud.amortizacion || "{}");
-  } catch (error) {
-    amortizacion = {};
-  }
-
-  return {
-    id: solicitud.id,
-
-    estatus_id: solicitud.estatus_id,
-
-    estatus: solicitud.estatus,
-
-    monto_credito: solicitud.monto_credito,
-
-    plazo_meses: solicitud.plazo_meses,
-
-    monto_pago: solicitud.monto_pago,
-
-    monto_total: solicitud.monto_total,
-
-    fecha_registro: solicitud.registro_fecha,
-
-    producto: amortizacion?.info?.nombre_comercial || null,
-
-    tabla:
-      amortizacion?.info?.detalle?.payments ||
-      amortizacion?.amortizacion?.tabla ||
-      [],
-  };
-};
-
 export const validateApplicationService = async ({
   cliente_id,
   institucion_producto_id,
@@ -333,7 +256,8 @@ export const validateApplicationService = async ({
     return {
       success: false,
       type: "PROCESS",
-      message: "Tiene actualmente solicitudes en proceso de revisión. No puede enviar más solicitudes hasta que finalice las actuales. Para verificar el estado de sus solicitudes, vaya al menú 'Solicitudes de Crédito'.",
+      message:
+        "Tiene actualmente solicitudes en proceso de revisión. No puede enviar más solicitudes hasta que finalice las actuales. Para verificar el estado de sus solicitudes, vaya al menú 'Solicitudes de Crédito'.",
     };
   }
 
@@ -361,7 +285,8 @@ export const validateApplicationService = async ({
       success: false,
       type: "PENDING",
       solicitud_id: solicitudVigente.id,
-      message: "Tiene usted una Solicitud sin enviar. Para continuar puede editar la solicitud pendiente o cancelarla y crear una nueva.",
+      message:
+        "Tiene usted una Solicitud sin enviar. Para continuar puede editar la solicitud pendiente o cancelarla y crear una nueva.",
     };
   }
 
@@ -374,3 +299,485 @@ export const validateApplicationService = async ({
     express: Number(producto.express || 0),
   };
 };
+
+export const getApplicationByIdService = async ({
+  solicitud_id,
+  user_id,
+}) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+      s.id,
+      s.estatus_id,
+      s.monto_credito,
+      s.plazo_meses,
+      s.monto_pago,
+      s.monto_total,
+      s.registro_fecha,
+      s.amortizacion,
+
+      cat.nombre AS estatus,
+
+      cl.nombre,
+      cl.apellido_paterno,
+      cl.apellido_materno,
+      cl.telefono_movil,
+      cl.email,
+      cl.curp,
+      cl.rfc,
+      cl.nacimiento_fecha,
+
+      cl.domicilio_calle,
+      cl.domicilio_calle_numext,
+      cl.domicilio_calle_numint,
+      cl.domicilio_colonia,
+      cl.domicilio_municipio,
+      cl.domicilio_estado,
+      cl.domicilio_cp,
+
+      cl.empleo_puesto,
+      cl.empleo_Ingreso_neto_mensual,
+      cl.empleo_antiguedad
+
+    FROM solicitud s
+
+    INNER JOIN sis_usuario su
+      ON su.cliente_id = s.cliente_id
+
+    INNER JOIN cliente cl
+      ON cl.id = s.cliente_id
+
+    LEFT JOIN catalogo cat
+      ON cat.id = s.estatus_id
+      AND cat.catalogo_tipo_id = 5
+
+    WHERE s.id = ?
+      AND su.id = ?
+
+    LIMIT 1
+    `,
+    [solicitud_id, user_id],
+  );
+
+  if (!rows.length) {
+    throw new Error(
+      "Solicitud no encontrada",
+    );
+  }
+
+  const solicitud = rows[0];
+
+  /*
+  | PARSEAR AMORTIZACION
+  */
+
+  let amortizacion = {};
+
+  try {
+    amortizacion = JSON.parse(
+      solicitud.amortizacion || "{}",
+    );
+  } catch (error) {
+    amortizacion = {};
+  }
+
+  /*
+  | RESPONSE
+  */
+
+  return {
+    current_step: 1,
+
+    cliente: {
+      nombre: solicitud.nombre,
+
+      apellido_paterno:
+        solicitud.apellido_paterno,
+
+      apellido_materno:
+        solicitud.apellido_materno,
+
+      telefono_movil:
+        solicitud.telefono_movil,
+
+      email: solicitud.email,
+
+      curp: solicitud.curp,
+
+      rfc: solicitud.rfc,
+
+      fecha_nacimiento:
+        solicitud.nacimiento_fecha,
+    },
+
+    domicilio: {
+      calle:
+        solicitud.domicilio_calle,
+
+      numero_exterior:
+        solicitud.domicilio_calle_numext,
+
+      numero_interior:
+        solicitud.domicilio_calle_numint,
+
+      colonia:
+        solicitud.domicilio_colonia,
+
+      municipio:
+        solicitud.domicilio_municipio,
+
+      estado:
+        solicitud.domicilio_estado,
+
+      codigo_postal:
+        solicitud.domicilio_cp,
+    },
+
+    laboral: {
+      puesto:
+        solicitud.empleo_puesto,
+
+      ingreso_mensual:
+        solicitud.empleo_Ingreso_neto_mensual,
+
+      antiguedad:
+        solicitud.empleo_antiguedad,
+    },
+
+    solicitud: {
+      id: solicitud.id,
+
+      estatus_id:
+        solicitud.estatus_id,
+
+      estatus:
+        solicitud.estatus,
+
+      monto_credito:
+        solicitud.monto_credito,
+
+      plazo_meses:
+        solicitud.plazo_meses,
+
+      monto_pago:
+        solicitud.monto_pago,
+
+      monto_total:
+        solicitud.monto_total,
+
+      fecha_registro:
+        solicitud.registro_fecha,
+
+      producto:
+        amortizacion?.info
+          ?.nombre_comercial || null,
+
+      tabla:
+        amortizacion?.info?.detalle
+          ?.payments ||
+        amortizacion?.amortizacion
+          ?.tabla ||
+        [],
+    },
+  };
+};
+
+export const getPrestamoExpressService = async ({ solicitud_id, user_id }) => {
+  /*
+    OBTENER SOLICITUD
+  */
+
+  const [solicitudRows] = await pool.query(
+    `
+    SELECT
+      s.*,
+      c.id AS cliente_id,
+      c.nombre,
+      c.apellido_paterno,
+      c.apellido_materno,
+      c.email
+    FROM solicitud s
+    INNER JOIN cliente c
+      ON c.id = s.cliente_id
+    INNER JOIN sis_usuario su
+      ON su.cliente_id = c.id
+    WHERE s.id = ?
+      AND su.id = ?
+    LIMIT 1
+    `,
+    [solicitud_id, user_id],
+  );
+
+  if (!solicitudRows.length) {
+    throw new Error("Solicitud no encontrada");
+  }
+
+  const solicitud = solicitudRows[0];
+
+  /*
+    PARSEAR AMORTIZACION
+  */
+
+  let amortizacion = {};
+
+  try {
+    amortizacion = JSON.parse(solicitud.amortizacion || "{}");
+  } catch (error) {
+    amortizacion = {};
+  }
+
+  /*
+    CATALOGOS
+  */
+
+  const [estados] = await pool.query(`
+    SELECT id, nombre
+    FROM catalogo
+    WHERE catalogo_tipo_id = 1
+  `);
+
+  /*
+    DOCUMENTOS
+  */
+
+  const [documentos] = await pool.query(
+    `
+    SELECT *
+    FROM documento
+    WHERE solicitud_id = ?
+    `,
+    [solicitud_id],
+  );
+
+  /*
+    RESPUESTA FINAL
+  */
+
+  return {
+    solicitud: {
+      id: solicitud.id,
+      monto_credito: solicitud.monto_credito,
+      plazo_meses: solicitud.plazo_meses,
+      monto_pago: solicitud.monto_pago,
+    },
+
+    cliente: {
+      id: solicitud.cliente_id,
+      nombre: solicitud.nombre,
+      apellido_paterno: solicitud.apellido_paterno,
+      apellido_materno: solicitud.apellido_materno,
+      email: solicitud.email,
+    },
+
+    producto: amortizacion?.info || null,
+
+    tabla: amortizacion?.amortizacion?.tabla || [],
+
+    catalogos: {
+      estados,
+    },
+
+    documentos,
+  };
+};
+
+export const updateApplicationService = async ({
+  solicitud_id,
+  user_id,
+  body,
+}) => {
+  /*
+  | VALIDAR SOLICITUD
+  */
+
+  const [solicitudRows] = await pool.query(
+    `
+    SELECT
+      s.id,
+      s.cliente_id
+
+    FROM solicitud s
+
+    INNER JOIN sis_usuario su
+      ON su.cliente_id = s.cliente_id
+
+    WHERE s.id = ?
+      AND su.id = ?
+
+    LIMIT 1
+    `,
+    [solicitud_id, user_id],
+  );
+
+  if (!solicitudRows.length) {
+    throw new Error("Solicitud no encontrada");
+  }
+
+  const solicitud = solicitudRows[0];
+
+  /*
+  | CLIENTE
+  */
+
+  if (body.cliente) {
+    await pool.query(
+      `
+      UPDATE cliente
+      SET
+        nombre = ?,
+        apellido_paterno = ?,
+        apellido_materno = ?,
+        telefono_movil = ?,
+        email = ?,
+        curp = ?,
+        rfc = ?
+
+      WHERE id = ?
+      `,
+      [
+        body.cliente.nombre || null,
+
+        body.cliente.apellido_paterno || null,
+
+        body.cliente.apellido_materno || null,
+
+        body.cliente.telefono_movil || null,
+
+        body.cliente.email || null,
+
+        body.cliente.curp || null,
+
+        body.cliente.rfc || null,
+
+        solicitud.cliente_id,
+      ],
+    );
+  }
+
+  /*
+  | DOMICILIO
+  */
+
+  if (body.domicilio) {
+    await pool.query(
+      `
+    UPDATE cliente
+    SET
+      domicilio_calle = ?,
+      domicilio_calle_numext = ?,
+      domicilio_calle_numint = ?,
+      domicilio_colonia = ?,
+      domicilio_municipio = ?,
+      domicilio_estado = ?,
+      domicilio_cp = ?
+
+    WHERE id = ?
+    `,
+      [
+        body.domicilio.calle || null,
+
+        body.domicilio.numero_exterior || null,
+
+        body.domicilio.numero_interior || null,
+
+        body.domicilio.colonia || null,
+
+        body.domicilio.municipio || null,
+
+        body.domicilio.estado || null,
+
+        body.domicilio.codigo_postal || null,
+
+        solicitud.cliente_id,
+      ],
+    );
+  }
+
+  return true;
+};
+
+export const finalizeApplicationService =
+  async ({
+    solicitud_id,
+    user_id,
+  }) => {
+    /*
+    | VALIDAR SOLICITUD
+    */
+
+    const [rows] = await pool.query(
+      `
+      SELECT
+        s.id,
+        s.cliente_id
+
+      FROM solicitud s
+
+      INNER JOIN sis_usuario su
+        ON su.cliente_id = s.cliente_id
+
+      WHERE s.id = ?
+        AND su.id = ?
+
+      LIMIT 1
+      `,
+      [solicitud_id, user_id],
+    );
+
+    if (!rows.length) {
+      throw new Error(
+        "Solicitud no encontrada",
+      );
+    }
+
+    const solicitud = rows[0];
+
+    /*
+    | GENERAR REM TEMPORAL
+    */
+
+    const rem =
+      "REM-" +
+      solicitud.id +
+      "-" +
+      Date.now();
+
+    /*
+    | ACTUALIZAR CLIENTE
+    */
+
+    await pool.query(
+      `
+      UPDATE cliente
+      SET
+        id_rem = ?
+
+      WHERE id = ?
+      `,
+      [
+        rem,
+        solicitud.cliente_id,
+      ],
+    );
+
+    /*
+    | ACTUALIZAR SOLICITUD
+    */
+
+    await pool.query(
+      `
+      UPDATE solicitud
+      SET
+        estatus_id = 2
+
+      WHERE id = ?
+      `,
+      [solicitud.id],
+    );
+
+    return {
+      success: true,
+
+      rem,
+    };
+  };

@@ -82,8 +82,7 @@ async function apiFetch<T>(
         ? "Demasiadas solicitudes. Intenta nuevamente en unos minutos"
         : `Error ${response.status}`);
 
-    throw new Error(message,
-    );
+    throw new Error(message);
   }
 
   if (!json) {
@@ -297,4 +296,21 @@ export function getApplicationRequest(id: number) {
   return apiFetch(`/applications/consulta/${id}`, {
     auth: true,
   });
+}
+
+export function updateApplicationRequest(id: number, body: unknown) {
+  return apiFetch(`/applications/consulta/${id}`, {
+    method: "PATCH",
+
+    body: JSON.stringify(body),
+
+    auth: true,
+  });
+}
+
+export function finalizeApplicationRequest(id: number,) {
+  return apiFetch(`/applications/finalizar/${id}`, {
+      method: "POST",
+      auth: true,
+    },);
 }
