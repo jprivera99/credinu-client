@@ -868,6 +868,7 @@ export const finalizeApplicationService = async ({
     throw new Error(
       "Solicitud no encontrada",
     );
+    console.log("Solicitud no encontrada");
   }
 
   const solicitud = rows[0];
@@ -877,6 +878,7 @@ export const finalizeApplicationService = async ({
   */
 
   if (solicitud.url_Rem) {
+    console.log("Solicitud ya tiene URL REM:", solicitud.url_Rem);
     return {
       success: true,
 
@@ -917,6 +919,7 @@ export const finalizeApplicationService = async ({
     workflow?.public_url || null;
 
   if (!public_url) {
+    console.log("REM no devolvió public_url:", workflow);
     throw new Error(
       "REM no devolvió public_url",
     );

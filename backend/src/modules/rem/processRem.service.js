@@ -12,6 +12,19 @@ export const insertProcessRemLog = async ({
   respuesta = {},
   webhook_uuid = null,
 }) => {
+
+  console.log("Insertando log de proceso REM:", {
+    tipo,
+    proceso,
+    id_rem,
+    relacion,
+    id_relacion,
+    url,
+    data,
+    respuesta,
+    webhook_uuid,
+  });
+  
   try {
     await pool.query(
       `INSERT INTO process_rem

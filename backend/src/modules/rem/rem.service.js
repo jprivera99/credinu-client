@@ -175,11 +175,13 @@ export const syncPersonRemService = async ({
   let existingPerson = null;
 
   if (
+    console.log("Search result:", search),
     search?.result &&
     Array.isArray(search.result) &&
     search.result.length > 0
   ) {
     existingPerson = search.result[0];
+    console.log("Persona encontrada en REM:", existingPerson);
   }
 
   /*
@@ -217,6 +219,9 @@ export const syncPersonRemService = async ({
     */
 
   if (existingPerson) {
+
+    console.log("Actualizando persona en REM con ID:", existingPerson.id || existingPerson.uuid);
+    
     const remId = existingPerson.id || existingPerson.uuid;
 
     const url = `${process.env.REM_URL}onboarding/people/${remId}`;
@@ -255,6 +260,8 @@ export const syncPersonRemService = async ({
       respuesta: data,
     });
 
+    console.log("Response from REM update:", data);
+    
     return {
       id_rem: remId,
 
@@ -324,6 +331,7 @@ export const syncPersonRemService = async ({
 */
 
 export const searchPersonRemByCurp = async (curp) => {
+  console.log("Buscando persona en REM por CURP:", curp);
   const url = `${process.env.REM_URL}onboarding/people/search?national_id=${curp}`;
 
   const res = await fetch(url, {
@@ -353,9 +361,7 @@ export const createWorkflowTokenRemService = async ({
 }) => {
   try {
     /*
-    |--------------------------------------------------------------------------
     | URL
-    |--------------------------------------------------------------------------
     */
 
     let url = `${process.env.REM_URL}workflows/${workflow_uuid}/create-token`;
@@ -365,9 +371,7 @@ export const createWorkflowTokenRemService = async ({
     }
 
     /*
-    |--------------------------------------------------------------------------
     | REQUEST
-    |--------------------------------------------------------------------------
     */
 
     const res = await fetch(url, {
@@ -383,9 +387,7 @@ export const createWorkflowTokenRemService = async ({
     console.log("REM CREATE TOKEN:", data);
 
     /*
-    |--------------------------------------------------------------------------
     | LOG
-    |--------------------------------------------------------------------------
     */
 
     await insertProcessRemLog({
@@ -407,9 +409,7 @@ export const createWorkflowTokenRemService = async ({
     });
 
     /*
-    |--------------------------------------------------------------------------
     | RESPONSE
-    |--------------------------------------------------------------------------
     */
 
     return data;

@@ -214,10 +214,10 @@ export const createWorkflowRemService = async ({
   redirect_url = "",
 }) => {
   /*
-    |--------------------------------------------------------------------------
     | OBTENER ID REM
-    |--------------------------------------------------------------------------
     */
+
+  console.log("Sincronizando persona con REM para cliente_id:", cliente_id);
 
   const [clienteRows] = await pool.query(
     `
@@ -240,9 +240,7 @@ export const createWorkflowRemService = async ({
   const cliente = clienteRows[0];
 
   /*
-    |--------------------------------------------------------------------------
     | DATA
-    |--------------------------------------------------------------------------
     */
 
   const body = {
@@ -262,9 +260,7 @@ export const createWorkflowRemService = async ({
   };
 
   /*
-    |--------------------------------------------------------------------------
     | REQUEST
-    |--------------------------------------------------------------------------
     */
 
   let url = `${process.env.REM_URL}workflows`;
@@ -290,9 +286,7 @@ export const createWorkflowRemService = async ({
   console.log("REM WORKFLOW:", data);
 
   /*
-    |--------------------------------------------------------------------------
     | LOG
-    |--------------------------------------------------------------------------
     */
 
   await insertProcessRemLog({
