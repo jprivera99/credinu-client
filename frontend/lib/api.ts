@@ -314,3 +314,4 @@ export function finalizeApplicationRequest(id: number,) {
       auth: true,
     },);
 }
+

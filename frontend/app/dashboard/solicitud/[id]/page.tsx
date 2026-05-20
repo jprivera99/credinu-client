@@ -69,6 +69,32 @@ interface PrestamoExpressResponse {
   domicilio?: Domicilio;
 
   solicitud?: Solicitud;
+
+  laboral?: Laboral;
+}
+
+interface Laboral {
+  puesto?: string;
+  ingreso_mensual?: number;
+  antiguedad?: number;
+}
+
+interface Referencia {
+  nombre?: string;
+
+  telefono?: string;
+
+  parentesco?: string;
+}
+
+interface RedesSociales {
+  facebook?: string;
+
+  instagram?: string;
+
+  tiktok?: string;
+
+  linkedin?: string;
 }
 
 /*
@@ -95,6 +121,18 @@ export default function PrestamoExpressPage() {
   const [cliente, setCliente] = useState<Cliente>({});
 
   const [domicilio, setDomicilio] = useState<Domicilio>({});
+
+  const [laboral, setLaboral] = useState<Laboral>({});
+
+  const [referencias, setReferencias] = useState<Referencia[]>([
+    {
+      nombre: "",
+      telefono: "",
+      parentesco: "",
+    },
+  ]);
+
+  const [redes, setRedes] = useState<RedesSociales>({});
 
   /*
   | FETCH
@@ -124,6 +162,21 @@ export default function PrestamoExpressPage() {
         setCliente(response?.cliente || {});
 
         setDomicilio(response?.domicilio || {});
+
+        setLaboral(response?.laboral || {});
+        setReferencias(
+          response?.referencias?.length
+            ? response.referencias
+            : [
+                {
+                  nombre: "",
+                  telefono: "",
+                  parentesco: "",
+                },
+              ],
+        );
+
+        setRedes(response?.redes_sociales || {});
       } catch (error) {
         console.error("ERROR:", error);
       } finally {
@@ -150,6 +203,12 @@ export default function PrestamoExpressPage() {
         cliente,
 
         domicilio,
+
+        laboral,
+
+        referencias,
+
+        redes_sociales: redes,
       });
 
       return true;
@@ -181,7 +240,9 @@ export default function PrestamoExpressPage() {
       setSaving(true);
 
       /*
+    |--------------------------------------------------------------------------
     | GUARDAR ULTIMA INFO
+    |--------------------------------------------------------------------------
     */
 
       await updateApplicationRequest(id, {
@@ -190,21 +251,43 @@ export default function PrestamoExpressPage() {
         cliente,
 
         domicilio,
+
+        laboral,
+
+        referencias,
+
+        redes_sociales: redes,
       });
 
       /*
+    |--------------------------------------------------------------------------
     | FINALIZAR
+    |--------------------------------------------------------------------------
     */
 
       const response = await finalizeApplicationRequest(id);
 
       console.log("FINALIZADO:", response);
 
-      alert("Solicitud finalizada correctamente");
+      /*
+    |--------------------------------------------------------------------------
+    | REDIRECCIONAR REM
+    |--------------------------------------------------------------------------
+    */
+
+      if (response?.url_rem) {
+        window.location.href = response.url_rem;
+
+        return;
+      }
 
       /*
-    | OPCIONAL
+    |--------------------------------------------------------------------------
+    | FALLBACK
+    |--------------------------------------------------------------------------
     */
+
+      alert("Solicitud finalizada correctamente");
 
       setStep(6);
     } catch (error) {
@@ -215,7 +298,6 @@ export default function PrestamoExpressPage() {
       setSaving(false);
     }
   };
-
   /*
   | PREVIOUS STEP
   */
@@ -630,88 +712,347 @@ export default function PrestamoExpressPage() {
         {/* STEP 3 */}
 
         {step === 3 && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-            }}
-          >
-            <h2
+          <>
+            <div
               style={{
-                fontSize: "24px",
-                fontWeight: 700,
+                marginBottom: "30px",
               }}
             >
-              Información laboral
-            </h2>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Información laboral
+              </h2>
 
-            <p
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Verifica tu información laboral.
+              </p>
+            </div>
+
+            <div
               style={{
-                marginTop: "15px",
-                opacity: 0.7,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))",
+                gap: "20px",
               }}
             >
-              Próximamente...
-            </p>
-          </div>
+              <div>
+                <label className="form-label">Puesto</label>
+
+                <input
+                  className="form-input"
+                  value={laboral.puesto || ""}
+                  onChange={(e) =>
+                    setLaboral({
+                      ...laboral,
+                      puesto: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Ingreso mensual</label>
+
+                <input
+                  type="number"
+                  className="form-input"
+                  value={laboral.ingreso_mensual || ""}
+                  onChange={(e) =>
+                    setLaboral({
+                      ...laboral,
+                      ingreso_mensual: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Antigüedad</label>
+
+                <input
+                  type="number"
+                  className="form-input"
+                  value={laboral.antiguedad || ""}
+                  onChange={(e) =>
+                    setLaboral({
+                      ...laboral,
+                      antiguedad: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {/* STEP 4 */}
 
         {step === 4 && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-            }}
-          >
-            <h2
+          <>
+            <div
               style={{
-                fontSize: "24px",
-                fontWeight: 700,
+                marginBottom: "30px",
               }}
             >
-              Referencias
-            </h2>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Referencias personales
+              </h2>
 
-            <p
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Agrega tus referencias.
+              </p>
+            </div>
+
+            <div
               style={{
-                marginTop: "15px",
-                opacity: 0.7,
+                display: "grid",
+                gap: "20px",
               }}
             >
-              Próximamente...
-            </p>
-          </div>
+              {referencias.map((ref, index) => (
+                <div key={index} className="product-card">
+                  <h4
+                    style={{
+                      marginBottom: "15px",
+                    }}
+                  >
+                    Referencia {index + 1}
+                  </h4>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(220px,1fr))",
+                      gap: "15px",
+                    }}
+                  >
+                    <div>
+                      <label className="form-label">Nombre</label>
+
+                      <input
+                        className="form-input"
+                        value={ref.nombre || ""}
+                        onChange={(e) => {
+                          const copy = [...referencias];
+
+                          copy[index].nombre = e.target.value;
+
+                          setReferencias(copy);
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Teléfono</label>
+
+                      <input
+                        className="form-input"
+                        value={ref.telefono || ""}
+                        onChange={(e) => {
+                          const copy = [...referencias];
+
+                          copy[index].telefono = e.target.value;
+
+                          setReferencias(copy);
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Parentesco</label>
+
+                      <input
+                        className="form-input"
+                        value={ref.parentesco || ""}
+                        onChange={(e) => {
+                          const copy = [...referencias];
+
+                          copy[index].parentesco = e.target.value;
+
+                          setReferencias(copy);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() =>
+                  setReferencias([
+                    ...referencias,
+                    {
+                      nombre: "",
+                      telefono: "",
+                      parentesco: "",
+                    },
+                  ])
+                }
+              >
+                Agregar referencia
+              </button>
+            </div>
+          </>
         )}
 
         {/* STEP 5 */}
 
         {step === 5 && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 0",
-            }}
-          >
-            <h2
+          <>
+            <div
               style={{
-                fontSize: "24px",
-                fontWeight: 700,
+                marginBottom: "30px",
               }}
             >
-              Documentos
-            </h2>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                }}
+              >
+                Redes sociales y documentos
+              </h2>
 
-            <p
+              <p
+                style={{
+                  marginTop: "10px",
+                  opacity: 0.7,
+                }}
+              >
+                Completa la información.
+              </p>
+            </div>
+
+            <div
               style={{
-                marginTop: "15px",
-                opacity: 0.7,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px,1fr))",
+                gap: "20px",
               }}
             >
-              Próximamente...
-            </p>
-          </div>
+              <div>
+                <label className="form-label">Facebook</label>
+
+                <input
+                  className="form-input"
+                  value={redes.facebook || ""}
+                  onChange={(e) =>
+                    setRedes({
+                      ...redes,
+                      facebook: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Instagram</label>
+
+                <input
+                  className="form-input"
+                  value={redes.instagram || ""}
+                  onChange={(e) =>
+                    setRedes({
+                      ...redes,
+                      instagram: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">TikTok</label>
+
+                <input
+                  className="form-input"
+                  value={redes.tiktok || ""}
+                  onChange={(e) =>
+                    setRedes({
+                      ...redes,
+                      tiktok: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="form-label">LinkedIn</label>
+
+                <input
+                  className="form-input"
+                  value={redes.linkedin || ""}
+                  onChange={(e) =>
+                    setRedes({
+                      ...redes,
+                      linkedin: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "35px",
+              }}
+            >
+              <h3
+                style={{
+                  marginBottom: "20px",
+                }}
+              >
+                Documentos
+              </h3>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))",
+                  gap: "20px",
+                }}
+              >
+                <div className="upload-box">
+                  <p>INE frontal</p>
+
+                  <input type="file" />
+                </div>
+
+                <div className="upload-box">
+                  <p>INE reverso</p>
+
+                  <input type="file" />
+                </div>
+
+                <div className="upload-box">
+                  <p>Comprobante domicilio</p>
+
+                  <input type="file" />
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* STEP 6 */}
@@ -811,11 +1152,9 @@ export default function PrestamoExpressPage() {
             onClick={step === 6 ? handleFinalize : handleNext}
           >
             {saving
-              ? step === 6
-                ? "Finalizando..."
-                : "Guardando..."
+              ? "Guardando..."
               : step === 6
-                ? "Finalizar solicitud"
+                ? "Finalizar"
                 : "Guardar y continuar"}
           </button>
         </div>

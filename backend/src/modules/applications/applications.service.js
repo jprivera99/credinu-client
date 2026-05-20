@@ -4,6 +4,10 @@ import {
   detalleService,
 } from "../quotation/quotation.service.js";
 
+import { syncPersonRemService } from "../rem/rem.service.js";
+
+import { createWorkflowRemService } from "../rem/rem.workflow.service.js";
+
 function getProductNameFromAmortizacion(amortizacion) {
   try {
     const parsed = JSON.parse(amortizacion);
@@ -300,10 +304,7 @@ export const validateApplicationService = async ({
   };
 };
 
-export const getApplicationByIdService = async ({
-  solicitud_id,
-  user_id,
-}) => {
+export const getApplicationByIdService = async ({ solicitud_id, user_id }) => {
   const [rows] = await pool.query(
     `
     SELECT
@@ -315,6 +316,7 @@ export const getApplicationByIdService = async ({
       s.monto_total,
       s.registro_fecha,
       s.amortizacion,
+      s.referencias_json,
 
       cat.nombre AS estatus,
 
@@ -337,7 +339,9 @@ export const getApplicationByIdService = async ({
 
       cl.empleo_puesto,
       cl.empleo_Ingreso_neto_mensual,
-      cl.empleo_antiguedad
+      cl.empleo_antiguedad,
+
+      cl.redes_sociales
 
     FROM solicitud s
 
@@ -360,9 +364,7 @@ export const getApplicationByIdService = async ({
   );
 
   if (!rows.length) {
-    throw new Error(
-      "Solicitud no encontrada",
-    );
+    throw new Error("Solicitud no encontrada");
   }
 
   const solicitud = rows[0];
@@ -374,11 +376,41 @@ export const getApplicationByIdService = async ({
   let amortizacion = {};
 
   try {
-    amortizacion = JSON.parse(
-      solicitud.amortizacion || "{}",
-    );
+    amortizacion = JSON.parse(solicitud.amortizacion || "{}");
   } catch (error) {
     amortizacion = {};
+  }
+
+  /*
+  | PARSEAR REFERENCIAS
+  */
+
+  let referencias = [];
+
+  try {
+    const parsed = JSON.parse(solicitud.referencias_json || "{}");
+
+    referencias = Object.keys(parsed).map((key) => ({
+      nombre: parsed[key]?.nombre || "",
+
+      parentesco: parsed[key]?.parentesco || "",
+
+      telefono: parsed[key]?.telefono_movil || "",
+    }));
+  } catch (error) {
+    referencias = [];
+  }
+
+  /*
+  | PARSEAR REDES SOCIALES
+  */
+
+  let redes_sociales = {};
+
+  try {
+    redes_sociales = JSON.parse(solicitud.redes_sociales || "{}");
+  } catch (error) {
+    redes_sociales = {};
   }
 
   /*
@@ -389,94 +421,73 @@ export const getApplicationByIdService = async ({
     current_step: 1,
 
     cliente: {
-      nombre: solicitud.nombre,
+      nombre: solicitud.nombre || "",
 
-      apellido_paterno:
-        solicitud.apellido_paterno,
+      apellido_paterno: solicitud.apellido_paterno || "",
 
-      apellido_materno:
-        solicitud.apellido_materno,
+      apellido_materno: solicitud.apellido_materno || "",
 
-      telefono_movil:
-        solicitud.telefono_movil,
+      telefono_movil: solicitud.telefono_movil || "",
 
-      email: solicitud.email,
+      email: solicitud.email || "",
 
-      curp: solicitud.curp,
+      curp: solicitud.curp || "",
 
-      rfc: solicitud.rfc,
+      rfc: solicitud.rfc || "",
 
-      fecha_nacimiento:
-        solicitud.nacimiento_fecha,
+      fecha_nacimiento: solicitud.nacimiento_fecha,
     },
 
     domicilio: {
-      calle:
-        solicitud.domicilio_calle,
+      calle: solicitud.domicilio_calle || "",
 
-      numero_exterior:
-        solicitud.domicilio_calle_numext,
+      numero_exterior: solicitud.domicilio_calle_numext || "",
 
-      numero_interior:
-        solicitud.domicilio_calle_numint,
+      numero_interior: solicitud.domicilio_calle_numint || "",
 
-      colonia:
-        solicitud.domicilio_colonia,
+      colonia: solicitud.domicilio_colonia || "",
 
-      municipio:
-        solicitud.domicilio_municipio,
+      municipio: solicitud.domicilio_municipio || "",
 
-      estado:
-        solicitud.domicilio_estado,
+      estado: solicitud.domicilio_estado || "",
 
-      codigo_postal:
-        solicitud.domicilio_cp,
+      codigo_postal: solicitud.domicilio_cp || "",
     },
 
     laboral: {
-      puesto:
-        solicitud.empleo_puesto,
+      puesto: solicitud.empleo_puesto || "",
 
-      ingreso_mensual:
-        solicitud.empleo_Ingreso_neto_mensual,
+      ingreso_mensual: solicitud.empleo_Ingreso_neto_mensual || 0,
 
-      antiguedad:
-        solicitud.empleo_antiguedad,
+      antiguedad: solicitud.empleo_antiguedad || "",
     },
+
+    referencias,
+
+    redes_sociales,
 
     solicitud: {
       id: solicitud.id,
 
-      estatus_id:
-        solicitud.estatus_id,
+      estatus_id: solicitud.estatus_id,
 
-      estatus:
-        solicitud.estatus,
+      estatus: solicitud.estatus,
 
-      monto_credito:
-        solicitud.monto_credito,
+      monto_credito: solicitud.monto_credito,
 
-      plazo_meses:
-        solicitud.plazo_meses,
+      plazo_meses: solicitud.plazo_meses,
 
-      monto_pago:
-        solicitud.monto_pago,
+      monto_pago: solicitud.monto_pago,
 
-      monto_total:
-        solicitud.monto_total,
+      monto_total: solicitud.monto_total,
 
-      fecha_registro:
-        solicitud.registro_fecha,
+      fecha_registro: solicitud.registro_fecha,
 
-      producto:
-        amortizacion?.info
-          ?.nombre_comercial || null,
+      producto: amortizacion?.info?.nombre_comercial || null,
 
       tabla:
-        amortizacion?.info?.detalle
-          ?.payments ||
-        amortizacion?.amortizacion
-          ?.tabla ||
+        amortizacion?.info?.detalle?.payments ||
+        amortizacion?.amortizacion?.tabla ||
         [],
     },
   };
@@ -630,7 +641,8 @@ export const updateApplicationService = async ({
         telefono_movil = ?,
         email = ?,
         curp = ?,
-        rfc = ?
+        rfc = ?,
+        nacimiento_fecha = ?
 
       WHERE id = ?
       `,
@@ -649,6 +661,8 @@ export const updateApplicationService = async ({
 
         body.cliente.rfc || null,
 
+        body.cliente.fecha_nacimiento || null,
+
         solicitud.cliente_id,
       ],
     );
@@ -661,18 +675,18 @@ export const updateApplicationService = async ({
   if (body.domicilio) {
     await pool.query(
       `
-    UPDATE cliente
-    SET
-      domicilio_calle = ?,
-      domicilio_calle_numext = ?,
-      domicilio_calle_numint = ?,
-      domicilio_colonia = ?,
-      domicilio_municipio = ?,
-      domicilio_estado = ?,
-      domicilio_cp = ?
+      UPDATE cliente
+      SET
+        domicilio_calle = ?,
+        domicilio_calle_numext = ?,
+        domicilio_calle_numint = ?,
+        domicilio_colonia = ?,
+        domicilio_municipio = ?,
+        domicilio_estado = ?,
+        domicilio_cp = ?
 
-    WHERE id = ?
-    `,
+      WHERE id = ?
+      `,
       [
         body.domicilio.calle || null,
 
@@ -693,91 +707,261 @@ export const updateApplicationService = async ({
     );
   }
 
-  return true;
-};
+  /*
+  | LABORAL
+  */
 
-export const finalizeApplicationService =
-  async ({
-    solicitud_id,
-    user_id,
-  }) => {
-    /*
-    | VALIDAR SOLICITUD
-    */
-
-    const [rows] = await pool.query(
-      `
-      SELECT
-        s.id,
-        s.cliente_id
-
-      FROM solicitud s
-
-      INNER JOIN sis_usuario su
-        ON su.cliente_id = s.cliente_id
-
-      WHERE s.id = ?
-        AND su.id = ?
-
-      LIMIT 1
-      `,
-      [solicitud_id, user_id],
-    );
-
-    if (!rows.length) {
-      throw new Error(
-        "Solicitud no encontrada",
-      );
-    }
-
-    const solicitud = rows[0];
-
-    /*
-    | GENERAR REM TEMPORAL
-    */
-
-    const rem =
-      "REM-" +
-      solicitud.id +
-      "-" +
-      Date.now();
-
-    /*
-    | ACTUALIZAR CLIENTE
-    */
-
+  if (body.laboral) {
     await pool.query(
       `
       UPDATE cliente
       SET
-        id_rem = ?
+        empleo_puesto = ?,
+        empleo_Ingreso_neto_mensual = ?,
+        empleo_antiguedad = ?
 
       WHERE id = ?
       `,
       [
-        rem,
+        body.laboral.puesto || null,
+
+        body.laboral.ingreso_mensual || 0,
+
+        body.laboral.antiguedad || 0,
+
         solicitud.cliente_id,
       ],
     );
+  }
 
-    /*
-    | ACTUALIZAR SOLICITUD
-    */
+  /*
+  | REDES SOCIALES
+  */
 
+  if (body.redes_sociales) {
+    await pool.query(
+      `
+      UPDATE cliente
+      SET
+        redes_sociales = ?
+
+      WHERE id = ?
+      `,
+      [
+        JSON.stringify({
+          facebook: body.redes_sociales.facebook || "",
+
+          linkedln: body.redes_sociales.linkedln || "",
+
+          twitter: body.redes_sociales.twitter || "",
+
+          instagram: body.redes_sociales.instagram || "",
+
+          otros: body.redes_sociales.otros || "",
+        }),
+
+        solicitud.cliente_id,
+      ],
+    );
+  }
+
+  /*
+  | REFERENCIAS
+  */
+
+  if (body.referencias) {
     await pool.query(
       `
       UPDATE solicitud
       SET
-        estatus_id = 2
+        referencias_json = ?
 
       WHERE id = ?
       `,
-      [solicitud.id],
-    );
+      [
+        JSON.stringify({
+          1: {
+            nombre: body.referencias?.["1"]?.nombre || "",
 
+            parentesco: body.referencias?.["1"]?.parentesco || "",
+
+            telefono_movil: body.referencias?.["1"]?.telefono_movil || "",
+          },
+
+          2: {
+            nombre: body.referencias?.["2"]?.nombre || "",
+
+            parentesco: body.referencias?.["2"]?.parentesco || "",
+
+            telefono_movil: body.referencias?.["2"]?.telefono_movil || "",
+          },
+
+          3: {
+            nombre: body.referencias?.["3"]?.nombre || "",
+
+            parentesco: body.referencias?.["3"]?.parentesco || "",
+
+            telefono_movil: body.referencias?.["3"]?.telefono_movil || "",
+          },
+        }),
+
+        solicitud.id,
+      ],
+    );
+  }
+
+  /*
+  | STEP ACTUAL
+  */
+
+  if (body.current_step) {
+    await pool.query(
+      `
+      UPDATE solicitud
+      SET
+        comentarios = ?
+
+      WHERE id = ?
+      `,
+      [
+        JSON.stringify({
+          current_step: body.current_step,
+        }),
+
+        solicitud.id,
+      ],
+    );
+  }
+
+  return true;
+};
+
+export const finalizeApplicationService = async ({
+  solicitud_id,
+  user_id,
+}) => {
+  /*
+  | VALIDAR SOLICITUD
+  */
+
+  const [rows] = await pool.query(
+    `
+    SELECT
+      s.id,
+      s.url_Rem,
+      s.cliente_id
+
+    FROM solicitud s
+
+    INNER JOIN sis_usuario su
+      ON su.cliente_id = s.cliente_id
+
+    WHERE s.id = ?
+      AND su.id = ?
+
+    LIMIT 1
+    `,
+    [solicitud_id, user_id],
+  );
+
+  if (!rows.length) {
+    throw new Error(
+      "Solicitud no encontrada",
+    );
+  }
+
+  const solicitud = rows[0];
+
+  /*
+  | SI YA EXISTE URL REM
+  */
+
+  if (solicitud.url_Rem) {
     return {
       success: true,
 
-      rem,
+      public_url: solicitud.url_Rem,
     };
+  }
+
+  /*
+  | SINCRONIZAR PERSONA REM
+  */
+
+  const id_rem =
+    await syncPersonRemService({
+      cliente_id:
+        solicitud.cliente_id,
+    });
+
+  /*
+  | CREAR WORKFLOW
+  */
+
+  const workflow =
+    await createWorkflowRemService({
+      cliente_id:
+        solicitud.cliente_id,
+
+      solicitud_id,
+
+      redirect_url:
+        `${process.env.FRONT_URL}/solicitudes/${solicitud_id}/finalizado`,
+    });
+
+  /*
+  | URL REM
+  */
+
+  const public_url =
+    workflow?.public_url || null;
+
+  if (!public_url) {
+    throw new Error(
+      "REM no devolvió public_url",
+    );
+  }
+
+  /*
+  | GUARDAR URL REM
+  */
+
+  await pool.query(
+    `
+    UPDATE solicitud
+    SET
+      url_Rem = ?,
+
+      num_intentos_firma =
+        IFNULL(num_intentos_firma,0) + 1
+
+    WHERE id = ?
+    `,
+    [public_url, solicitud.id],
+  );
+
+  /*
+  | RESPONSE
+  */
+
+  return {
+    success: true,
+
+    id_rem,
+
+    workflow_uuid:
+      workflow?.uuid || null,
+
+    webhook_uuid:
+      workflow?.webhook_uuid ||
+      null,
+
+    people_uuid:
+      workflow?.people_uuid ||
+      null,
+
+    public_url,
+
+    workflow,
   };
+};

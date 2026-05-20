@@ -26,13 +26,8 @@ export const createApplication = async (req, res, next) => {
     const institucion_id = req.user.institucion_id;
     const cliente_id = req.user.cliente_id;
 
-    const {
-      monto,
-      ingreso,
-      plazo,
-      institucion_producto_id,
-      validar,
-    } = req.body;
+    const { monto, ingreso, plazo, institucion_producto_id, validar } =
+      req.body;
 
     const validation = await validateApplicationService({
       cliente_id,
@@ -96,49 +91,36 @@ export const getPrestamoExpress = async (req, res, next) => {
   }
 };
 
-export const updateApplication = async (
-  req,
-  res,
-  next,
-) => {
+export const updateApplication = async (req, res, next) => {
   try {
-    const data =
-      await updateApplicationService({
-        solicitud_id: req.params.id,
+    const data = await updateApplicationService({
+      solicitud_id: req.params.id,
 
-        user_id: req.user.id,
+      user_id: req.user.id,
 
-        body: req.body,
-      });
+      body: req.body,
+    });
 
-    return ok(
-      res,
-      data,
-      "Solicitud actualizada",
-    );
+    return ok(res, data, "Solicitud actualizada");
   } catch (error) {
     next(error);
   }
 };
 
-export const finalizeApplication = async (
-  req,
-  res,
-  next,
-) => {
+export const finalizeApplication = async (req, res) => {
   try {
-    const data =
-      await finalizeApplicationService({
-        solicitud_id: req.params.id,
-        user_id: req.user.id,
-      });
+    const response = await finalizeApplicationService({
+      solicitud_id: req.params.id,
 
-    return ok(
-      res,
-      data,
-      "Solicitud finalizada",
-    );
+      user_id: req.user.id,
+    });
+
+    return res.json(response);
   } catch (error) {
-    return next(error);
+    console.error(error);
+
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
