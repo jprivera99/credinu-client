@@ -4,7 +4,10 @@ import {
   detalleService,
 } from "../quotation/quotation.service.js";
 
-import { syncPersonRemService } from "../rem/rem.service.js";
+import {
+  syncPersonRemService,
+  createWorkflowTokenRemService,
+} from "../rem/rem.service.js";
 
 import { createWorkflowRemService } from "../rem/rem.workflow.service.js";
 
@@ -836,10 +839,7 @@ export const updateApplicationService = async ({
   return true;
 };
 
-export const finalizeApplicationService = async ({
-  solicitud_id,
-  user_id,
-}) => {
+export const finalizeApplicationService = async ({ solicitud_id, user_id }) => {
   /*
   | VALIDAR SOLICITUD
   */
@@ -865,10 +865,9 @@ export const finalizeApplicationService = async ({
   );
 
   if (!rows.length) {
-    throw new Error(
-      "Solicitud no encontrada",
-    );
     console.log("Solicitud no encontrada");
+
+    throw new Error("Solicitud no encontrada");
   }
 
   const solicitud = rows[0];
@@ -887,42 +886,112 @@ export const finalizeApplicationService = async ({
   }
 
   /*
-  | SINCRONIZAR PERSONA REM
-  */
+| OBTENER CLIENTE
+*/
 
-  const id_rem =
-    await syncPersonRemService({
-      cliente_id:
-        solicitud.cliente_id,
-    });
+  const [clienteRows] = await pool.query(
+    `
+  SELECT
+    id,
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    nacimiento_fecha,
+    rfc,
+    curp,
+    telefono_movil,
+    id_rem
+
+  FROM cliente
+
+  WHERE id = ?
+
+  LIMIT 1
+  `,
+    [solicitud.cliente_id],
+  );
+
+  if (!clienteRows.length) {
+    throw new Error("Cliente no encontrado");
+  }
+
+  const cliente = clienteRows[0];
+
+  /*
+| SINCRONIZAR PERSONA REM
+*/
+
+  const rem = await syncPersonRemService({
+    cliente_id: cliente.id,
+
+    nombre: cliente.nombre,
+
+    apellido_paterno: cliente.apellido_paterno,
+
+    apellido_materno: cliente.apellido_materno,
+
+    nacimiento_fecha: cliente.nacimiento_fecha,
+
+    rfc: cliente.rfc,
+
+    curp: cliente.curp,
+
+    id_rem: cliente.id_rem,
+  });
+
+  /*
+| ACTUALIZAR ID REM
+*/
+
+  await pool.query(
+    `
+  UPDATE cliente
+  SET id_rem = ?
+  WHERE id = ?
+  `,
+    [rem.id_rem, cliente.id],
+  );
 
   /*
   | CREAR WORKFLOW
   */
 
-  const workflow =
-    await createWorkflowRemService({
-      cliente_id:
-        solicitud.cliente_id,
+  const workflow = await createWorkflowRemService({
+    cliente_id: solicitud.cliente_id,
 
-      solicitud_id,
+    solicitud_id,
 
-      redirect_url:
-        `${process.env.FRONT_URL}/solicitudes/${solicitud_id}/finalizado`,
-    });
+    people_uuid: rem.id_rem,
+
+    redirect_url: `${process.env.FRONT_URL}/solicitudes/${solicitud_id}/finalizado`,
+  });
 
   /*
-  | URL REM
-  */
+| CREAR TOKEN WORKFLOW
+*/
 
-  const public_url =
-    workflow?.public_url || null;
+  const token = await createWorkflowTokenRemService({
+    workflow_uuid: workflow.result.uuid,
+
+    cliente_id: solicitud.cliente_id,
+
+    solicitud_id,
+
+    people_uuid: workflow.result.people_uuid,
+
+    proceso: "FINALIZAR_SOLICITUD",
+  });
+
+  /*
+| URL REM
+*/
+
+  const public_url = token?.result?.public_url || null;
 
   if (!public_url) {
-    console.log("REM no devolvió public_url:", workflow);
-    throw new Error(
-      "REM no devolvió public_url",
-    );
+    console.log("REM no devolvió public_url:", token);
+
+    throw new Error("REM no devolvió public_url");
   }
 
   /*
@@ -950,18 +1019,13 @@ export const finalizeApplicationService = async ({
   return {
     success: true,
 
-    id_rem,
+    id_rem: rem.id_rem,
 
-    workflow_uuid:
-      workflow?.uuid || null,
+    workflow_uuid: workflow?.result?.uuid || null,
 
-    webhook_uuid:
-      workflow?.webhook_uuid ||
-      null,
+    webhook_uuid: workflow?.webhook_uuid || null,
 
-    people_uuid:
-      workflow?.people_uuid ||
-      null,
+    people_uuid: workflow?.result?.people_uuid || null,
 
     public_url,
 

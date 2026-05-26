@@ -211,6 +211,7 @@ export const syncPersonRemService = async ({ cliente_id }) => {
 export const createWorkflowRemService = async ({
   cliente_id,
   solicitud_id,
+  people_uuid,
   redirect_url = "",
 }) => {
   /*
@@ -244,13 +245,19 @@ export const createWorkflowRemService = async ({
     */
 
   const body = {
-    people_uuid: cliente.id_rem,
+    people_uuid,
 
     external_reference_id: `S${solicitud_id}`,
 
     callback_url: process.env.REM_WEBHOOK_URL,
 
     autofill: {},
+
+    setup: {
+      enroll_basic: {
+        show_confirmation: true,
+      },
+    },
 
     metadata: {},
 

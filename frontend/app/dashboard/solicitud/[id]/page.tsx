@@ -240,9 +240,7 @@ export default function PrestamoExpressPage() {
       setSaving(true);
 
       /*
-    |--------------------------------------------------------------------------
     | GUARDAR ULTIMA INFO
-    |--------------------------------------------------------------------------
     */
 
       await updateApplicationRequest(id, {
@@ -260,9 +258,7 @@ export default function PrestamoExpressPage() {
       });
 
       /*
-    |--------------------------------------------------------------------------
     | FINALIZAR
-    |--------------------------------------------------------------------------
     */
 
       const response = await finalizeApplicationRequest(id);
@@ -270,21 +266,17 @@ export default function PrestamoExpressPage() {
       console.log("FINALIZADO:", response);
 
       /*
-    |--------------------------------------------------------------------------
     | REDIRECCIONAR REM
-    |--------------------------------------------------------------------------
     */
 
-      if (response?.url_rem) {
-        window.location.href = response.url_rem;
+      if (response?.public_url) {
+        window.location.href = response.public_url;
 
         return;
       }
 
       /*
-    |--------------------------------------------------------------------------
     | FALLBACK
-    |--------------------------------------------------------------------------
     */
 
       alert("Solicitud finalizada correctamente");

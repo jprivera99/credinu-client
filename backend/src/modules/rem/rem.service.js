@@ -169,18 +169,14 @@ export const syncPersonRemService = async ({
   const search = await searchPersonRemByCurp(curp);
 
   /*
-    | EXISTE
-    */
+| EXISTE
+*/
 
   let existingPerson = null;
 
-  if (
-    console.log("Search result:", search),
-    search?.result &&
-    Array.isArray(search.result) &&
-    search.result.length > 0
-  ) {
-    existingPerson = search.result[0];
+  if (search?.success && search?.result?.id) {
+    existingPerson = search.result;
+
     console.log("Persona encontrada en REM:", existingPerson);
   }
 
@@ -211,7 +207,7 @@ export const syncPersonRemService = async ({
 
     tax_id: rfc,
 
-    external_ref_id: cliente_id,
+    external_ref_id: String(cliente_id),
   };
 
   /*
@@ -219,9 +215,11 @@ export const syncPersonRemService = async ({
     */
 
   if (existingPerson) {
+    console.log(
+      "Actualizando persona en REM con ID:",
+      existingPerson.id || existingPerson.uuid,
+    );
 
-    console.log("Actualizando persona en REM con ID:", existingPerson.id || existingPerson.uuid);
-    
     const remId = existingPerson.id || existingPerson.uuid;
 
     const url = `${process.env.REM_URL}onboarding/people/${remId}`;
@@ -261,7 +259,7 @@ export const syncPersonRemService = async ({
     });
 
     console.log("Response from REM update:", data);
-    
+
     return {
       id_rem: remId,
 
@@ -332,7 +330,8 @@ export const syncPersonRemService = async ({
 
 export const searchPersonRemByCurp = async (curp) => {
   console.log("Buscando persona en REM por CURP:", curp);
-  const url = `${process.env.REM_URL}onboarding/people/search?national_id=${curp}`;
+
+  const url = `${process.env.REM_URL}onboarding/people-search/${curp}/national-id`;
 
   const res = await fetch(url, {
     method: "GET",
