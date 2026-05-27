@@ -1,7 +1,10 @@
 //src/modules/rem/rem.service.js
 import { insertProcessRemLog } from "./processRem.service.js";
 
-//ENPOINT REALES
+/*
+| ENVIAR CODIGO OTP
+*/
+
 export const sendCodeService = async ({
   canal,
   phone,
@@ -16,6 +19,10 @@ export const sendCodeService = async ({
     return await sendCodeWhatsapp(id_cliente, phone);
   }
 };
+
+/*
+| ENVIAR CODIGO SMS
+*/
 
 const sendCodeSMS = async (id_cliente, phone, nombre_cliente, retry) => {
   const url = `${process.env.REM_URL}otp/create/sms`;
@@ -49,6 +56,10 @@ const sendCodeSMS = async (id_cliente, phone, nombre_cliente, retry) => {
   return data;
 };
 
+/*
+| ENVIAR CODIGO WHATSAPP
+*/
+
 const sendCodeWhatsapp = async (id_cliente, phone) => {
   const url = `${process.env.REM_URL}otp/create/whatsapp`;
 
@@ -74,7 +85,10 @@ const sendCodeWhatsapp = async (id_cliente, phone) => {
   return data;
 };
 
-// Función para verificar el código OTP
+/*
+| VALIDAR CODIGO OTP
+*/
+
 export const validateCodeService = async ({ phone, code, canal = "SMS" }) => {
   const url = `${process.env.REM_URL}otp/validate`;
 
@@ -100,7 +114,10 @@ export const validateCodeService = async ({ phone, code, canal = "SMS" }) => {
   return data;
 };
 
-// Función para actualizar o crear persona en REM
+/*
+| ACTUALIZAR PERSONA REM
+*/
+
 export const updatePersonRem = async ({
   id,
   telefono_movil,
@@ -151,6 +168,10 @@ export const updatePersonRem = async ({
     throw error;
   }
 };
+
+/*
+| SINCRONIZAR PERSONA REM
+*/
 
 export const syncPersonRemService = async ({
   cliente_id,
@@ -349,6 +370,10 @@ export const searchPersonRemByCurp = async (curp) => {
 
   return data;
 };
+
+/*
+| CREAR TOKEN WORKFLOW
+*/
 
 export const createWorkflowTokenRemService = async ({
   workflow_uuid,

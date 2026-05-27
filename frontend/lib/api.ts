@@ -1,3 +1,4 @@
+//lib/api.ts
 import type {
   ApplicationItemNew,
   AuthUser,
@@ -16,6 +17,7 @@ import type {
   validateCodePayload,
   ValidateCodeResponse,
   DetalleCotizacion,
+  PrestamoExpressResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -293,9 +295,12 @@ export function createApplicationRequest(data: {
 }
 
 export function getApplicationRequest(id: number) {
-  return apiFetch(`/applications/consulta/${id}`, {
-    auth: true,
-  });
+  return apiFetch<PrestamoExpressResponse>(
+    `/applications/consulta/${id}`,
+    {
+      auth: true,
+    },
+  );
 }
 
 export function updateApplicationRequest(id: number, body: unknown) {
@@ -308,10 +313,20 @@ export function updateApplicationRequest(id: number, body: unknown) {
   });
 }
 
-export function finalizeApplicationRequest(id: number,) {
-  return apiFetch(`/applications/finalizar/${id}`, {
-      method: "POST",
-      auth: true,
-    },);
-}
+export function finalizeApplicationRequest(id: number) {
+  return apiFetch<{
+    success: boolean;
+    public_url?: string;
 
+    id_rem?: string;
+
+    workflow_uuid?: string;
+
+    webhook_uuid?: string;
+
+    people_uuid?: string;
+  }>(`/applications/finalizar/${id}`, {
+    method: "POST",
+    auth: true,
+  });
+}

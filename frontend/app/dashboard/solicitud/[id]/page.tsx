@@ -11,95 +11,14 @@ import {
   finalizeApplicationRequest,
 } from "@/lib/api";
 
-/*
-| TYPES
-*/
-
-interface Cliente {
-  nombre?: string;
-
-  apellido_paterno?: string;
-
-  apellido_materno?: string;
-
-  telefono_movil?: string;
-
-  email?: string;
-
-  curp?: string;
-
-  rfc?: string;
-
-  fecha_nacimiento?: string;
-}
-
-interface Domicilio {
-  calle?: string;
-
-  numero_exterior?: string;
-
-  numero_interior?: string;
-
-  colonia?: string;
-
-  municipio?: string;
-
-  estado?: string;
-
-  codigo_postal?: string;
-}
-
-interface Solicitud {
-  monto_credito?: number;
-
-  plazo_meses?: number;
-
-  monto_pago?: number;
-
-  monto_total?: number;
-
-  producto?: string;
-}
-
-interface PrestamoExpressResponse {
-  current_step?: number;
-
-  cliente?: Cliente;
-
-  domicilio?: Domicilio;
-
-  solicitud?: Solicitud;
-
-  laboral?: Laboral;
-}
-
-interface Laboral {
-  puesto?: string;
-  ingreso_mensual?: number;
-  antiguedad?: number;
-}
-
-interface Referencia {
-  nombre?: string;
-
-  telefono?: string;
-
-  parentesco?: string;
-}
-
-interface RedesSociales {
-  facebook?: string;
-
-  instagram?: string;
-
-  tiktok?: string;
-
-  linkedin?: string;
-}
-
-/*
-| COMPONENT
-*/
+import type {
+  Cliente,
+  Domicilio,
+  Laboral,
+  Referencia,
+  RedesSociales,
+  PrestamoExpressResponse,
+} from "@/lib/types";
 
 export default function PrestamoExpressPage() {
   const params = useParams();

@@ -181,3 +181,69 @@ export type ApplicationItemNew = {
   producto?: string;
   pago_semanal: number;
 };
+
+// ------------------------------MODULO SOLICITUD ------------------------------
+
+export interface Cliente {
+  nombre?: string;
+  apellido_paterno?: string;
+  apellido_materno?: string;
+  telefono_movil?: string;
+  email?: string;
+  curp?: string;
+  rfc?: string;
+  fecha_nacimiento?: string;
+}
+
+export interface Domicilio {
+  calle?: string;
+  numero_exterior?: string;
+  numero_interior?: string;
+  colonia?: string;
+  municipio?: string;
+  estado?: string;
+  codigo_postal?: string;
+}
+
+export interface Laboral {
+  puesto?: string;
+  ingreso_mensual?: number;
+  antiguedad?: number;
+}
+
+export interface Referencia {
+  nombre?: string;
+  telefono?: string;
+  parentesco?: string;
+}
+
+export interface RedesSociales {
+  facebook?: string;
+  instagram?: string;
+  tiktok?: string;
+  linkedin?: string;
+}
+
+export interface Solicitud {
+  monto_credito?: number;
+  plazo_meses?: number;
+  monto_pago?: number;
+  monto_total?: number;
+  producto?: string;
+}
+
+export interface PrestamoExpressResponse {
+  current_step?: number;
+
+  cliente?: Cliente;
+
+  domicilio?: Domicilio;
+
+  solicitud?: Solicitud;
+
+  laboral?: Laboral;
+
+  referencias?: Referencia[];
+
+  redes_sociales?: RedesSociales;
+}

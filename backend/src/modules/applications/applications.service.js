@@ -11,6 +11,10 @@ import {
 
 import { createWorkflowRemService } from "../rem/rem.workflow.service.js";
 
+/*
+| BUSCAR SOLICITUDES POR USUARIO AUTENTICADO
+*/
+
 function getProductNameFromAmortizacion(amortizacion) {
   try {
     const parsed = JSON.parse(amortizacion);
@@ -19,6 +23,10 @@ function getProductNameFromAmortizacion(amortizacion) {
     return null;
   }
 }
+
+/*
+| ACTUALIZAR SOLICITUD
+*/
 
 export const getApplicationsByAuthenticatedUser = async (userId) => {
   const [rows] = await pool.query(
@@ -50,6 +58,10 @@ export const getApplicationsByAuthenticatedUser = async (userId) => {
     estatus: row.estatus_nombre ?? null,
   }));
 };
+
+/*
+| ACTUALIZAR SOLICITUD
+*/
 
 export const createApplicationService = async ({
   cliente_id,
@@ -181,6 +193,10 @@ export const createApplicationService = async ({
   };
 };
 
+/*
+| VALIDAR SOLICITUD
+*/
+
 export const validateApplicationService = async ({
   cliente_id,
   institucion_producto_id,
@@ -306,6 +322,10 @@ export const validateApplicationService = async ({
     express: Number(producto.express || 0),
   };
 };
+
+/*
+| CREAR SOLICITUD
+*/
 
 export const getApplicationByIdService = async ({ solicitud_id, user_id }) => {
   const [rows] = await pool.query(
@@ -496,6 +516,10 @@ export const getApplicationByIdService = async ({ solicitud_id, user_id }) => {
   };
 };
 
+/*
+| OBTENER PRESTAMO EXPRES
+*/
+
 export const getPrestamoExpressService = async ({ solicitud_id, user_id }) => {
   /*
     OBTENER SOLICITUD
@@ -594,6 +618,10 @@ export const getPrestamoExpressService = async ({ solicitud_id, user_id }) => {
     documentos,
   };
 };
+
+/*
+| ACTUALIZAR SOLICITUD
+*/
 
 export const updateApplicationService = async ({
   solicitud_id,
@@ -838,6 +866,10 @@ export const updateApplicationService = async ({
 
   return true;
 };
+
+/*
+| FINALIZAR SOLICITUD
+*/
 
 export const finalizeApplicationService = async ({ solicitud_id, user_id }) => {
   /*
