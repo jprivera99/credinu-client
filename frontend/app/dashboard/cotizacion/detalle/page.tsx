@@ -354,6 +354,11 @@ export default function DetallePage() {
         </div>
       </div>
 
+      <p className="form-notice is-warning onboarding-warning" role="note">
+        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y
+        las políticas del producto.
+      </p>
+
       {/* TABLA */}
       <div className="hero-panel">
         <div className="table-header">
@@ -394,11 +399,6 @@ export default function DetallePage() {
           </table>
         </div>
       </div>
-
-      <p className="form-notice is-warning onboarding-warning" role="note">
-        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y
-        las políticas del producto.
-      </p>
 
       {/* MODAL RECORDATORIO */}
       {mounted && showReminderModal
