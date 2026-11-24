@@ -9,7 +9,10 @@ export const pool = mysql.createPool({
     user: url.username,
     password: url.password,
     database: url.pathname.replace('/', ''),
-    port: url.port || 3001,
+    port: url.port || 3306,
+    // Fechas como texto ("YYYY-MM-DD"), igual que en PHP; evita corrimientos de zona horaria.
+    dateStrings: true,
+    charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

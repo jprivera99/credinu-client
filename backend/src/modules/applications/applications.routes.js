@@ -1,20 +1,34 @@
 import { Router } from "express";
-import { verifyToken } from "../../middleware/auth.middleware.js";
+import { verifyToken, requireCliente } from "../../middleware/auth.middleware.js";
 import {
   getApplications,
   createApplication,
   getApplicationById,
-  getPrestamoExpress,
-  updateApplication,
+  updateApplicationSection,
+  authorizeBuro,
+  cancelApplication,
   finalizeApplication,
+  completeApplication,
+  signApplication,
+  signedContract,
 } from "./applications.controller.js";
 
 const router = Router();
-router.get("/", verifyToken, getApplications);
-router.post("/create", verifyToken, createApplication);
-router.get("/consulta/:id", verifyToken, getApplicationById);
-router.patch("/consulta/:id", verifyToken, updateApplication);
-router.get("/prestamo-express/:id", verifyToken, getPrestamoExpress);
-router.post("/finalizar/:id", verifyToken, finalizeApplication);
+
+router.use(verifyToken, requireCliente);
+
+router.get("/", getApplications);
+router.post("/create", createApplication);
+
+router.get("/:id", getApplicationById);
+router.put("/:id/secciones/:seccion", updateApplicationSection);
+router.post("/:id/buro", authorizeBuro);
+router.post("/:id/cancelar", cancelApplication);
+
+router.post("/:id/enviar", finalizeApplication);
+router.post("/:id/completar", completeApplication);
+
+router.post("/:id/firma", signApplication);
+router.get("/:id/contrato", signedContract);
 
 export default router;

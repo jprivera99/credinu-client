@@ -55,3 +55,12 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: "Token inválido" });
   }
 };
+/*
+| Sólo clientes (perfil 4) con cliente asociado. Se usa después de verifyToken.
+*/
+export const requireCliente = (req, res, next) => {
+  if (Number(req.user?.perfil_id) !== 4 || Number(req.user?.cliente_id) <= 0) {
+    return res.status(403).json({ success: false, message: "Usuario no autorizado para portal cliente" });
+  }
+  return next();
+};

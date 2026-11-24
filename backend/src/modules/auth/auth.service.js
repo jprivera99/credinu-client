@@ -6,7 +6,8 @@ import { env } from "../../config/env.js";
 import { AppError } from "../../utils/appError.js";
 import { enviarCorreoRecuperacion } from "../../modules/mail/mail.service.js";
 
-const CLIENTE_PROFILE_IDS = [2, 4];
+// 4 = PERFIL_SNET_CLIENTE. (2 es PROMOTOR en el sistema actual: no debe entrar al portal de clientes)
+const CLIENTE_PROFILE_IDS = [4];
 
 const isBcryptHash = (hash = "") => {
   return /^\$2[aby]\$\d{2}\$/.test(hash);
@@ -16,7 +17,7 @@ const md5 = (value) => {
   return crypto.createHash("md5").update(value).digest("hex");
 };
 
-const verifyPassword = async (plainPassword, storedHash) => {
+export const verifyPassword = async (plainPassword, storedHash) => {
   if (!storedHash) return { valid: false, needsUpgrade: false };
 
   const password = String(plainPassword).trim();
@@ -26,7 +27,9 @@ const verifyPassword = async (plainPassword, storedHash) => {
     return { valid, needsUpgrade: false };
   }
 
-  const validLegacy = md5(password) === String(storedHash).toLowerCase();
+  // El sistema actual guarda md5 de la contraseña tal cual (sin trim).
+  const legacy = String(storedHash).toLowerCase();
+  const validLegacy = md5(String(plainPassword)) === legacy || md5(password) === legacy;
 
   return { valid: validLegacy, needsUpgrade: validLegacy };
 };
@@ -50,7 +53,7 @@ const buildToken = (user) => {
 
 export const loginService = async (usuario, password) => {
   const [rows] = await pool.query(
-    "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id, institucion_id FROM sis_usuario WHERE usuario = ? LIMIT 1",
+    "SELECT id, nombre, usuario, email, password, perfil_id, cliente_id, institucion_id FROM sis_usuario WHERE usuario = ? AND IFNULL(borrado,0) = 0 LIMIT 1",
     [usuario],
   );
 
