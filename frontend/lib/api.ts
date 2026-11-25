@@ -1,6 +1,5 @@
 //lib/api.ts
 import type {
-  ApplicationItemNew,
   AuthUser,
   ChangePasswordPayload,
   ChangePasswordRecoveryPayload,
@@ -16,11 +15,20 @@ import type {
   SendCodePayload,
   validateCodePayload,
   ValidateCodeResponse,
-  DetalleCotizacion,
-  PrestamoExpressResponse,
 } from "./types";
+import type {
+  ProductoCotizado,
+  DetalleCotizacion,
+  SolicitudListado,
+  SolicitudDetalle,
+  CatalogosSolicitud,
+  Sepomex,
+  ClabeValidacion,
+  EnvioResultado,
+  Prestamo,
+} from "./solicitud";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api").replace(/\/+$/, "");
 
 type FetchOptions = RequestInit & {
   auth?: boolean;
@@ -115,10 +123,6 @@ export function getClientProducts() {
   return apiFetch<ProductItem[]>("/products", { auth: true });
 }
 
-// ------------------------------MODULO SOLICITUDES ------------------------------
-export function getClientApplications() {
-  return apiFetch<ApplicationItemNew[]>("/applications", { auth: true });
-}
 
 // ------------------------------MODULO PERFIL ------------------------------
 
@@ -247,27 +251,14 @@ export function getProductoById(producto_id: number) {
 // ------------------------------MODULO COTIZACION ------------------------------
 
 export function cotizarRequest(payload: { monto: number; ingreso: number }) {
-  return apiFetch<
-    {
-      producto_id: number;
-      nombre: string;
-      monto_aprobado: number;
-      plazo: number;
-      pago_periodico: number;
-    }[]
-  >("/quotation/cotizar", {
+  return apiFetch<ProductoCotizado[]>("/quotation/cotizar", {
     method: "POST",
     auth: true,
     body: JSON.stringify(payload),
   });
 }
 
-export function detalleRequest(data: {
-  id: number;
-  monto: number;
-  plazo: number;
-  ingreso: number;
-}) {
+export function detalleRequest(data: { id: number; monto: number; plazo: number; ingreso: number }) {
   return apiFetch<DetalleCotizacion>("/quotation/detalle", {
     method: "POST",
     auth: true,
@@ -282,51 +273,99 @@ export function createApplicationRequest(data: {
   monto: number;
   plazo: number;
   ingreso: number;
-  validar?: boolean; // Si validar es true, la API solo validará los datos sin crear la solicitud. Esto se usa para mostrar errores antes de crear la solicitud.
+  validar?: boolean; // true = solo valida, no crea la solicitud
 }) {
-  return apiFetch<{
-    solicitud_id: number;
-    express?: number;
-  }>("/applications/create", {
+  return apiFetch<{ solicitud_id: number; express?: number }>("/applications/create", {
     method: "POST",
     auth: true,
     body: JSON.stringify(data),
   });
 }
 
-export function getApplicationRequest(id: number) {
-  return apiFetch<PrestamoExpressResponse>(
-    `/applications/consulta/${id}`,
-    {
-      auth: true,
-    },
-  );
+export function getClientApplications() {
+  return apiFetch<SolicitudListado[]>("/applications", { auth: true });
 }
 
-export function updateApplicationRequest(id: number, body: unknown) {
-  return apiFetch(`/applications/consulta/${id}`, {
-    method: "PATCH",
+export function getApplicationRequest(id: number) {
+  return apiFetch<SolicitudDetalle>(`/applications/${id}`, { auth: true });
+}
 
-    body: JSON.stringify(body),
-
+export function saveApplicationSection(id: number, seccion: string, datos: unknown) {
+  return apiFetch<{ seccion: string; banco_nombre?: string }>(`/applications/${id}/secciones/${seccion}`, {
+    method: "PUT",
     auth: true,
+    body: JSON.stringify(datos),
   });
 }
 
-export function finalizeApplicationRequest(id: number) {
-  return apiFetch<{
-    success: boolean;
-    public_url?: string;
-
-    id_rem?: string;
-
-    workflow_uuid?: string;
-
-    webhook_uuid?: string;
-
-    people_uuid?: string;
-  }>(`/applications/finalizar/${id}`, {
+export function authorizeBuroRequest(id: number, password: string) {
+  return apiFetch<{ autorizado: boolean }>(`/applications/${id}/buro`, {
     method: "POST",
     auth: true,
+    body: JSON.stringify({ password }),
   });
+}
+
+export function cancelApplicationRequest(id: number) {
+  return apiFetch<{ cancelada: boolean }>(`/applications/${id}/cancelar`, { method: "POST", auth: true });
+}
+
+export function sendApplicationRequest(id: number) {
+  return apiFetch<EnvioResultado>(`/applications/${id}/enviar`, { method: "POST", auth: true });
+}
+
+export function completeApplicationRequest(
+  id: number,
+  params: { workflow?: string | null; workflow_status?: string | null; last_step?: string | null },
+) {
+  return apiFetch<EnvioResultado>(`/applications/${id}/completar`, {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify(params),
+  });
+}
+
+export function signApplicationRequest(id: number) {
+  return apiFetch<{ url: string }>(`/applications/${id}/firma`, { method: "POST", auth: true });
+}
+
+export function signedContractRequest(id: number) {
+  return apiFetch<{ url: string }>(`/applications/${id}/contrato`, { auth: true });
+}
+
+// ------------------------------CATALOGOS ------------------------------
+
+export function getSolicitudCatalogs(tipoProducto?: number | string | null) {
+  const q = tipoProducto ? `?tipo_producto=${encodeURIComponent(String(tipoProducto))}` : "";
+  return apiFetch<CatalogosSolicitud>(`/catalogs/solicitud${q}`, { auth: true });
+}
+
+export function getSepomexRequest(cp: string) {
+  return apiFetch<Sepomex>(`/catalogs/sepomex/${encodeURIComponent(cp)}`, { auth: true });
+}
+
+export function validateClabeRequest(clabe: string) {
+  return apiFetch<ClabeValidacion>(`/catalogs/clabe/${encodeURIComponent(clabe)}`, { auth: true });
+}
+
+// ------------------------------DOCUMENTOS ------------------------------
+
+export function uploadDocumentRequest(payload: { tipo: number; nombre: string; base64: string }) {
+  return apiFetch<{ tipo: number; estado: string; documento_id: number | null }>("/documents", {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getDocumentFileRequest(documentoId: number) {
+  return apiFetch<{ url?: string; base64?: string; mime?: string }>(`/documents/${documentoId}/archivo`, {
+    auth: true,
+  });
+}
+
+// ------------------------------PRESTAMOS ------------------------------
+
+export function getLoansRequest() {
+  return apiFetch<Prestamo[]>("/loans", { auth: true });
 }

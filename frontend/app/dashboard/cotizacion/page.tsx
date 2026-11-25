@@ -1,204 +1,162 @@
-// app/dashboard/cotizacion/page.tsx
 "use client";
 
-import { useState } from "react";
-import { cotizarRequest, detalleRequest } from "@/lib/api";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { cotizarRequest } from "@/lib/api";
+import type { ProductoCotizado } from "@/lib/solicitud";
+import { formatMoney, pagosLabel } from "@/lib/solicitud";
+import { Alert, Card, EmptyState, Field, PageHeader, errorMessage } from "@/components/portal/ui";
+
+const STORAGE_KEY = "credinu.cotizador";
+
+const limpiar = (v: string) => v.replace(/[^\d.]/g, "");
+const conComas = (v: string) => {
+  const n = limpiar(v);
+  if (!n) return "";
+  const [ent, dec] = n.split(".");
+  return Number(ent).toLocaleString("es-MX") + (dec !== undefined ? "." + dec.slice(0, 2) : "");
+};
 
 export default function CotizacionPage() {
-  const [monto, setMonto] = useState("");
+  const router = useRouter();
   const [ingreso, setIngreso] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [resultados, setResultados] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [detalle, setDetalle] = useState<any>(null);
-
+  const [monto, setMonto] = useState("");
+  const [resultados, setResultados] = useState<ProductoCotizado[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
 
-  const getPeriodoLabel = (periodicidad?: string) => {
-    const p = String(periodicidad || "").toLowerCase();
-
-    switch (p) {
-      case "semanal":
-        return "semanal(es)";
-      case "catorcenal":
-        return "catorcenal(es)";
-      case "quincenal":
-        return "quincenal(es)";
-      case "mensual":
-      default:
-        return "mensual(es)";
+  // Conserva la última cotización al regresar de "Detalles".
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      if (saved) {
+        setIngreso(saved.ingreso || "");
+        setMonto(saved.monto || "");
+        setResultados(saved.resultados || null);
+      }
+    } catch {
+      /* sin datos guardados */
     }
-  };
+  }, []);
 
-  // ================== COTIZAR ==================
-  const handleCotizar = async () => {
+  const handleCotizar = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
-    setDetalle(null);
-
-    if (!monto || !ingreso) {
-      setError("Ingresa monto e ingreso");
+    const ing = Number(limpiar(ingreso));
+    const mon = Number(limpiar(monto));
+    if (!ing || !mon) {
+      setError("Captura tu ingreso y el monto que necesitas.");
       return;
     }
 
     try {
       setLoading(true);
-
-      const data = await cotizarRequest({
-        monto: Number(monto),
-        ingreso: Number(ingreso),
-      });
-
+      const data = await cotizarRequest({ ingreso: ing, monto: mon });
       setResultados(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || "Error al cotizar");
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ingreso, monto, resultados: data }));
+    } catch (err) {
+      setError(errorMessage(err, "No fue posible cotizar"));
     } finally {
       setLoading(false);
     }
   };
 
+  const verDetalle = (p: ProductoCotizado) => {
+    const params = new URLSearchParams({
+      id: String(p.id),
+      monto: String(p.monto_aprobado),
+      plazo: String(p.duracion),
+      ingreso: limpiar(ingreso),
+    });
+    router.push(`/dashboard/cotizacion/detalle?${params.toString()}`);
+  };
+
+  const hoy = new Date().toISOString().slice(0, 10);
+
   return (
-    <section className="portal-stack">
-      {/* HEADER */}
-      <div className="hero-panel">
-        <p className="hero-kicker">Seguimiento</p>
-        <h2>Cotizador de crédito</h2>
-        <p>Captura la información y presiona Cotizar</p>
-      </div>
+    <div className="cx-page">
+      <PageHeader
+        eyebrow="Cotizador"
+        title="¿Cuánto necesitas?"
+        subtitle='Captura la información que te solicitamos y presiona "Cotizar".'
+      />
 
-      {/* FORM */}
-      <div className="hero-panel">
-        {error && <div className="register-error">{error}</div>}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "20px",
-            maxWidth: "500px",
-            margin: "0 auto",
-          }}
-        >
-          <input
-            type="number"
-            placeholder="Ingreso recibido"
-            value={ingreso}
-            onChange={(e) => setIngreso(e.target.value)}
-            className="register-input"
-          />
-
-          <input
-            type="number"
-            placeholder="Monto solicitado"
-            value={monto}
-            onChange={(e) => setMonto(e.target.value)}
-            className="register-input"
-          />
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: "20px" }}>
-          <button
-            onClick={handleCotizar}
-            disabled={loading}
-            className="register-submit"
-            style={{ width: "300px", maxWidth: "100%" }}
-          >
-            {loading ? "COTIZANDO..." : "COTIZAR"}
+      <Card>
+        <form onSubmit={handleCotizar} className="cx-grid cx-grid-3" style={{ alignItems: "end" }}>
+          <Field label="Ingreso recibido en tu última nómina" required>
+            <input
+              className="cx-input"
+              inputMode="decimal"
+              placeholder="$0.00"
+              value={ingreso}
+              maxLength={15}
+              onChange={(e) => setIngreso(conComas(e.target.value))}
+            />
+          </Field>
+          <Field label="¿Cuánto dinero necesitas?" required>
+            <input
+              className="cx-input"
+              inputMode="decimal"
+              placeholder="$0.00"
+              value={monto}
+              maxLength={15}
+              onChange={(e) => setMonto(conComas(e.target.value))}
+            />
+          </Field>
+          <button type="submit" className="cx-btn cx-btn-primary" disabled={loading}>
+            {loading ? "Cotizando..." : "Cotizar"}
           </button>
-        </div>
-      </div>
-
-      {/* RESULTADOS */}
-      {resultados.length > 0 && (
-        <div className="hero-grid">
-          <h3>Créditos disponibles para ti</h3>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "20px",
-              marginTop: "20px",
-            }}
-          >
-            {resultados.map((prod) => (
-              <div key={prod.id} className="product-card">
-                <h4 style={{ color: "red" }}>{prod.nombre_comercial}</h4>
-
-                <p>
-                  Préstamo hasta por:
-                  <b> ${Number(prod.monto_aprobado).toLocaleString()}</b>
-                </p>
-
-                <p>
-                  en {prod.plazo} pago(s) {getPeriodoLabel(prod.periodicidad)}
-                </p>
-
-                <button
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/cotizacion/detalle?id=${prod.id}&monto=${prod.monto_aprobado}&plazo=${prod.plazo}&ingreso=${ingreso}`,
-                    )
-                  }
-                  className="register-submit"
-                  style={{ marginTop: "10px" }}
-                >
-                  DETALLES
-                </button>
-              </div>
-            ))}
+        </form>
+        {error ? (
+          <div style={{ marginTop: 16 }}>
+            <Alert tone="error">{error}</Alert>
           </div>
-        </div>
-      )}
+        ) : null}
+      </Card>
 
-      {/* DETALLE (ABAJO COMO PHP) */}
-      {detalle && (
-        <div className="hero-panel">
-          <h3>{detalle.producto}</h3>
+      {resultados && resultados.length === 0 ? (
+        <EmptyState
+          title="No hay créditos disponibles con estos datos"
+          text="Prueba con otro monto o revisa el ingreso capturado."
+        />
+      ) : null}
 
-          <p>
-            <b>Monto:</b> ${detalle.monto.toLocaleString()}
-          </p>
-          <p>
-            <b>Plazo:</b> {detalle.plazo}
-          </p>
-          <p>
-            <b>Tasa:</b> {detalle.tasa}%
-          </p>
-
-          <div style={{ overflowX: "auto", marginTop: "20px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#f5f5f5" }}>
-                  <th>#</th>
-                  <th>Saldo Inicial</th>
-                  <th>Interés</th>
-                  <th>Capital</th>
-                  <th>Pago</th>
-                  <th>Saldo Final</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {detalle.tabla.map((row: any) => (
-                  <tr key={row.periodo}>
-                    <td>{row.periodo}</td>
-                    <td>${row.saldo_inicial.toFixed(2)}</td>
-                    <td>${row.interes.toFixed(2)}</td>
-                    <td>${row.capital.toFixed(2)}</td>
-                    <td>${row.pago.toFixed(2)}</td>
-                    <td>${row.saldo_final.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {resultados && resultados.length > 0 ? (
+        <>
+          <div>
+            <h3 className="cx-card-title">Créditos disponibles para ti</h3>
+            <p className="cx-card-text">Puedes modificar el monto y el plazo en Detalles.</p>
           </div>
-        </div>
-      )}
-    </section>
+          <div className="cx-grid cx-grid-3">
+            {resultados.map((p) => {
+              const noDisponible = p.fecha_disponible && p.fecha_disponible > hoy;
+              return (
+                <article key={p.id} className="cx-product">
+                  <h3 className="cx-product-name">{p.nombre_comercial}</h3>
+                  <div>
+                    <p className="cx-stat-label">Préstamo hasta por</p>
+                    <p className="cx-stat-value">{formatMoney(p.monto_aprobado)}</p>
+                  </div>
+                  <p className="cx-card-text" style={{ flex: 1 }}>
+                    En <b>{p.plazo}</b> pago(s) {pagosLabel(p.periodicidad)} de <b>{formatMoney(p.pago_periodico)}</b>
+                  </p>
+                  {noDisponible ? (
+                    <span className="cx-badge cx-badge-warning">Disponible a partir del {p.fecha_disponible}</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="cx-btn cx-btn-primary cx-btn-block"
+                    onClick={() => verDetalle(p)}
+                    disabled={Boolean(noDisponible)}
+                  >
+                    Detalles
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }

@@ -19,8 +19,12 @@
 import { pool } from "../../config/db.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../utils/appError.js";
-import { callBridge } from "../../utils/bridge.js";
-import { mapPayments } from "../quotation/quotation.service.js";
+import { mapPayments, calcularProductoCliente } from "../quotation/quotation.service.js";
+import { insertSolicitud, updateSolicitud, hoyMexico } from "./solicitud.repository.js";
+import { iniciarValidacionIne, regenerarTokenIne, remActivo } from "./rem.solicitud.js";
+import { enviarCorreosSolicitudEnviada } from "../mail/solicitud.notificaciones.js";
+import { leerArchivo } from "../../utils/storage.js";
+import { phpJsonEncode } from "../../utils/phpJson.js";
 import { getSepomexByCpService, validarClabeService, CATALOGO_IDS } from "../catalogs/catalogs.service.js";
 import { getDocumentosRequeridos } from "../documents/documents.service.js";
 import { verifyPassword } from "../auth/auth.service.js";
@@ -326,14 +330,65 @@ export const createApplicationService = async ({ user, monto, ingreso, plazo, in
   if (!monto || Number(monto) <= 0) throw new AppError("Monto inválido", 400);
   if (!ingreso || Number(ingreso) <= 0) throw new AppError("Ingreso inválido", 400);
 
-  // El cotizador del sistema actual recalcula y guarda la amortización con el formato que
-  // usan el expediente y la generación de contratos.
-  return callBridge("crear_solicitud", user, {
-    institucion_producto_id: Number(institucion_producto_id),
-    monto: Number(monto),
-    ingreso: Number(ingreso),
-    duracion: Number(plazo) || 0,
+  // Se recalcula con el cotizador (no se confía en los montos que manda el navegador).
+  const { producto, prod } = await calcularProductoCliente({
+    user,
+    institucion_producto_id,
+    monto,
+    ingreso,
+    duracion: plazo,
   });
+
+  const info = prod.info;
+  const amortizacion = prod.amortizacion;
+  const pagos = amortizacion?.payments;
+  const lista = pagos && typeof pagos === "object" ? pagos : null;
+  if (!lista || !Object.keys(lista).length || !(Number(info.monto) > 0)) {
+    throw new AppError("Con los datos capturados no hay un crédito disponible para este producto", 422);
+  }
+
+  // Igual que cte/Solicitud::prestamo_express (perfil cliente): el "pago" es el del índice 1.
+  const p1 = lista[1] || {};
+  const pagoPeriodico = Number(p1.amortized || 0) + Number(p1.interest || 0) + Number(p1.iva || 0);
+
+  const solicitud = {
+    cliente_id: Number(user.cliente_id),
+    estatus_id: ESTATUS.SIN_ENVIAR,
+    estatus: ESTATUS.SIN_ENVIAR,
+    alerta: null,
+    amortizacion: phpJsonEncode({ info, amortizacion }),
+    institucion_producto_id: info.id,
+    tipo_credito: info.tipo_producto ?? null,
+    periodicidad: info.periodicidad ?? null,
+    monto_adelanto: info.monto_adelanto ?? null,
+    num_pagos_adelanto: info.num_pagos_adelanto ?? null,
+    monto_credito: info.monto ?? null,
+    plazo_meses: info.duracion ?? null,
+    total_pagos: Object.keys(lista).length,
+    monto_pago: pagoPeriodico,
+    monto_total: info.monto_total ?? null,
+    monto_autorizado: info.monto ?? null,
+    fecha_celebracion_contrato: hoyMexico(),
+    ciudad_celebracion_contrato: "Monterrey, N.L.",
+    disposicion_credito: "683",
+    comisiones_contratacion: info.porcen_comision_apertura ?? null,
+    comisiones_fondo: info.porcen_fondo_garantia ?? null,
+    porcentaje_credito: info.porcen_fondo_garantia ?? null,
+    empleo_Ingreso_neto_mensual: info.ultimo_ingreso ?? null,
+  };
+
+  if (Number(info.num_pagos_gracia) > 0) {
+    solicitud.num_pagos_adelanto = info.num_pagos_gracia;
+    solicitud.monto_adelanto = info.pago_gracia ?? null;
+  }
+
+  // Cadenas vacías del cotizador ("") se guardan como NULL en columnas numéricas.
+  for (const k of ["monto_adelanto", "num_pagos_adelanto", "comisiones_contratacion", "comisiones_fondo", "porcentaje_credito"]) {
+    if (solicitud[k] === "") solicitud[k] = null;
+  }
+
+  const id = await insertSolicitud(solicitud, user.id);
+  return { solicitud_id: id, express: Number(producto.express || 0) };
 };
 
 /* ======================================================================= */
@@ -501,7 +556,7 @@ const guardarDatosGenerales = async (s, d) => {
   );
 };
 
-const guardarReferencias = async (s, lista) => {
+const guardarReferencias = async (s, lista, user) => {
   const arr = Array.isArray(lista) ? lista : Object.values(lista || {});
   const json = {};
   [0, 1, 2].forEach((i) => {
@@ -512,21 +567,22 @@ const guardarReferencias = async (s, lista) => {
       telefono_movil: telefono(r.telefono_movil ?? r.telefono) || "",
     };
   });
-  await pool.query("UPDATE solicitud SET referencias_json = ? WHERE id = ?", [JSON.stringify(json), s.id]);
+  await updateSolicitud(s.id, { referencias_json: phpJsonEncode(json) }, user.id);
 };
 
 const guardarRedes = async (s, d) => {
+  // Mismo orden de campos que el formulario del sistema actual.
   const json = {
     facebook: txt(d.facebook, 200) || "",
-    instagram: txt(d.instagram, 200) || "",
     linkedln: txt(d.linkedln, 200) || "",
     twitter: txt(d.twitter, 200) || "",
+    instagram: txt(d.instagram, 200) || "",
     otros: txt(d.otros, 200) || "",
   };
-  await pool.query("UPDATE cliente SET redes_sociales = ? WHERE id = ?", [JSON.stringify(json), s.cliente_id]);
+  await pool.query("UPDATE cliente SET redes_sociales = ? WHERE id = ?", [phpJsonEncode(json), s.cliente_id]);
 };
 
-const guardarContrato = async (s, d) => {
+const guardarContrato = async (s, d, user) => {
   const destino = int(d.destino_credito) || 0;
   const pep = int(d.personas_pol_exp);
   const propia = int(d.cuenta_propia);
@@ -534,56 +590,51 @@ const guardarContrato = async (s, d) => {
   const productivo = destino === CATALOGO_IDS.DESTINO_PRODUCTIVO;
   const vivienda = destino === CATALOGO_IDS.DESTINO_MEJORA_VIVIENDA;
 
-  await pool.query(
-    `UPDATE solicitud SET
-        destino_credito = ?, destino_credito_otros = ?, porcentaje_vivienda = ?, descripcion_vivienda = ?,
-        nombre_negocio = ?, tiempo_negocio = ?, direccion_negocio = ?, descr_cred_sol = ?, cargo_negocio = ?,
-        personas_pol_exp = ?, nombre_personas_pol_exp = ?, cuenta_propia = ?, nombre_tercero = ?,
-        propietario_real = ?, nombre_propietario_real = ?
-      WHERE id = ?`,
-    [
-      destino,
-      destino === CATALOGO_IDS.DESTINO_OTROS ? upper(d.destino_credito_otros, 200) || "" : "",
-      vivienda ? int(d.porcentaje_vivienda) || 0 : 0,
-      vivienda ? upper(d.descripcion_vivienda, 255) || "" : "",
-      productivo ? upper(d.nombre_negocio, 150) || "" : "",
-      productivo ? upper(d.tiempo_negocio, 60) || "" : "",
-      productivo ? upper(d.direccion_negocio, 255) || "" : "",
-      productivo ? upper(d.descr_cred_sol, 255) || "" : "",
-      productivo ? upper(d.cargo_negocio, 150) || "" : "",
-      [1, 2].includes(pep) ? pep : 0,
-      pep === 1 ? upper(d.nombre_personas_pol_exp, 255) || "" : "",
-      [1, 2].includes(propia) ? propia : 0,
-      propia === 2 ? upper(d.nombre_tercero, 255) || "" : "",
-      [1, 2].includes(propietario) ? propietario : 0,
-      propietario === 2 ? upper(d.nombre_propietario_real, 255) || "" : "",
-      s.id,
-    ],
+  await updateSolicitud(
+    s.id,
+    {
+      destino_credito: destino,
+      destino_credito_otros: destino === CATALOGO_IDS.DESTINO_OTROS ? upper(d.destino_credito_otros, 200) || "" : "",
+      porcentaje_vivienda: vivienda ? int(d.porcentaje_vivienda) || 0 : 0,
+      descripcion_vivienda: vivienda ? upper(d.descripcion_vivienda, 255) || "" : "",
+      nombre_negocio: productivo ? upper(d.nombre_negocio, 150) || "" : "",
+      tiempo_negocio: productivo ? upper(d.tiempo_negocio, 60) || "" : "",
+      direccion_negocio: productivo ? upper(d.direccion_negocio, 255) || "" : "",
+      descr_cred_sol: productivo ? upper(d.descr_cred_sol, 255) || "" : "",
+      cargo_negocio: productivo ? upper(d.cargo_negocio, 150) || "" : "",
+      personas_pol_exp: [1, 2].includes(pep) ? pep : 0,
+      nombre_personas_pol_exp: pep === 1 ? upper(d.nombre_personas_pol_exp, 255) || "" : "",
+      cuenta_propia: [1, 2].includes(propia) ? propia : 0,
+      nombre_tercero: propia === 2 ? upper(d.nombre_tercero, 255) || "" : "",
+      propietario_real: [1, 2].includes(propietario) ? propietario : 0,
+      nombre_propietario_real: propietario === 2 ? upper(d.nombre_propietario_real, 255) || "" : "",
+    },
+    user.id,
   );
 
   const gastos = money(d.empleo_gastos_totales);
   await pool.query("UPDATE cliente SET empleo_gastos_totales = ? WHERE id = ?", [gastos ?? 0, s.cliente_id]);
 };
 
-const guardarClabe = async (s, d) => {
+const guardarClabe = async (s, d, user) => {
   const r = await validarClabeService(d.clabe);
   if (!r.correcto) throw new AppError(r.msg || "CLABE incorrecta", 400);
-  await pool.query("UPDATE solicitud SET clabe = ?, banco_id = ?, clabe_valida = 1 WHERE id = ?", [r.clabe, r.banco_id, s.id]);
+  await updateSolicitud(s.id, { clabe: r.clabe, banco_id: r.banco_id, clabe_valida: 1 }, user.id);
   return { banco_nombre: r.banco_nombre };
 };
 
-const guardarDispositivo = async (s, d) => {
+const guardarDispositivo = async (s, d, user) => {
   // Datos que el sistema actual guarda junto con la documentación (ajaxActualizaDocumentos).
-  await pool.query(
-    "UPDATE solicitud SET Plataforma = ?, Navegador = ?, Latitud = ?, Longitud = ?, Precicion = ? WHERE id = ?",
-    [
-      txt(d.plataforma, 100),
-      txt(d.navegador, 255),
-      txt(d.latitud, 30),
-      txt(d.longitud, 30),
-      txt(d.precision, 30),
-      s.id,
-    ],
+  await updateSolicitud(
+    s.id,
+    {
+      Plataforma: txt(d.plataforma, 100),
+      Navegador: txt(d.navegador, 255),
+      Latitud: txt(d.latitud, 30),
+      Longitud: txt(d.longitud, 30),
+      Precicion: txt(d.precision, 30),
+    },
+    user.id,
   );
 };
 
@@ -604,7 +655,7 @@ export const updateApplicationSectionService = async ({ solicitud_id, user, secc
   const s = await getSolicitudDelCliente(solicitud_id, user);
   exigirEditable(s);
 
-  const extra = await guardar(s, datos || {});
+  const extra = await guardar(s, datos || {}, user);
   return { seccion, ...(extra || {}) };
 };
 
@@ -644,7 +695,7 @@ export const autorizarBuroService = async ({ solicitud_id, user, password }) => 
 export const cancelApplicationService = async ({ solicitud_id, user }) => {
   const s = await getSolicitudDelCliente(solicitud_id, user);
   exigirEditable(s);
-  await pool.query("UPDATE solicitud SET estatus = ?, estatus_id = ? WHERE id = ?", [ESTATUS.CANCELADA, ESTATUS.CANCELADA, s.id]);
+  await updateSolicitud(s.id, { estatus: ESTATUS.CANCELADA, estatus_id: ESTATUS.CANCELADA }, user.id);
   return { cancelada: true };
 };
 
@@ -654,9 +705,28 @@ export const cancelApplicationService = async ({ solicitud_id, user }) => {
 
 const redirectUrl = (solicitud_id) => `${env.frontUrl}/dashboard/solicitud/${solicitud_id}/finalizado`;
 
+/** validaVigenciaINE: INE (posición 21) revisada y con vigencia futura. */
+const ineVigente = async (cliente_id) => {
+  const [rows] = await pool.query(
+    `SELECT fecha_vigencia, revision FROM documento
+      WHERE cliente_id = ? AND posicion = 21 AND Active = 1 AND (borrado <> 1 OR borrado IS NULL)
+      ORDER BY Id DESC LIMIT 1`,
+    [cliente_id],
+  );
+  const d = rows[0];
+  const fecha = d?.fecha_vigencia ? String(d.fecha_vigencia).slice(0, 10) : "";
+  return Boolean(d && fecha && fecha !== "0000-00-00" && fecha >= hoyMexico() && Number(d.revision) === 1);
+};
+
+/** Pasa la solicitud a "enviada" y avisa por correo (cte/Solicitud::terminarSolicitud). */
+const marcarEnviada = async (s, user) => {
+  await updateSolicitud(s.id, { estatus: ESTATUS.ENVIADA, estatus_id: ESTATUS.ENVIADA }, user.id);
+  await enviarCorreosSolicitudEnviada(s.id, user.id);
+};
+
 /**
  * Revisa que todo esté completo y arranca el envío:
- *  - INE vigente → se envía directo (estatus 11, validación CLABE y correos).
+ *  - INE vigente (o REM desactivado) → se envía directo (estatus 11 y correos).
  *  - Sin INE vigente → regresa la liga de REM para capturar la INE.
  */
 export const finalizeApplicationService = async ({ solicitud_id, user }) => {
@@ -674,46 +744,73 @@ export const finalizeApplicationService = async ({ solicitud_id, user }) => {
     );
   }
 
-  const inicio = await callBridge("iniciar_validacion", user, {
-    solicitud_id: s.id,
-    redirect_url: redirectUrl(s.id),
-  });
-
-  if (inicio?.modo === "rem" && inicio.public_url) {
-    return { estado: "validar_identidad", public_url: inicio.public_url };
+  if (!(await ineVigente(s.cliente_id)) && (await remActivo())) {
+    const public_url = await iniciarValidacionIne({
+      solicitud: s,
+      redirect_url: redirectUrl(s.id),
+      proceso: Number(s.express) === 1 ? "" : "VALIDACION_INE",
+    });
+    return { estado: "validar_identidad", public_url };
   }
 
-  const fin = await callBridge("terminar", user, { solicitud_id: s.id, modo: "directo" });
-  return { estado: fin?.estado || "enviada" };
+  await marcarEnviada(s, user);
+  return { estado: "enviada" };
 };
 
 /**
  * Regreso de REM (redirect con ?workflow=&workflow_status=&last_step=).
- * Equivale a cte/Solicitud::terminarSolicitud_express.
+ * Equivale a cte/Solicitud::terminarSolicitud_express. La descarga de la INE y los cambios de
+ * estatus de productos express los sigue haciendo el webhook de REM del sistema actual.
  */
 export const completeApplicationService = async ({ solicitud_id, user, workflow, workflow_status, last_step }) => {
   const s = await getSolicitudDelCliente(solicitud_id, user);
-  const fin = await callBridge("terminar", user, {
-    solicitud_id: s.id,
-    modo: "rem",
-    workflow: txt(workflow, 100) || "",
-    workflow_status: txt(workflow_status, 30) || "",
-    last_step: txt(last_step, 100) || "",
-    redirect_url: redirectUrl(s.id),
-  });
-  return fin;
+  const estatus = Number(s.estatus_id);
+
+  if ([ESTATUS.FIRMA, ESTATUS.RECHAZO_IDENTIDAD].includes(estatus)) return { estado: "ya_procesada" };
+  if (estatus === ESTATUS.ENVIADA) return { estado: "enviada" };
+  if (estatus !== ESTATUS.SIN_ENVIAR) return { estado: "ya_procesada" };
+
+  if (txt(workflow_status, 30) === "success") {
+    await marcarEnviada(s, user);
+    return { estado: "enviada" };
+  }
+
+  const uuid = txt(workflow, 100);
+  const intentos = Number(s.num_intentos_firma || 0);
+  if (intentos < 3 && uuid) {
+    await updateSolicitud(s.id, { num_intentos_firma: intentos + 1 }, user.id);
+    const public_url = await regenerarTokenIne({
+      solicitud: s,
+      workflow_uuid: uuid,
+      redirect_url: redirectUrl(s.id),
+      proceso: Number(s.express) === 1 ? "" : "VALIDACION_INE",
+    });
+    if (public_url) return { estado: "reintentar", public_url };
+  }
+  return { estado: "callcenter" };
 };
 
 /* ======================================================================= */
 /* FIRMA Y CONTRATO                                                         */
 /* ======================================================================= */
 
+/**
+ * Liga de firma del contrato. La genera el sistema actual cuando la solicitud pasa a
+ * "documentos para firma" (estatus 14) y la guarda en solicitud.url_Rem.
+ */
 export const signApplicationService = async ({ solicitud_id, user }) => {
   const s = await getSolicitudDelCliente(solicitud_id, user);
   if (Number(s.estatus_id) !== ESTATUS.FIRMA) {
     throw new AppError("La solicitud no tiene documentos pendientes de firma", 409);
   }
-  return callBridge("firma", user, { solicitud_id: s.id });
+  const url = String(s.url_Rem || "").trim();
+  if (!/^https:\/\//.test(url)) {
+    throw new AppError(
+      "Tu contrato se está preparando. En cuanto esté listo te enviaremos la liga de firma por SMS y correo.",
+      409,
+    );
+  }
+  return { url };
 };
 
 export const signedContractService = async ({ solicitud_id, user }) => {
@@ -721,5 +818,19 @@ export const signedContractService = async ({ solicitud_id, user }) => {
   if (Number(s.estatus_id) !== ESTATUS.APROBADO) {
     throw new AppError("El contrato estará disponible cuando el crédito sea aprobado", 409);
   }
-  return callBridge("contrato_firmado", user, { solicitud_id: s.id });
+
+  const [rows] = await pool.query(
+    `SELECT path FROM documentos_expediente_firmados
+      WHERE id_expediente = ? AND IFNULL(borrado,0) = 0
+      ORDER BY (descripcion LIKE 'Contrato Firmado%') DESC, id DESC LIMIT 1`,
+    [s.id],
+  );
+  if (rows[0]?.path) {
+    return leerArchivo(rows[0].path, { mime: "application/pdf", nombreDescarga: `contrato_${s.id}.pdf` });
+  }
+
+  const firma = parseJSON(s.jsonFirmaElectronica, null);
+  if (firma?.status === "signed" && firma?.signed_file) return { url: firma.signed_file };
+
+  throw new AppError("El contrato firmado aún no está disponible", 404);
 };

@@ -18,15 +18,11 @@ export const env = {
     // Orígenes permitidos para CORS (separados por coma). Si está vacío se usa FRONT_URL.
     corsOrigins: list(process.env.CORS_ORIGINS),
 
-    // Puente con el sistema actual (PHP): cotizador, REM, STP/Dispersa, contratos, S3, correos.
-    bridgeUrl: (process.env.BRIDGE_URL || '').replace(/\/+$/, ''),
-    bridgeToken: process.env.BRIDGE_TOKEN || '',
-    bridgeTimeoutMs: Number(process.env.BRIDGE_TIMEOUT_MS || 60000),
 };
 
 if (!env.jwtSecret || env.jwtSecret.length < 32) {
     console.warn('[env] JWT_SECRET debe tener al menos 32 caracteres.');
 }
-if (!env.bridgeUrl || env.bridgeToken.length < 32) {
-    console.warn('[env] BRIDGE_URL / BRIDGE_TOKEN no configurados: cotización, envío de solicitudes, documentos y préstamos no funcionarán.');
+if (!process.env.REM_WEBHOOK_URL) {
+    console.warn('[env] REM_WEBHOOK_URL no configurado: REM no podrá avisar el resultado de la validación de INE.');
 }

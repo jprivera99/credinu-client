@@ -1,4 +1,5 @@
 import { ClientShell } from "@/components/ClientShell";
+import "./portal.css";
 
 export default function DashboardLayout({
     children,

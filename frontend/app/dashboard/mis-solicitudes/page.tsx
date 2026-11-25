@@ -1,111 +1,162 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getClientApplications } from "@/lib/api";
-import type { ApplicationItemNew } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { cancelApplicationRequest, getClientApplications } from "@/lib/api";
+import type { SolicitudListado } from "@/lib/solicitud";
+import { formatFecha, formatFolio, formatMoney } from "@/lib/solicitud";
+import { Alert, EmptyState, Loading, Modal, PageHeader, StatusBadge, errorMessage } from "@/components/portal/ui";
 
 export default function SolicitudesPage() {
-  const [applications, setApplications] = useState<ApplicationItemNew[]>([]);
+  const [items, setItems] = useState<SolicitudListado[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [error, setError] = useState("");
+  const [cancelar, setCancelar] = useState<SolicitudListado | null>(null);
+  const [procesando, setProcesando] = useState(false);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
+    setLoading(true);
     getClientApplications()
-      .then((data) => setApplications(data))
+      .then((data) => setItems(data || []))
+      .catch((err) => setError(errorMessage(err, "No fue posible cargar tus solicitudes")))
       .finally(() => setLoading(false));
   }, []);
 
-  const formatFolio = (id: number) => {
-    return id.toString().padStart(5, "0");
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const confirmarCancelacion = async () => {
+    if (!cancelar) return;
+    setProcesando(true);
+    try {
+      await cancelApplicationRequest(cancelar.id);
+      setCancelar(null);
+      cargar();
+    } catch (err) {
+      setError(errorMessage(err));
+      setCancelar(null);
+    } finally {
+      setProcesando(false);
+    }
   };
 
-  const formatFecha = (fecha?: string) => {
-    if (!fecha) return "-";
-    return fecha.substring(0, 10);
-  };
-
-  const formatMonto = (monto?: number) => {
-    if (!monto) return "$0.00";
-    return monto.toLocaleString("es-MX", {
-      style: "currency",
-      currency: "MXN",
-    });
-  };
+  const pendientesFirma = items.filter((i) => i.requiere_firma);
 
   return (
-    <section className="portal-stack">
-      <div className="hero-panel">
-        <div>
-          <p className="hero-kicker">Seguimiento</p>
-          <h2>Solicitudes de crédito</h2>
-          <p>Consulta el estado de tus solicitudes</p>
-        </div>
-      </div>
+    <div className="cx-page">
+      <PageHeader
+        eyebrow="Seguimiento"
+        title="Solicitudes de crédito"
+        subtitle="Consulta el estado de tus solicitudes y continúa las que tengas pendientes."
+        actions={
+          <Link href="/dashboard/cotizacion" className="cx-btn cx-btn-primary">
+            Nueva solicitud
+          </Link>
+        }
+      />
 
-      {loading ? (
-        <div className="empty-state">Cargando solicitudes...</div>
-      ) : applications.length === 0 ? (
-        <div className="empty-state">Aún no tienes solicitudes.</div>
-      ) : (
-        <div className="table-card">
-          <table className="portal-table">
-            <thead>
-              <tr>
-                <th>No. Solicitud</th>
-                <th>Fecha</th>
-                <th>Monto</th>
-                <th>Estatus</th>
-              </tr>
-            </thead>
+      {error ? <Alert tone="error">{error}</Alert> : null}
 
-            <tbody>
-              {applications.map((item) => (
-                <tr key={item.id}>
+      {pendientesFirma.length ? (
+        <Alert tone="warning">
+          Tienes {pendientesFirma.length === 1 ? "un contrato listo" : `${pendientesFirma.length} contratos listos`} para
+          firmar. Entra a <b>Detalles</b> y presiona <b>Aceptar y firmar</b>.
+        </Alert>
+      ) : null}
 
-                  <td style={{ position: "relative" }}>
-                    <b>{formatFolio(item.id)}</b>
+      {loading ? <Loading text="Cargando solicitudes..." /> : null}
 
-                    {item.estatus_id === 14 && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          top: "-5px",
-                          right: "-10px",
-                          background: "red",
-                          color: "#fff",
-                          borderRadius: "50%",
-                          padding: "2px 6px",
-                          fontSize: "10px",
-                        }}
-                      >
-                        !
-                      </span>
-                    )}
+      {!loading && !error && items.length === 0 ? (
+        <EmptyState
+          title="Aún no tienes solicitudes"
+          text="Cotiza un crédito para iniciar tu primera solicitud."
+          action={
+            <Link href="/dashboard/cotizacion" className="cx-btn cx-btn-primary">
+              Ir al cotizador
+            </Link>
+          }
+        />
+      ) : null}
 
-                    <br />
-
-                    <button
-                      className="link-button"
-                      onClick={() =>
-                        router.push(`/solicitudes/${item.id}`)
-                      }
-                    >
-                      Detalles
-                    </button>
-                  </td>
-
-                  <td>{formatFecha(item.fecha_registro)}</td>
-
-                  <td>{formatMonto(item.monto_credito)}</td>
-                  
-                  <td>{item.estatus ?? "Sin estatus"}</td>
+      {!loading && items.length > 0 ? (
+        <div className="cx-card" style={{ padding: 0 }}>
+          <div className="cx-table-wrap" style={{ border: 0 }}>
+            <table className="cx-table">
+              <thead>
+                <tr>
+                  <th>No. solicitud</th>
+                  <th>Producto</th>
+                  <th>Fecha</th>
+                  <th className="cx-num">Monto</th>
+                  <th>Estatus</th>
+                  <th style={{ textAlign: "right" }}>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <b>{formatFolio(s.id)}</b>
+                    </td>
+                    <td>{s.producto || "—"}</td>
+                    <td>{formatFecha(s.fecha_registro)}</td>
+                    <td className="cx-num">{formatMoney(s.monto_credito)}</td>
+                    <td>
+                      <StatusBadge estatusId={s.estatus_id} text={s.estatus} />
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                        {s.puede_continuar ? (
+                          <>
+                            <Link href={`/dashboard/solicitud/${s.id}`} className="cx-btn cx-btn-primary cx-btn-sm">
+                              Continuar
+                            </Link>
+                            <button
+                              type="button"
+                              className="cx-btn cx-btn-danger cx-btn-sm"
+                              onClick={() => setCancelar(s)}
+                            >
+                              Cancelar
+                            </button>
+                          </>
+                        ) : null}
+                        <Link
+                          href={`/dashboard/solicitud/${s.id}/expediente`}
+                          className={`cx-btn cx-btn-sm ${s.requiere_firma ? "cx-btn-success" : "cx-btn-secondary"}`}
+                        >
+                          {s.requiere_firma ? "Firmar contrato" : "Detalles"}
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
-    </section>
+      ) : null}
+
+      <Modal
+        open={Boolean(cancelar)}
+        title="¿Cancelar solicitud?"
+        onClose={() => setCancelar(null)}
+        actions={
+          <>
+            <button type="button" className="cx-btn cx-btn-secondary" onClick={() => setCancelar(null)}>
+              No, regresar
+            </button>
+            <button type="button" className="cx-btn cx-btn-danger" onClick={confirmarCancelacion} disabled={procesando}>
+              {procesando ? "Cancelando..." : "Sí, cancelar"}
+            </button>
+          </>
+        }
+      >
+        <p>
+          La solicitud {cancelar ? formatFolio(cancelar.id) : ""} quedará cancelada y podrás crear una nueva desde el
+          cotizador.
+        </p>
+      </Modal>
+    </div>
   );
 }

@@ -9,6 +9,7 @@ import { AppError } from "./appError.js";
 
 export const callBridge = async (accion, user, payload = {}) => {
   if (!env.bridgeUrl || !env.bridgeToken) {
+    console.error(`[bridge] ${accion}: falta configurar BRIDGE_URL y BRIDGE_TOKEN en backend/.env`);
     throw new AppError("Servicio no disponible. Intenta más tarde.", 503);
   }
 

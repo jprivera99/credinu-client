@@ -1,11 +1,11 @@
 // src/modules/documents/documents.service.js
 // Documentos personales del cliente (tabla documento, opción 1 = cliente).
-// El archivo se guarda a través del puente con documento_model->adjunta_archivo para
-// que quede en la misma ruta de S3 y con el mismo registro que en el sistema actual.
+// El archivo se guarda con la misma ruta y el mismo registro que documento_model->adjunta_archivo
+// del sistema actual: <YYYY>/<MM>/01_<cliente>_<tipo>.<ext> en S3 (o carpeta local en desarrollo).
 
 import { pool } from "../../config/db.js";
 import { AppError } from "../../utils/appError.js";
-import { callBridge } from "../../utils/bridge.js";
+import { guardarArchivo, leerArchivo } from "../../utils/storage.js";
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 
@@ -81,39 +81,74 @@ export const getDocumentosRequeridos = async (cliente_id, idsCsv) => {
   });
 };
 
-const TIPOS_PERMITIDOS_SQL =
-  "SELECT id FROM catalogo WHERE id = ? AND catalogo_tipo_id IN (7,8,29) AND IFNULL(borrado,0) = 0 LIMIT 1";
+const MIMES = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };
+
+/** Revisa la "firma" del archivo para que el contenido corresponda a la extensión. */
+const contenidoValido = (buffer, ext) => {
+  if (ext === "pdf") return buffer.subarray(0, 5).toString("latin1") === "%PDF-";
+  if (ext === "png") return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+};
 
 export const subirDocumentoService = async ({ user, tipo, nombre, base64 }) => {
   const tipoNum = Number(tipo);
   if (!Number.isInteger(tipoNum) || tipoNum <= 0) throw new AppError("Tipo de documento inválido", 400);
 
-  const [[existe]] = await pool.query(TIPOS_PERMITIDOS_SQL, [tipoNum]);
-  if (!existe) throw new AppError("Tipo de documento inválido", 400);
+  const [[tipoCat]] = await pool.query(
+    "SELECT id, nombre FROM catalogo WHERE id = ? AND catalogo_tipo_id IN (7,8,29) LIMIT 1",
+    [tipoNum],
+  );
+  if (!tipoCat) throw new AppError("Tipo de documento inválido", 400);
 
   const ext = String(nombre || "").split(".").pop().toLowerCase();
-  if (!["pdf", "jpg", "jpeg", "png"].includes(ext)) {
-    throw new AppError("Solo se permiten archivos PDF, JPG o PNG", 400);
+  if (!MIMES[ext]) throw new AppError("Solo se permiten archivos PDF, JPG o PNG", 400);
+
+  const buffer = Buffer.from(String(base64 || "").replace(/^data:[^;]+;base64,/, ""), "base64");
+  if (!buffer.length) throw new AppError("Archivo vacío", 400);
+  if (buffer.length > 10 * 1024 * 1024) throw new AppError("El archivo no debe pesar más de 10 MB", 400);
+  if (!contenidoValido(buffer, ext)) throw new AppError("El contenido del archivo no coincide con su tipo", 400);
+  const inicio = buffer.subarray(0, 512).toString("latin1");
+  if (inicio.includes("<?php") || inicio.includes("<?=")) throw new AppError("Archivo no permitido", 400);
+
+  const clienteId = Number(user.cliente_id);
+  const [anio, mes] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit" })
+    .format(new Date())
+    .split("-");
+  const extension = ext;
+  const ruta = `${anio}/${mes}/01_${clienteId}_${String(tipoNum).padStart(2, "0")}.${extension}`;
+
+  await guardarArchivo(ruta, buffer, MIMES[ext]);
+
+  const docs = await getDocumentosPorPosicion(clienteId);
+  const existente = docs[tipoNum];
+  if (existente) {
+    await pool.query("UPDATE documento SET Mime = ?, Extension = ?, path = ?, ocr = '' WHERE Id = ?", [
+      MIMES[ext], extension, ruta, existente.Id,
+    ]);
+  } else {
+    await pool.query(
+      "INSERT INTO documento (cliente_id, Description, Mime, Extension, path, Active, posicion, ocr) VALUES (?, ?, ?, ?, ?, 1, ?, '')",
+      [clienteId, tipoCat.nombre, MIMES[ext], extension, ruta, tipoNum],
+    );
   }
 
-  const limpio = String(base64 || "").replace(/^data:[^;]+;base64,/, "");
-  if (!limpio) throw new AppError("Archivo vacío", 400);
-  const bytes = Math.floor((limpio.length * 3) / 4);
-  if (bytes > 10 * 1024 * 1024) throw new AppError("El archivo no debe pesar más de 10 MB", 400);
-
-  await callBridge("subir_documento", user, { tipo: tipoNum, nombre: `documento.${ext}`, base64: limpio });
-
-  const docs = await getDocumentosPorPosicion(user.cliente_id);
-  const doc = docs[tipoNum];
-  return {
-    tipo: tipoNum,
-    estado: estadoDocumento(doc),
-    documento_id: doc ? Number(doc.Id) : null,
-  };
+  const actualizados = await getDocumentosPorPosicion(clienteId);
+  const doc = actualizados[tipoNum];
+  return { tipo: tipoNum, estado: estadoDocumento(doc), documento_id: doc ? Number(doc.Id) : null };
 };
 
 export const verDocumentoService = async ({ user, documento_id }) => {
   const id = Number(documento_id);
   if (!Number.isInteger(id) || id <= 0) throw new AppError("Documento inválido", 400);
-  return callBridge("ver_documento", user, { documento_id: id });
+
+  const [[doc]] = await pool.query(
+    `SELECT d.Id, d.path, d.Mime FROM documento d
+       LEFT JOIN solicitud s ON s.id = d.solicitud_id
+      WHERE d.Id = ? AND d.Active = 1 AND (d.borrado <> 1 OR d.borrado IS NULL)
+        AND (d.cliente_id = ? OR s.cliente_id = ?)
+      LIMIT 1`,
+    [id, Number(user.cliente_id), Number(user.cliente_id)],
+  );
+  if (!doc) throw new AppError("Documento no encontrado", 404);
+  return leerArchivo(doc.path, { mime: doc.Mime });
 };

@@ -1,484 +1,264 @@
-// app/dashboard/cotizacion/detalle/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { detalleRequest, createApplicationRequest } from "@/lib/api";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createApplicationRequest, detalleRequest } from "@/lib/api";
+import type { DetalleCotizacion } from "@/lib/solicitud";
+import { formatMoney, pagosLabel, periodoLabel } from "@/lib/solicitud";
+import {
+  Alert,
+  Card,
+  Field,
+  Loading,
+  Modal,
+  PageHeader,
+  TablaAmortizacion,
+  errorMessage,
+} from "@/components/portal/ui";
 
-export default function DetallePage() {
+function DetalleCotizacionContent() {
   const params = useSearchParams();
   const router = useRouter();
 
   const id = Number(params.get("id"));
+  const ingreso = Number(params.get("ingreso"));
 
-  const [monto, setMonto] = useState(Number(params.get("monto")) || 0);
-
+  const [monto, setMonto] = useState(params.get("monto") || "");
   const [plazo, setPlazo] = useState(Number(params.get("plazo")) || 0);
+  const [data, setData] = useState<DetalleCotizacion | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
 
-  const [ingreso, setIngreso] = useState(0);
+  const [express, setExpress] = useState(0);
+  const [recordatorio, setRecordatorio] = useState(false);
+  const [aviso, setAviso] = useState("");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
-
-  const [loading, setLoading] = useState(false);
-
-  const [mounted, setMounted] = useState(false);
-
-  /*
-    MODAL RECORDATORIO
-  */
-
-  const [showReminderModal, setShowReminderModal] = useState(false);
-
-  /*
-    MODAL ERROR
-  */
-
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [showErrorModal, setShowErrorModal] = useState(false);
-
-  /*
-    EXPRESS
-  */
-
-  const [isExpress, setIsExpress] = useState(0);
-
-  const getPlazoLabel = (periodicidad?: string) => {
-    const p = String(periodicidad || "").toLowerCase();
-
-    switch (p) {
-      case "semanal":
-        return "Plazo (semanas)";
-      case "catorcenal":
-        return "Plazo (catorcenas)";
-      case "quincenal":
-        return "Plazo (quincenas)";
-      case "mensual":
-      default:
-        return "Plazo (meses)";
-    }
-  };
-
-  /*
-    OBTENER INGRESO DESDE QUERY PARAMS
-  */
+  const calcular = useCallback(
+    async (m: number, p: number) => {
+      setError("");
+      setLoading(true);
+      try {
+        const res = await detalleRequest({ id, monto: m, plazo: p, ingreso });
+        setData(res);
+        setMonto(String(res.monto));
+        setPlazo(Number(res.plazo));
+      } catch (err) {
+        setError(errorMessage(err, "No fue posible calcular el crédito"));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id, ingreso],
+  );
 
   useEffect(() => {
-    const ingresoParam = params.get("ingreso");
-
-    if (ingresoParam) {
-      setIngreso(Number(ingresoParam));
-    }
-  }, [params]);
-
-  /*
-    FETCH DETALLE
-  */
-
-  const fetchDetalle = async () => {
-    try {
-      setLoading(true);
-
-      const res = await detalleRequest({
-        id,
-        monto: Number(monto),
-        plazo: Number(plazo),
-        ingreso: Number(ingreso),
-      });
-
-      setData(res);
-
-      setMonto(Number(res.monto));
-
-      setPlazo(Number(res.plazo));
-    } catch (error) {
-      console.error("DETALLE ERROR:", error);
-    } finally {
+    if (!id || !ingreso) {
+      setError("Faltan datos de la cotización. Regresa al cotizador.");
       setLoading(false);
+      return;
     }
-  };
+    calcular(Number(params.get("monto")) || 0, Number(params.get("plazo")) || 0);
+    // Solo al entrar a la pantalla.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  /*
-    CREAR SOLICITUD
-  */
-
-  const submitSolicitud = async () => {
+  const solicitar = async () => {
+    if (!data) return;
+    setEnviando(true);
     try {
-      setLoading(true);
-
-      if (!ingreso || ingreso <= 0) {
-        throw new Error("El ingreso es inválido");
-      }
-
-      const response = await createApplicationRequest({
-        institucion_producto_id: Number(id),
-        monto: Number(monto),
-        plazo: Number(plazo),
-        ingreso: Number(ingreso),
-      });
-
-      /*
-        REDIRECCIONAR
-      */
-
-      router.push(`/dashboard/solicitud/${response.solicitud_id}`);
-    } catch (error: any) {
-      setErrorMessage(
-        error?.message || "Ocurrió un error al procesar la solicitud.",
-      );
-
-      setShowErrorModal(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /*
-    VALIDAR ANTES DE MOSTRAR RECORDATORIO
-  */
-
-  const validateSolicitud = async () => {
-    try {
-      setLoading(true);
-
-      const response = await createApplicationRequest({
-        institucion_producto_id: Number(id),
-        monto: Number(monto),
-        plazo: Number(plazo),
-        ingreso: Number(ingreso),
+      const res = await createApplicationRequest({
+        institucion_producto_id: id,
+        monto: data.monto,
+        plazo: data.plazo,
+        ingreso,
         validar: true,
       });
-
-      /*
-        GUARDAR EXPRESS
-      */
-
-      setIsExpress(Number(response?.express || 0));
-
-      /*
-        MOSTRAR RECORDATORIO
-      */
-
-      setShowReminderModal(true);
-    } catch (error: any) {
-      /*
-        MOSTRAR ERROR PRIMERO
-      */
-
-      setErrorMessage(
-        error?.message || "No fue posible validar la solicitud.",
-      );
-
-      setShowErrorModal(true);
+      setExpress(Number(res?.express || 0));
+      setRecordatorio(true);
+    } catch (err) {
+      setAviso(errorMessage(err, "No es posible solicitar este crédito por ahora."));
     } finally {
-      setLoading(false);
+      setEnviando(false);
     }
   };
 
-  /*
-    CLICK BOTON SOLICITAR
-  */
-
-  const handleSolicitarClick = async () => {
-    if (loading) return;
-
-    await validateSolicitud();
-  };
-
-  /*
-    CONFIRMAR RECORDATORIO
-  */
-
-  const handleConfirmReminder = async () => {
-    setShowReminderModal(false);
-
-    await submitSolicitud();
-  };
-
-  /*
-    TEXTO RECORDATORIO
-  */
-
-  const getReminderContent = () => {
-    switch (Number(isExpress)) {
-      case 1:
-        return (
-          <ul
-            style={{
-              textAlign: "left",
-              paddingLeft: "20px",
-              marginTop: "10px",
-            }}
-          >
-            <li>Cuenta CLABE interbancaria</li>
-            <li>Credencial INE</li>
-          </ul>
-        );
-
-      case 0:
-      default:
-        return (
-          <ul
-            style={{
-              textAlign: "left",
-              paddingLeft: "20px",
-              marginTop: "10px",
-            }}
-          >
-            <li>Cuenta CLABE interbancaria</li>
-            <li>Credencial INE</li>
-            <li>Últimos 3 recibos de Nómina</li>
-            <li>Comprobante de domicilio</li>
-            <li>Último estado de cuenta bancario</li>
-          </ul>
-        );
+  const confirmar = async () => {
+    if (!data) return;
+    setRecordatorio(false);
+    setEnviando(true);
+    try {
+      const res = await createApplicationRequest({
+        institucion_producto_id: id,
+        monto: data.monto,
+        plazo: data.plazo,
+        ingreso,
+      });
+      sessionStorage.removeItem("credinu.cotizador");
+      router.push(`/dashboard/solicitud/${res.solicitud_id}`);
+    } catch (err) {
+      setAviso(errorMessage(err, "No fue posible crear la solicitud."));
+      setEnviando(false);
     }
   };
 
-  /*
-    INIT
-  */
-
-  useEffect(() => {
-    if (id && monto && plazo) {
-      fetchDetalle();
-    }
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  /*
-    LOADING
-  */
-
-  if (!data) {
-    return <p style={{ padding: 20 }}>Cargando...</p>;
+  const opcionesPlazo: number[] = [];
+  if (data) {
+    const min = Math.ceil(Number(data.plazo_min) || Number(data.plazo));
+    const max = Math.floor(Number(data.plazo_max) || Number(data.plazo));
+    for (let i = min; i <= max && opcionesPlazo.length < 200; i++) opcionesPlazo.push(i);
+    if (!opcionesPlazo.includes(Number(data.plazo))) opcionesPlazo.push(Number(data.plazo));
+    opcionesPlazo.sort((a, b) => a - b);
   }
 
+  if (loading && !data) return <Loading text="Calculando tu crédito..." />;
+
   return (
-    <section className="portal-stack">
-      {/* HEADER */}
-      <div className="hero-panel">
-        <h2>{data.producto}</h2>
+    <div className="cx-page">
+      <PageHeader
+        eyebrow="Detalle de la cotización"
+        title={data?.producto || "Crédito"}
+        subtitle="Puedes modificar el plazo y el monto de tu crédito."
+        actions={
+          <Link href="/dashboard/cotizacion" className="cx-btn cx-btn-secondary">
+            Regresar
+          </Link>
+        }
+      />
 
-        {/* INPUTS */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 260px",
-            gap: "15px",
-            marginTop: "15px",
-            alignItems: "end",
-          }}
-        >
-          <div>
-            <label>Monto</label>
+      {error ? <Alert tone="error">{error}</Alert> : null}
 
-            <input
-              type="number"
-              value={monto}
-              onChange={(e) => setMonto(Number(e.target.value))}
-              min={data?.monto_min || 0}
-              max={data?.monto_max || undefined}
-              className="register-input"
-            />
+      {data ? (
+        <>
+          <Card>
+            <div className="cx-grid cx-grid-3" style={{ alignItems: "end" }}>
+              <Field label="Monto">
+                <input
+                  className="cx-input"
+                  inputMode="decimal"
+                  value={monto}
+                  onChange={(e) => setMonto(e.target.value.replace(/[^\d.]/g, ""))}
+                />
+              </Field>
+              <Field label={`Plazo (${periodoLabel(data.periodicidad)})`}>
+                {opcionesPlazo.length > 1 && !data.express ? (
+                  <select className="cx-select" value={plazo} onChange={(e) => setPlazo(Number(e.target.value))}>
+                    {opcionesPlazo.map((n) => (
+                      <option key={n} value={n}>
+                        {n} {periodoLabel(data.periodicidad, n !== 1)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input className="cx-input" value={`${data.plazo} ${periodoLabel(data.periodicidad)}`} disabled />
+                )}
+              </Field>
+              <button
+                type="button"
+                className="cx-btn cx-btn-secondary"
+                disabled={loading}
+                onClick={() => calcular(Number(monto) || 0, plazo)}
+              >
+                {loading ? "Calculando..." : "Recalcular"}
+              </button>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <Alert tone="warning">
+                <b>Nota:</b> el sistema ajusta el monto del crédito a tu capacidad de pago y a las políticas del
+                producto.
+              </Alert>
+            </div>
+          </Card>
+
+          <div className="cx-grid cx-grid-4">
+            <div className="cx-stat">
+              <p className="cx-stat-label">Monto del crédito</p>
+              <p className="cx-stat-value">{formatMoney(data.monto)}</p>
+            </div>
+            <div className="cx-stat">
+              <p className="cx-stat-label">Número de pagos</p>
+              <p className="cx-stat-value">
+                {data.num_pagos} <small style={{ fontSize: "0.85rem", fontWeight: 500 }}>{pagosLabel(data.periodicidad)}</small>
+              </p>
+            </div>
+            <div className="cx-stat">
+              <p className="cx-stat-label">Pago periódico</p>
+              <p className="cx-stat-value">{formatMoney(data.pago)}</p>
+            </div>
+            <div className="cx-stat">
+              <p className="cx-stat-label">Total a pagar</p>
+              <p className="cx-stat-value">{formatMoney(data.total_pagar)}</p>
+            </div>
           </div>
 
-          <div>
-            <label>{getPlazoLabel(data?.periodicidad)}</label>
-
-            <input
-              type="number"
-              value={plazo}
-              onChange={(e) => setPlazo(Number(e.target.value))}
-              min={data?.plazo_min || 1}
-              max={data?.plazo_max || undefined}
-              className="register-input"
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
+          <Card
+            title="Tabla de pagos"
+            actions={
+              <button type="button" className="cx-btn cx-btn-success" onClick={solicitar} disabled={enviando || loading}>
+                {enviando ? "Procesando..." : "Quiero mi préstamo"}
+              </button>
+            }
           >
-            <button
-              onClick={fetchDetalle}
-              className="register-submit"
-              disabled={loading}
-            >
-              {loading ? "CALCULANDO..." : "RECALCULAR"}
+            <TablaAmortizacion filas={data.tabla} completa={Boolean(data.detalle_completo)} />
+          </Card>
+        </>
+      ) : null}
+
+      <Modal
+        open={recordatorio}
+        title="Antes de continuar"
+        onClose={() => setRecordatorio(false)}
+        actions={
+          <>
+            <button type="button" className="cx-btn cx-btn-secondary" onClick={() => setRecordatorio(false)}>
+              Cancelar
             </button>
-
-            <button
-              onClick={handleSolicitarClick}
-              className="register-submit"
-              disabled={loading}
-            >
-              QUIERO MI PRÉSTAMO
+            <button type="button" className="cx-btn cx-btn-primary" onClick={confirmar}>
+              Continuar
             </button>
-          </div>
-        </div>
+          </>
+        }
+      >
+        <p>Por favor ten a la mano lo siguiente:</p>
+        <ul style={{ margin: "10px 0 0", paddingLeft: 20, lineHeight: 1.7 }}>
+          <li>Cuenta CLABE interbancaria</li>
+          <li>Credencial INE</li>
+          {express ? null : (
+            <>
+              <li>Últimos recibos de nómina</li>
+              <li>Comprobante de domicilio</li>
+              <li>Último estado de cuenta bancario</li>
+            </>
+          )}
+        </ul>
+      </Modal>
 
-        {/* RESUMEN */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px,1fr))",
-            gap: "15px",
-            marginTop: "20px",
-          }}
-        >
-          <div className="product-card centered-card">
-            <span className="card-label">Tasa</span>
+      <Modal
+        open={Boolean(aviso)}
+        title="Solicitud no disponible"
+        onClose={() => setAviso("")}
+        actions={
+          <>
+            <button type="button" className="cx-btn cx-btn-secondary" onClick={() => setAviso("")}>
+              Cerrar
+            </button>
+            <Link href="/dashboard/mis-solicitudes" className="cx-btn cx-btn-primary">
+              Ver mis solicitudes
+            </Link>
+          </>
+        }
+      >
+        <p>{aviso}</p>
+      </Modal>
+    </div>
+  );
+}
 
-            <h4>{data.tasa}%</h4>
-          </div>
-
-          <div className="product-card">
-            <p>Pago periódico</p>
-
-            <h4>${data.pago.toFixed(2)}</h4>
-          </div>
-
-          <div className="product-card">
-            <p>Total a pagar</p>
-
-            <h4>${Number(data.total_pagar || 0).toFixed(2)}</h4>
-          </div>
-        </div>
-      </div>
-
-      <p className="form-notice is-warning onboarding-warning" role="note">
-        NOTA: El sistema ajusta el monto del crédito a la capacidad de pago y
-        las políticas del producto.
-      </p>
-
-      {/* TABLA */}
-      <div className="hero-panel">
-        <div className="table-header">
-          <h3>Tabla de amortización</h3>
-        </div>
-
-        <div className="table-container">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Saldo Inicial</th>
-                <th>Interés</th>
-                <th>Capital</th>
-                <th>Pago</th>
-                <th>Saldo Final</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {data.tabla.map((row: any) => (
-                <tr key={row.periodo}>
-                  <td>{row.periodo}</td>
-
-                  <td>${row.saldo_inicial.toFixed(2)}</td>
-
-                  <td>${row.interes.toFixed(2)}</td>
-
-                  <td>${row.capital.toFixed(2)}</td>
-
-                  <td>${row.pago.toFixed(2)}</td>
-
-                  <td>${row.saldo_final.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* MODAL RECORDATORIO */}
-      {mounted && showReminderModal
-        ? createPortal(
-            <div
-              className="confirm-modal-backdrop"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="confirm-modal">
-                <h3>Recordatorio</h3>
-
-                <div className="confirm-alert">
-                  <span className="confirm-alert-icon">!</span>
-
-                  <div>
-                    <p>
-                      Por favor, asegúrate de tener a la mano lo siguiente:
-                    </p>
-
-                    {getReminderContent()}
-                  </div>
-                </div>
-
-                <div className="confirm-modal-actions">
-                  <button
-                    type="button"
-                    className="confirm-cancel"
-                    onClick={() => setShowReminderModal(false)}
-                    disabled={loading}
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    type="button"
-                    className="confirm-accept"
-                    onClick={handleConfirmReminder}
-                    disabled={loading}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
-
-      {/* MODAL ERROR */}
-      {mounted && showErrorModal
-        ? createPortal(
-            <div
-              className="confirm-modal-backdrop"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="confirm-modal">
-                <h3>Solicitud no disponible</h3>
-
-                <div className="confirm-alert">
-                  <span className="confirm-alert-icon">!</span>
-
-                  <p>{errorMessage}</p>
-                </div>
-
-                <div className="confirm-modal-actions">
-                  <button
-                    type="button"
-                    className="confirm-accept"
-                    onClick={() => setShowErrorModal(false)}
-                  >
-                    Entendido
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
-    </section>
+export default function DetalleCotizacionPage() {
+  return (
+    <Suspense fallback={<Loading text="Cargando..." />}>
+      <DetalleCotizacionContent />
+    </Suspense>
   );
 }
